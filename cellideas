@@ -1,0 +1,42 @@
+LifeEngine cells:
+
+    Mouth - Orange, eats food in directly adjacent cells.
+    Producer - Green, randomly generates food in directly adjacent empty cells.
+    Mover - Light blue, allows the organism to move and rotate randomly.
+    Killer - Red, harms organisms in directly adjacent cells (besides itself).
+    Armor - Purple, negates the effects of killer cells.
+    Eye - Light purple with a slit, allows the organism to see and move intelligently. See further description below.
+
+
+LifeEngineLite cells:
+organisms require energy to perform actions
+organisms take damage when no energy?
+organism health = cell count? same as original?
+
+food:
+ - food like LifeEngine
+ - Dense Food dropped by death of cells? worth more than normal food (5x?)
+
+
+Mouth - Orange, eats food in directly adjacent cells.
+	- no energy cost
+	- 20 energy gained from eating food
+	- 100 energy gained from eating dense food
+//Producer - Yellow, randomly generates food in directly adjacent empty cells
+//	- costs 20 energy to produce
+//	- if no available cells, energy is preserved
+Mover - Light blue, allows the organism to move and rotate randomly.
+	- costs 1 energy to move 1 tile
+Killer - Red, harms organisms in directly adjacent cells (besides itself).
+	- costs 1 energy per tile harmed
+Armor - Purple, negates the effects of killer cells.
+	- no energy cost
+Eye - Light purple with a slit, allows the organism to see and move intelligently. See further description below.
+	- no energy cost? or maybe 1/tick?
+Leaf - Dark Green, allows the organism to passively gain energy from the sun
+	- +1 energy per tick
+Blossom - Light Green, allows the organism to produce food in empty adjacent spots
+	- costs 20 energy to produce fruit
+
+
+
