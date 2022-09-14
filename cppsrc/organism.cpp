@@ -38,6 +38,7 @@ Organism::Organism(int center_x, int center_y)
 	this->age = 0;
 	this->alive = 1;
 	this->reproductionCooldown = 0;
+	this->justBorn = true;
 }
 
 void Organism::Die()
@@ -52,8 +53,11 @@ void Organism::Die()
 
 Organism *Organism::Tick()
 {
-	mvprintw(BOARD_DIM + 9, 0, "tick for age %d", this->age);
-	refresh();
+	if(this->justBorn)
+	{
+		this->justBorn = false;
+		return nullptr;
+	}
 
 	// if (this->energy == 0 || this->currentHealth == 0)
 	// {
@@ -65,7 +69,7 @@ Organism *Organism::Tick()
 	{
 		this->myCells[i]->Tick();
 	}
-	this->age = this->age + 1;
+	this->age++;
 
 	if (this->reproductionCooldown == 0)
 	{
@@ -102,9 +106,10 @@ Organism *Organism::Reproduce()
 	int index = (rand() >> 5) % 4;
 	int dir_x = directions[index][0] * max_rel_x;
 	int dir_y = directions[index][1] * max_rel_y;
-	int baby_offset_x = (rand() >> 5) % 3;
-	int baby_offset_y = (rand() >> 5) % 3;
-
+	// int baby_offset_x = (((rand() >> 5) % 4 == 0) + ((rand() >> 5) % 8 == 0) + ((rand() >> 5) % 16 == 0)) * directions[index][0];
+	// int baby_offset_y = (((rand() >> 5) % 4 == 0) + ((rand() >> 5) % 8 == 0) + ((rand() >> 5) % 16 == 0)) * directions[index][1];
+	int baby_offset_x = 0;
+	int baby_offset_y = 0;
 	char canReproduceHere = 1;
 	for (int i = 0; i < this->nCells; i++)
 	{
@@ -118,14 +123,14 @@ Organism *Organism::Reproduce()
 		for (int i = 0; i < this->nCells; i++)
 		{
 			Cell *thisCell = this->myCells[i];
-			int this_rel_x = this->x - thisCell->x;
-			int this_rel_y = this->y - thisCell->y;
+			int this_rel_x = thisCell->x - this->x;
+			int this_rel_y = thisCell->y - this->y;
 			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, thisCell->type);
 		}
 		this->ExpendEnergy(this->nCells * 5);
-		replicated->energy = replicated->nCells * 8;
-		this->reproductionCooldown = 25;
-		replicated->reproductionCooldown = 50;
+		replicated->energy = 0;
+		this->reproductionCooldown = this->nCells * 5;
+		replicated->reproductionCooldown = replicated->nCells * 10;
 		return replicated;
 	}
 	return nullptr;
@@ -176,12 +181,12 @@ Cell::Cell(int x, int y, enum CellTypes type, Organism *myOrganism)
 
 void Cell::Tick()
 {
-	/*
+	
 	if(this->actionCooldown > 0)
 	{
 		this->actionCooldown--;
 		return;
-	}*/
+	}
 
 	switch (this->type)
 	{
@@ -190,6 +195,7 @@ void Cell::Tick()
 
 	case cell_mouth:
 	{
+		/*
 		char couldEat = 0;
 		for (int i = 0; i < 4; i++)
 		{
@@ -208,10 +214,11 @@ void Cell::Tick()
 		{
 			this->actionCooldown = 2;
 			this->myOrganism->energy += 20;
-		}
+		}*/
 	}
 	break;
 
+	/*
 	case cell_producer:
 
 		if (this->myOrganism->energy > 15)
@@ -243,6 +250,14 @@ void Cell::Tick()
 				this->myOrganism->ExpendEnergy(15);
 			}
 		}
+		break;
+		*/
+	case cell_leaf:
+		this->myOrganism->energy++;
+		this->actionCooldown = 1;
+		break;
+
+	case cell_flower:
 		break;
 
 	case cell_food:

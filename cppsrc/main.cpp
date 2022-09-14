@@ -12,7 +12,7 @@ void intHandler(int dummy)
 {
 	running = 0;
 }
-Cell* board[BOARD_DIM][BOARD_DIM];
+Cell *board[BOARD_DIM][BOARD_DIM];
 
 int main(int argc, char *argv[])
 {
@@ -26,10 +26,10 @@ int main(int argc, char *argv[])
 	init_pair(cell_producer, COLOR_GREEN, COLOR_BLACK);
 	init_pair(cell_mouth, COLOR_YELLOW, COLOR_BLACK);
 	*/
-	init_pair(cell_empty, COLOR_BLACK, COLOR_BLACK);
-	init_pair(cell_food, COLOR_BLUE, COLOR_BLUE);
-	init_pair(cell_producer, COLOR_GREEN, COLOR_GREEN);
-	init_pair(cell_mouth, COLOR_YELLOW, COLOR_YELLOW);
+	init_pair(cell_empty, COLOR_WHITE, COLOR_BLACK);
+	init_pair(cell_food, COLOR_WHITE, COLOR_BLUE);
+	init_pair(cell_leaf, COLOR_WHITE, COLOR_GREEN);
+	init_pair(cell_mouth, COLOR_WHITE, COLOR_YELLOW);
 	signal(SIGINT, intHandler);
 	// board = new Cell *[BOARD_DIM];
 	for (int y = 0; y < BOARD_DIM; y++)
@@ -43,9 +43,10 @@ int main(int argc, char *argv[])
 	refresh();
 
 	Organism *plant = new Organism(5, 5);
-	plant->energy = 31;
-	plant->AddCell(0, 0, cell_mouth);
-	plant->AddCell(1, 1, cell_producer);
+	plant->reproductionCooldown = 5;
+	plant->energy = 15;
+	plant->AddCell(0, 0, cell_leaf);
+	// plant->AddCell(1, 1, cell_leaf);
 
 	std::vector<Organism *> Organisms;
 	Organisms.push_back(plant);
@@ -55,16 +56,19 @@ int main(int argc, char *argv[])
 		erase();
 		for (size_t i = 0; i < Organisms.size(); i++)
 		{
+			mvprintw(BOARD_DIM + i, 0, "%lu", i);
 			if (!Organisms[i]->alive)
 			{
 				Organisms.erase(Organisms.begin() + i);
+				i--;
 			}
 			else
 			{
+				mvprintw(BOARD_DIM + i, 4, "%d %d: %d energy, %d cells (%d ticks old)",
+						 Organisms[i]->x, Organisms[i]->y, Organisms[i]->energy, Organisms[i]->nCells, Organisms[i]->age);
 				Organism *replicated = Organisms[i]->Tick();
-				mvprintw(BOARD_DIM + i, 0, "%d %d: %d energy, %d cells (%d ticks old)", 
-				Organisms[i]->x, Organisms[i]->y, Organisms[i]->energy, Organisms[i]->nCells, Organisms[i]->age);
-				if(replicated != nullptr)
+
+				if (replicated != nullptr)
 				{
 					Organisms.push_back(replicated);
 				}
@@ -88,21 +92,23 @@ int main(int argc, char *argv[])
 					addch('F');
 					break;
 
-				case cell_producer:
-					addch('P');
+				case cell_leaf:
+					addch('L');
 					break;
 
 				case cell_mouth:
 					addch('M');
 					break;
-				}
-		attron(COLOR_PAIR(10));
 
+				case cell_flower:
+					addch('F');
+					break;
+				}
+				attron(COLOR_PAIR(10));
 			}
 		}
 		refresh();
 		attron(COLOR_PAIR(10));
-
 		getch();
 	}
 

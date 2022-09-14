@@ -7,7 +7,8 @@ enum CellTypes
 {
 	cell_empty,
 	cell_food,
-	cell_producer,
+	cell_leaf,
+	cell_flower,
 	cell_mouth,	
 };
 
@@ -22,6 +23,7 @@ class Organism
 	bool alive;
 	Cell **myCells;
 	int reproductionCooldown;
+	bool justBorn;
 	
 	Organism(int center_x, int center_y);
 
