@@ -5,6 +5,7 @@
 
 int directions[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
 extern Cell *board[BOARD_DIM][BOARD_DIM];
+extern std::vector<Cell *> foodCells;
 extern std::vector<Organism *> Organisms;
 
 int boundCheckPos(int x, int y)
@@ -38,14 +39,16 @@ Organism::Organism(int center_x, int center_y)
 	this->age = 0;
 	this->alive = 1;
 	this->reproductionCooldown = 0;
-	this->justBorn = true;
 }
 
 void Organism::Die()
 {
 	for (int i = 0; i < this->nCells; i++)
 	{
-		board[this->myCells[i]->y][this->myCells[i]->x] = new Cell(this->myCells[i]->x, this->myCells[i]->y, cell_food, nullptr);
+		Cell *droppedFood = new Cell(this->myCells[i]->x, this->myCells[i]->y, cell_food, nullptr);
+		droppedFood->actionCooldown = FOOD_SPOILTIME;
+		board[this->myCells[i]->y][this->myCells[i]->x] = droppedFood;
+		foodCells.push_back(droppedFood);
 		delete this->myCells[i];
 	}
 	this->alive = 0;
@@ -53,17 +56,12 @@ void Organism::Die()
 
 Organism *Organism::Tick()
 {
-	if(this->justBorn)
+	if (/*this->energy == 0 || this->currentHealth == 0 || */ this->lifespan == 0)
 	{
-		this->justBorn = false;
+		this->Die();
 		return nullptr;
 	}
-
-	// if (this->energy == 0 || this->currentHealth == 0)
-	// {
-	// this->Die();
-	// return;
-	// }
+	this->lifespan--;
 
 	for (int i = 0; i < this->nCells; i++)
 	{
@@ -73,7 +71,7 @@ Organism *Organism::Tick()
 
 	if (this->reproductionCooldown == 0)
 	{
-		if (this->energy >= this->nCells * 10)
+		if (this->energy > ((this->nCells + 1) * REPRODUCTION_MULTIPLIER))
 		{
 			return this->Reproduce();
 		}
@@ -106,6 +104,8 @@ Organism *Organism::Reproduce()
 	int index = (rand() >> 5) % 4;
 	int dir_x = directions[index][0] * max_rel_x;
 	int dir_y = directions[index][1] * max_rel_y;
+	dir_x += ((rand() >> 5) % 3 - 1) * ((rand() >> 5) % 2 == 0);
+	dir_y += ((rand() >> 5) % 3 - 1) * ((rand() >> 5) % 2 == 0);
 	// int baby_offset_x = (((rand() >> 5) % 4 == 0) + ((rand() >> 5) % 8 == 0) + ((rand() >> 5) % 16 == 0)) * directions[index][0];
 	// int baby_offset_y = (((rand() >> 5) % 4 == 0) + ((rand() >> 5) % 8 == 0) + ((rand() >> 5) % 16 == 0)) * directions[index][1];
 	int baby_offset_x = 0;
@@ -127,14 +127,68 @@ Organism *Organism::Reproduce()
 			int this_rel_y = thisCell->y - this->y;
 			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, thisCell->type);
 		}
-		this->ExpendEnergy(this->nCells * 5);
-		replicated->energy = 0;
-		this->reproductionCooldown = this->nCells * 5;
-		replicated->reproductionCooldown = replicated->nCells * 10;
+		this->ExpendEnergy(this->nCells * REPRODUCTION_MULTIPLIER);
+		replicated->energy = replicated->nCells * 5;
+		this->reproductionCooldown = this->nCells * 3;
+		replicated->reproductionCooldown = replicated->nCells * 5;
+		replicated->lifespan = replicated->nCells * LIFESPAN_MULTIPLIER;
+
+		// mutate with 50% probability for testing
+		if (rand() % 2 == 0)
+		{
+			replicated->Mutate();
+		}
+
 		return replicated;
 	}
 	return nullptr;
 	// Organism *new = new Organism(this-)
+}
+
+// random generation using this method is super janky: 
+// TODO: improve this
+void Organism::Mutate()
+{
+	// change existing cell
+	if (rand() % 2 == 0 && this->nCells > 1)
+	{
+		int cellIndex = (rand() >> 5) % this->nCells;
+		this->myCells[cellIndex]->type = (enum CellTypes)((rand() >> 5) % (int)cell_mouth);
+	}
+	else
+	{
+		// remove a cell
+		if (rand() % 2 == 0 && this->nCells > 1)
+		{
+		}
+		// add a cell
+		else
+		{
+			/*
+			char couldAdd = 0;
+			int cellIndex = (rand() >> 5) % this->nCells;
+			while(!couldAdd)
+			{
+				int dirIndex = rand() >> 4;
+				for (int i = 0; i < 4; i++)
+				{
+					int x_abs = this->x + directions[dirIndex][0];
+					int y_abs = this->y + directions[dirIndex][1];
+					if (isCellOfType(x_abs, y_abs, cell_empty))
+					{
+						delete board[y_abs][x_abs];
+
+						board[y_abs][x_abs] = new Cell(x_abs, y_abs, cell_empty, nullptr);
+						couldAdd = 1;
+						break;
+					}
+					++dirIndex %= 4;
+				}
+				++cellIndex %= this->nCells;
+			}
+			*/
+		}
+	}
 }
 
 // return 1 if cell is occupied, else 0
@@ -181,8 +235,8 @@ Cell::Cell(int x, int y, enum CellTypes type, Organism *myOrganism)
 
 void Cell::Tick()
 {
-	
-	if(this->actionCooldown > 0)
+
+	if (this->actionCooldown > 0)
 	{
 		this->actionCooldown--;
 		return;
@@ -196,6 +250,8 @@ void Cell::Tick()
 	case cell_mouth:
 	{
 		/*
+		// TODO: check if food is fruit attached to an organism
+		// if so, need to detach it form that organism's cell list
 		char couldEat = 0;
 		for (int i = 0; i < 4; i++)
 		{
@@ -220,6 +276,8 @@ void Cell::Tick()
 
 	/*
 	case cell_producer:
+	*/
+	case cell_flower:
 
 		if (this->myOrganism->energy > 15)
 		{
@@ -232,8 +290,12 @@ void Cell::Tick()
 				int y_abs = this->y + directions[index][1];
 				if (isCellOfType(x_abs, y_abs, cell_empty))
 				{
+					// couldPlace = this->myOrganism->AddCell(x_rel, y_rel, cell_food);
 					delete board[y_abs][x_abs];
-					board[y_abs][x_abs] = new Cell(x_abs, y_abs, cell_food, nullptr);
+					Cell *droppedFood = new Cell(x_abs, y_abs, cell_food, this->myOrganism);
+					droppedFood->actionCooldown = FRUIT_SPOILTIME;
+					board[y_abs][x_abs] = droppedFood;
+					foodCells.push_back(droppedFood);
 					couldPlace = 1;
 					break;
 				}
@@ -246,18 +308,19 @@ void Cell::Tick()
 			}
 			if (couldPlace)
 			{
-				this->actionCooldown = 10;
+				this->actionCooldown = FLOWER_COOLDOWN;
 				this->myOrganism->ExpendEnergy(15);
+			}
+			else
+			{
+				this->actionCooldown = FLOWER_COOLDOWN * 4;
 			}
 		}
 		break;
-		*/
+
 	case cell_leaf:
 		this->myOrganism->energy++;
 		this->actionCooldown = 1;
-		break;
-
-	case cell_flower:
 		break;
 
 	case cell_food:

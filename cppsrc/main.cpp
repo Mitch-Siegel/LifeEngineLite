@@ -13,10 +13,11 @@ void intHandler(int dummy)
 	running = 0;
 }
 Cell *board[BOARD_DIM][BOARD_DIM];
+std::vector<Cell *> foodCells;
 
 int main(int argc, char *argv[])
 {
-	srand(0);
+	srand(0x134134u);
 	initscr();
 	start_color();
 	init_pair(10, COLOR_WHITE, COLOR_BLACK);
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
 	init_pair(cell_food, COLOR_WHITE, COLOR_BLUE);
 	init_pair(cell_leaf, COLOR_WHITE, COLOR_GREEN);
 	init_pair(cell_mouth, COLOR_WHITE, COLOR_YELLOW);
+	init_pair(cell_flower, COLOR_WHITE, COLOR_CYAN);
 	signal(SIGINT, intHandler);
 	// board = new Cell *[BOARD_DIM];
 	for (int y = 0; y < BOARD_DIM; y++)
@@ -44,8 +46,16 @@ int main(int argc, char *argv[])
 
 	Organism *plant = new Organism(5, 5);
 	plant->reproductionCooldown = 5;
-	plant->energy = 15;
+	plant->energy = 100;
+	plant->maxHealth = 1;
+	plant->currentHealth = 1;
+	// plant->AddCell(1, 0, cell_leaf);
+	// plant->AddCell(0, 0, cell_flower);
+	// plant->AddCell(-1, 0, cell_leaf);
+	// plant->AddCell(0, 1, cell_leaf);
 	plant->AddCell(0, 0, cell_leaf);
+
+	plant->lifespan = 2 * LIFESPAN_MULTIPLIER;
 	// plant->AddCell(1, 1, cell_leaf);
 
 	std::vector<Organism *> Organisms;
@@ -71,6 +81,22 @@ int main(int argc, char *argv[])
 				if (replicated != nullptr)
 				{
 					Organisms.push_back(replicated);
+				}
+			}
+		}
+
+		for(size_t i = 0; i < foodCells.size(); i++)
+		{
+			if(--foodCells[i]->actionCooldown <= 0)
+			{
+				int x = foodCells[i]->x;
+				int y = foodCells[i]->y;
+				board[y][x] = new Cell(x, y, cell_empty, nullptr);
+				delete foodCells[i];
+				foodCells.erase(foodCells.begin() + i);
+				if(i > 0)
+				{
+					i--;
 				}
 			}
 		}
@@ -101,7 +127,7 @@ int main(int argc, char *argv[])
 					break;
 
 				case cell_flower:
-					addch('F');
+					addch('*');
 					break;
 				}
 				attron(COLOR_PAIR(10));

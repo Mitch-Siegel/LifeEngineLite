@@ -1,6 +1,15 @@
 #pragma once
 #define BOARD_DIM 20
 
+#define REPRODUCTION_MULTIPLIER 11
+#define LIFESPAN_MULTIPLIER 75
+
+#define FLOWER_COOLDOWN 15
+#define FOOD_SPOILTIME 10
+#define FRUIT_SPOILTIME 20
+
+#define MUTATE_PROBABILITY 0.99
+
 class Cell;
 
 enum CellTypes
@@ -23,7 +32,7 @@ class Organism
 	bool alive;
 	Cell **myCells;
 	int reproductionCooldown;
-	bool justBorn;
+	int lifespan;
 	
 	Organism(int center_x, int center_y);
 
@@ -36,6 +45,8 @@ class Organism
 	void ExpendEnergy(int n);
 
 	Organism* Reproduce();
+
+	void Mutate();
 
 };
 
