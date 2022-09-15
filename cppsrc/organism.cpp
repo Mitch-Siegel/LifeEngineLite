@@ -1,32 +1,11 @@
-#include "organism.h"
+#include "lifeforms.h"
+#include "board.h"
 #include "curses.h"
 #include <stdlib.h>
 #include <vector>
 
-int directions[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
-extern Cell *board[BOARD_DIM][BOARD_DIM];
 extern std::vector<Cell *> foodCells;
 extern std::vector<Organism *> Organisms;
-
-int boundCheckPos(int x, int y)
-{
-	if (0 > x || 0 > y || x >= BOARD_DIM || y >= BOARD_DIM)
-	{
-		return 1;
-	}
-	return 0;
-}
-
-int isCellOfType(int x, int y, enum CellTypes type)
-{
-	if (boundCheckPos(x, y))
-	{
-		return 0;
-	}
-
-	return board[y][x]->type == type;
-}
-
 Organism::Organism(int center_x, int center_y)
 {
 	this->x = center_x;
@@ -217,113 +196,4 @@ int Organism::AddCell(int x_rel, int y_rel, enum CellTypes type)
 	this->myCells = newMyCells;
 
 	return 0;
-}
-
-Cell::Cell()
-{
-	this->actionCooldown = 0;
-}
-
-Cell::Cell(int x, int y, enum CellTypes type, Organism *myOrganism)
-{
-	this->x = x;
-	this->y = y;
-	this->type = type;
-	this->myOrganism = myOrganism;
-	this->actionCooldown = 0;
-}
-
-void Cell::Tick()
-{
-
-	if (this->actionCooldown > 0)
-	{
-		this->actionCooldown--;
-		return;
-	}
-
-	switch (this->type)
-	{
-	case cell_empty:
-		break;
-
-	case cell_mouth:
-	{
-		/*
-		// TODO: check if food is fruit attached to an organism
-		// if so, need to detach it form that organism's cell list
-		char couldEat = 0;
-		for (int i = 0; i < 4; i++)
-		{
-			int x_abs = this->x + directions[i][0];
-			int y_abs = this->y + directions[i][1];
-			if (isCellOfType(x_abs, y_abs, cell_food))
-			{
-				delete board[y_abs][x_abs];
-
-				board[y_abs][x_abs] = new Cell(x_abs, y_abs, cell_empty, nullptr);
-				couldEat = 1;
-				break;
-			}
-		}
-		if (couldEat)
-		{
-			this->actionCooldown = 2;
-			this->myOrganism->energy += 20;
-		}*/
-	}
-	break;
-
-	/*
-	case cell_producer:
-	*/
-	case cell_flower:
-
-		if (this->myOrganism->energy > 15)
-		{
-			char couldPlace = 0;
-			int index = (rand() >> 5) % 4;
-			int dir = ((rand() >> 6) % 2 == 0) ? 1 : -1;
-			for (int i = 0; i < 4; i++)
-			{
-				int x_abs = this->x + directions[index][0];
-				int y_abs = this->y + directions[index][1];
-				if (isCellOfType(x_abs, y_abs, cell_empty))
-				{
-					// couldPlace = this->myOrganism->AddCell(x_rel, y_rel, cell_food);
-					delete board[y_abs][x_abs];
-					Cell *droppedFood = new Cell(x_abs, y_abs, cell_food, this->myOrganism);
-					droppedFood->actionCooldown = FRUIT_SPOILTIME;
-					board[y_abs][x_abs] = droppedFood;
-					foodCells.push_back(droppedFood);
-					couldPlace = 1;
-					break;
-				}
-				index += dir;
-				index %= 4;
-				if (index < 0)
-				{
-					index += 4;
-				}
-			}
-			if (couldPlace)
-			{
-				this->actionCooldown = FLOWER_COOLDOWN;
-				this->myOrganism->ExpendEnergy(15);
-			}
-			else
-			{
-				this->actionCooldown = FLOWER_COOLDOWN * 4;
-			}
-		}
-		break;
-
-	case cell_leaf:
-		this->myOrganism->energy++;
-		this->actionCooldown = 1;
-		break;
-
-	case cell_food:
-		break;
-	}
 }

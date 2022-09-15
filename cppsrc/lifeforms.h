@@ -1,25 +1,10 @@
+#include "config.h"
+
 #pragma once
-#define BOARD_DIM 20
 
-#define REPRODUCTION_MULTIPLIER 11
-#define LIFESPAN_MULTIPLIER 75
-
-#define FLOWER_COOLDOWN 15
-#define FOOD_SPOILTIME 10
-#define FRUIT_SPOILTIME 20
-
-#define MUTATE_PROBABILITY 0.99
+enum CellTypes;
 
 class Cell;
-
-enum CellTypes
-{
-	cell_empty,
-	cell_food,
-	cell_leaf,
-	cell_flower,
-	cell_mouth,	
-};
 
 class Organism
 {
@@ -53,6 +38,16 @@ class Organism
 
 
 
+class Organism;
+
+#define REPRODUCTION_MULTIPLIER 11
+#define LIFESPAN_MULTIPLIER 75
+
+#define FLOWER_COOLDOWN 15
+#define FOOD_SPOILTIME 10
+#define FRUIT_SPOILTIME 20
+
+#define MUTATE_PROBABILITY 0.99
 
 class Cell
 {
@@ -68,4 +63,7 @@ class Cell
 
 	void Tick();
 };
+
+
+
 

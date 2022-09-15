@@ -4,7 +4,8 @@
 #include <signal.h>
 #include <vector>
 
-#include "organism.h"
+#include "lifeforms.h"
+#include "board.h"
 
 static volatile int running = 1;
 
@@ -12,7 +13,7 @@ void intHandler(int dummy)
 {
 	running = 0;
 }
-Cell *board[BOARD_DIM][BOARD_DIM];
+// Cell *board[BOARD_DIM][BOARD_DIM];
 std::vector<Cell *> foodCells;
 
 int main(int argc, char *argv[])
