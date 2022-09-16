@@ -4,15 +4,13 @@
 #include <stdlib.h>
 #include <vector>
 
-extern std::vector<Cell *> foodCells;
-extern std::vector<Organism *> Organisms;
+extern Board board;
 Organism::Organism(int center_x, int center_y)
 {
 	this->x = center_x;
 	this->y = center_y;
-	this->nCells = 0;
-	this->myCells = nullptr;
-	this->maxHealth = nCells;
+	// this->myCells = std::vector<Cell &>();
+	this->maxHealth = 0;
 	this->currentHealth = this->maxHealth;
 	this->energy = 0;
 	this->age = 0;
@@ -20,9 +18,10 @@ Organism::Organism(int center_x, int center_y)
 	this->reproductionCooldown = 0;
 }
 
+
 void Organism::Die()
 {
-	for (int i = 0; i < this->nCells; i++)
+	/*for (int i = 0; i < this->nCells; i++)
 	{
 		Cell *droppedFood = new Cell(this->myCells[i]->x, this->myCells[i]->y, cell_food, nullptr);
 		droppedFood->actionCooldown = FOOD_SPOILTIME;
@@ -30,7 +29,7 @@ void Organism::Die()
 		foodCells.push_back(droppedFood);
 		delete this->myCells[i];
 	}
-	this->alive = 0;
+	this->alive = 0;*/
 }
 
 Organism *Organism::Tick()
@@ -42,15 +41,17 @@ Organism *Organism::Tick()
 	}
 	this->lifespan--;
 
-	for (int i = 0; i < this->nCells; i++)
+	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
+		mvprintw(25 + i, 0, "Ticking cell %lu (type %d)", i, this->myCells[i]->type);
 		this->myCells[i]->Tick();
 	}
+	getch();
 	this->age++;
-
+	/*
 	if (this->reproductionCooldown == 0)
 	{
-		if (this->energy > ((this->nCells + 1) * REPRODUCTION_MULTIPLIER))
+		if (this->energy > ((this->myCells.size() + 1) * REPRODUCTION_MULTIPLIER))
 		{
 			return this->Reproduce();
 		}
@@ -58,7 +59,7 @@ Organism *Organism::Tick()
 	else
 	{
 		this->reproductionCooldown--;
-	}
+	}*/
 	return nullptr;
 }
 
@@ -71,7 +72,7 @@ Organism *Organism::Reproduce()
 {
 	int max_rel_x = 1;
 	int max_rel_y = 1;
-	for (int i = 0; i < this->nCells; i++)
+	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
 		int this_rel_x = this->x - thisCell->x;
@@ -90,27 +91,27 @@ Organism *Organism::Reproduce()
 	int baby_offset_x = 0;
 	int baby_offset_y = 0;
 	char canReproduceHere = 1;
-	for (int i = 0; i < this->nCells; i++)
+	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
-		canReproduceHere &= isCellOfType(thisCell->x + dir_x + baby_offset_x, thisCell->y + dir_y + baby_offset_y, cell_empty);
+		canReproduceHere &= board.isCellOfType(thisCell->x + dir_x + baby_offset_x, thisCell->y + dir_y + baby_offset_y, cell_empty);
 	}
 
 	if (canReproduceHere)
 	{
 		Organism *replicated = new Organism(this->x + dir_x + baby_offset_x, this->y + dir_y + baby_offset_y);
-		for (int i = 0; i < this->nCells; i++)
+		for (size_t i = 0; i < this->myCells.size(); i++)
 		{
 			Cell *thisCell = this->myCells[i];
 			int this_rel_x = thisCell->x - this->x;
 			int this_rel_y = thisCell->y - this->y;
-			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, thisCell->type);
+			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, *thisCell->Clone());
 		}
-		this->ExpendEnergy(this->nCells * REPRODUCTION_MULTIPLIER);
-		replicated->energy = replicated->nCells * 5;
-		this->reproductionCooldown = this->nCells * 3;
-		replicated->reproductionCooldown = replicated->nCells * 5;
-		replicated->lifespan = replicated->nCells * LIFESPAN_MULTIPLIER;
+		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_MULTIPLIER);
+		replicated->energy = replicated->myCells.size() * 5;
+		this->reproductionCooldown = this->myCells.size() * 3;
+		replicated->reproductionCooldown = replicated->myCells.size() * 5;
+		replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
 
 		// mutate with 50% probability for testing
 		if (rand() % 2 == 0)
@@ -129,15 +130,15 @@ Organism *Organism::Reproduce()
 void Organism::Mutate()
 {
 	// change existing cell
-	if (rand() % 2 == 0 && this->nCells > 1)
+	if (rand() % 2 == 0 && this->myCells.size() > 1)
 	{
-		int cellIndex = (rand() >> 5) % this->nCells;
-		this->myCells[cellIndex]->type = (enum CellTypes)((rand() >> 5) % (int)cell_mouth);
+		// int cellIndex = (rand() >> 5) % this->myCells.size();
+		// this->myCells[cellIndex].type = (enum CellTypes)((rand() >> 5) % (int)cell_mouth);
 	}
 	else
 	{
 		// remove a cell
-		if (rand() % 2 == 0 && this->nCells > 1)
+		if (rand() % 2 == 0 && this->myCells.size() > 1)
 		{
 		}
 		// add a cell
@@ -171,29 +172,20 @@ void Organism::Mutate()
 }
 
 // return 1 if cell is occupied, else 0
-int Organism::AddCell(int x_rel, int y_rel, enum CellTypes type)
+int Organism::AddCell(int x_rel, int y_rel, Cell _cell)
 {
 	int x_abs = this->x + x_rel;
 	int y_abs = this->y + y_rel;
-	if (!isCellOfType(x_abs, y_abs, cell_empty))
+	if (!board.isCellOfType(x_abs, y_abs, cell_empty))
 	{
 		return 1;
 	}
 
-	Cell **newMyCells = new Cell *[this->nCells + 1];
-	for (int i = 0; i < this->nCells; i++)
-	{
-		newMyCells[i] = this->myCells[i];
-	}
+	_cell.x = x_abs;
+	_cell.y = y_abs;
+	_cell.myOrganism = this;
 
-	delete board[y_abs][x_abs];
-	board[y_abs][x_abs] = new Cell(x_abs, y_abs, type, this);
-	newMyCells[this->nCells++] = board[y_abs][x_abs];
-	if (this->myCells != nullptr)
-	{
-		delete[] this->myCells;
-	}
-	this->myCells = newMyCells;
+	this->myCells.push_back(board.replaceCellAt(x_abs, y_abs, _cell));
 
 	return 0;
 }

@@ -1,5 +1,7 @@
 #include "config.h"
 
+#include <vector>
+
 #pragma once
 
 enum CellTypes;
@@ -8,35 +10,30 @@ class Cell;
 
 class Organism
 {
-	public:
+public:
 	int x, y;
-	int nCells;
-	int age;
-	int currentHealth, maxHealth;
-	int energy;
+	std::size_t age;
+	std::size_t currentHealth, maxHealth;
+	std::size_t energy;
 	bool alive;
-	Cell **myCells;
+	std::vector<Cell *> myCells;
 	int reproductionCooldown;
 	int lifespan;
-	
+
 	Organism(int center_x, int center_y);
 
 	void Die();
 
-	Organism* Tick();
+	Organism *Tick();
 
-	int AddCell(int x_rel, int y_rel, enum CellTypes type);
+	int AddCell(int x_rel, int y_rel, Cell _cell);
 
 	void ExpendEnergy(int n);
 
-	Organism* Reproduce();
+	Organism *Reproduce();
 
 	void Mutate();
-
 };
-
-
-
 
 class Organism;
 
@@ -49,21 +46,62 @@ class Organism;
 
 #define MUTATE_PROBABILITY 0.99
 
+
 class Cell
 {
-	public:
-	enum CellTypes type;
+public:
 	Organism *myOrganism;
+	enum CellTypes type;
 	int x, y;
-	int actionCooldown;
 
-	Cell();
+	//Cell();
+	// Cell(int _x, int _y, enum CellTypes _type, Organism *_myOrganism);
 
-	Cell(int x, int y, enum CellTypes type, Organism *myOrganism);
+	// Cell(enum CellTypes _type, Organism *_myOrganism);
 
-	void Tick();
+	virtual void Tick();
+
+	virtual Cell *Clone();
 };
 
 
+// template <class Cell>
 
+class Cell_Empty : public virtual Cell
+{
+public:
+	Cell_Empty();
+	// Cell_Empty(/*int _x, int _y*/);
 
+	virtual void Tick();
+
+	Cell_Empty *Clone();
+};
+
+class Cell_Food : public virtual Cell
+{
+	int ticksUntilSpoil;
+
+public:
+	Cell_Food();
+
+	Cell_Food(/*int _x, int _y, */int _ticksUntilSpoil);
+
+	virtual void Tick();
+};
+
+class Cell_Leaf : public virtual Cell
+{
+	int photosynthesisCooldown;
+
+public:
+	Cell_Leaf();
+
+	Cell_Leaf(/*int _x, int _y, */Organism *_myOrganism);
+
+	Cell_Leaf(const Cell_Leaf &c);
+
+	virtual void Tick();
+
+	Cell_Leaf *Clone();
+};

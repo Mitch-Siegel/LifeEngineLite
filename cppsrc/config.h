@@ -7,4 +7,5 @@ enum CellTypes
 	cell_leaf,
 	cell_flower,
 	cell_mouth,	
+	cell_null,
 };
