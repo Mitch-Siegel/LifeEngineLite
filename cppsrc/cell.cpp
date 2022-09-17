@@ -126,11 +126,6 @@ Cell_Empty::Cell_Empty()
 	this->myOrganism = nullptr;
 }
 
-// Cell_Empty::~Cell()
-// {
-
-// }
-
 void Cell_Empty::Tick()
 {
 	
@@ -141,8 +136,8 @@ Cell_Empty *Cell_Empty::Clone()
 	return new Cell_Empty(*this);
 }
 
-// food cell
 
+// food cell
 Cell_Food::~Cell_Food()
 {
 }
@@ -162,10 +157,6 @@ void Cell_Food::Tick()
 {
 	mvprintw(27, 0, "food::tick()");
 	this->ticksUntilSpoil--;
-	if(this->ticksUntilSpoil == 0)
-	{
-		board.replaceCellAt(this->x, this->y, new Cell_Empty());
-	}
 }
 
 Cell_Food *Cell_Food::Clone()

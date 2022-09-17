@@ -86,7 +86,7 @@ Organism *Organism::Reproduce()
 	// int baby_offset_y = (((rand() >> 5) % 4 == 0) + ((rand() >> 5) % 8 == 0) + ((rand() >> 5) % 16 == 0)) * directions[index][1];
 	int baby_offset_x = 0;
 	int baby_offset_y = 0;
-	char canReproduceHere = 1;
+	bool canReproduceHere = true;
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
@@ -101,7 +101,9 @@ Organism *Organism::Reproduce()
 			Cell *thisCell = this->myCells[i];
 			int this_rel_x = thisCell->x - this->x;
 			int this_rel_y = thisCell->y - this->y;
-			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, thisCell->Clone());
+			Cell *replicatedCell =thisCell->Clone();
+			replicatedCell->myOrganism = replicated;
+			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, replicatedCell);
 		}
 		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_MULTIPLIER);
 		replicated->energy = replicated->myCells.size() * 5;
@@ -118,7 +120,6 @@ Organism *Organism::Reproduce()
 		return replicated;
 	}
 	return nullptr;
-	// Organism *new = new Organism(this-)
 }
 
 // random generation using this method is super janky: 

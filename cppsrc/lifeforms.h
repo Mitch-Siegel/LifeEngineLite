@@ -60,15 +60,12 @@ public:
 	virtual void Tick() = 0;
 
 	virtual Cell *Clone() = 0;
-
 };
-
 
 // template <class Cell>
 class Cell_Empty : public Cell
 {
 public:
-
 	~Cell_Empty() override;
 
 	Cell_Empty();
@@ -81,15 +78,15 @@ public:
 
 class Cell_Food : public Cell
 {
+public:
 	int ticksUntilSpoil;
 
 public:
-
 	~Cell_Food() override;
 
 	Cell_Food();
 
-	Cell_Food(/*int _x, int _y, */int _ticksUntilSpoil);
+	Cell_Food(/*int _x, int _y, */ int _ticksUntilSpoil);
 
 	void Tick() override;
 
@@ -101,12 +98,11 @@ class Cell_Leaf : public Cell
 	int photosynthesisCooldown;
 
 public:
-
 	~Cell_Leaf() override;
 
 	Cell_Leaf();
 
-	Cell_Leaf(/*int _x, int _y, */Organism *_myOrganism);
+	Cell_Leaf(/*int _x, int _y, */ Organism *_myOrganism);
 
 	// Cell_Leaf(const Cell_Leaf &c);
 

@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 	refresh();
 	Organism *firstOrganism = board.createOrganism(5, 5);
 	// Cell_Leaf plantLeaf = Cell_Leaf();
-	if(firstOrganism->AddCell(0, 0, new Cell_Leaf()))
+	if (firstOrganism->AddCell(0, 0, new Cell_Leaf()))
 	{
 		std::cerr << "Error adding cell!";
 	}
@@ -58,13 +58,14 @@ int main(int argc, char *argv[])
 	}
 	// plant->AddCell(1, 1, cell_leaf);
 	getch();
-	
+	clear();
+	refresh();
 
 	while (running)
 	{
-		erase();
+		// erase();
 		board.Tick();
-		
+
 		for (int y = 0; y < board.dim_y; y++)
 		{
 			move(y, 0);

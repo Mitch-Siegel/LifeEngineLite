@@ -12,17 +12,14 @@ Board::Board(const int _dim_x, const int _dim_y)
 {
 	this->dim_x = _dim_x;
 	this->dim_y = _dim_y;
-	// this->cells = new Cell *[_dim_y];
 
 	for (int y = 0; y < _dim_y; y++)
 	{
 		this->cells.push_back(std::vector<Cell *>());
-		for(int x = 0; x < _dim_x; x++)
+		for (int x = 0; x < _dim_x; x++)
 		{
 			this->cells[y].push_back(new Cell_Empty());
-
 		}
-		// this->cells[y] = new Cell[_dim_x];
 	}
 	for (int y = 0; y < _dim_y; y++)
 	{
@@ -30,21 +27,24 @@ Board::Board(const int _dim_x, const int _dim_y)
 		{
 			this->cells[y][x]->x = x;
 			this->cells[y][x]->y = y;
-
 		}
 	}
 }
 
 void Board::Tick()
 {
-	for(Cell *c : this->FoodCells)
+	for (size_t i = 0; i < this->FoodCells.size(); i++)
 	{
-		c->Tick();
+		this->FoodCells[i]->Tick();
+		if (((Cell_Food *)this->FoodCells[i])->ticksUntilSpoil == 0)
+		{
+			board.replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Empty());
+			i--;
+		}
 	}
 
 	for (size_t i = 0; i < this->Organisms.size(); i++)
 	{
-		// mvprintw(BOARD_DIM + i, 0, "%lu", i);
 		if (!this->Organisms[i]->alive)
 		{
 			this->Organisms.erase(this->Organisms.begin() + i);
@@ -84,6 +84,8 @@ bool Board::isCellOfType(int x, int y, enum CellTypes type)
 	return this->cells[y][x]->type == type;
 }
 
+// replace the cell at a given position with another cell
+// automatically handles adding and removing from food list 
 Cell *Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 {
 	// if out of bounds, return a cell with null type
@@ -93,15 +95,16 @@ Cell *Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		exit(1);
 		return nullptr;
 	}
-	if(this->cells[_y][_x]->type == cell_food)
+	
+	if (this->cells[_y][_x]->type == cell_food)
 	{
 		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
 	}
 	delete this->cells[_y][_x];
-	// otherwise return the cell we just replaced
+
 	_cell->x = _x;
 	_cell->y = _y;
-	if(_cell->type == cell_food)
+	if (_cell->type == cell_food)
 	{
 		this->FoodCells.push_back(_cell);
 	}
@@ -112,12 +115,6 @@ Cell *Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 Organism *Board::createOrganism(const int _x, const int _y)
 {
 	Organism *newOrganism = new Organism(_x, _y);
-	// Cell *coreCell;
-	// if((coreCell = this->replaceCellAt(_x, _y, Cell(_x, _y, _coreCellType, newOrganism))) == nullptr)
-	// {
-	// std::cerr << "Error creating organism at " << _x << " " << _y << ": Cell was occupied!";
-	// exit(1);
-	// }
 	this->Organisms.push_back(newOrganism);
 	return newOrganism;
 }
