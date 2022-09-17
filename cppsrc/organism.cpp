@@ -21,15 +21,12 @@ Organism::Organism(int center_x, int center_y)
 
 void Organism::Die()
 {
-	/*for (int i = 0; i < this->nCells; i++)
+	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
-		Cell *droppedFood = new Cell(this->myCells[i]->x, this->myCells[i]->y, cell_food, nullptr);
-		droppedFood->actionCooldown = FOOD_SPOILTIME;
-		board[this->myCells[i]->y][this->myCells[i]->x] = droppedFood;
-		foodCells.push_back(droppedFood);
-		delete this->myCells[i];
+		Cell *thisCell = this->myCells[i];
+		board.replaceCellAt(thisCell->x, thisCell->y, new Cell_Food(10));
 	}
-	this->alive = 0;*/
+	this->alive = 0;
 }
 
 Organism *Organism::Tick()
@@ -43,12 +40,11 @@ Organism *Organism::Tick()
 
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
-		mvprintw(25 + i, 0, "Ticking cell %lu (type %d)", i, this->myCells[i]->type);
+		// mvprintw(25 + i, 0, "Ticking cell %lu (type %d)", i, this->myCells[i]->type);
 		this->myCells[i]->Tick();
 	}
-	getch();
 	this->age++;
-	/*
+	
 	if (this->reproductionCooldown == 0)
 	{
 		if (this->energy > ((this->myCells.size() + 1) * REPRODUCTION_MULTIPLIER))
@@ -59,7 +55,7 @@ Organism *Organism::Tick()
 	else
 	{
 		this->reproductionCooldown--;
-	}*/
+	}
 	return nullptr;
 }
 
@@ -102,10 +98,10 @@ Organism *Organism::Reproduce()
 		Organism *replicated = new Organism(this->x + dir_x + baby_offset_x, this->y + dir_y + baby_offset_y);
 		for (size_t i = 0; i < this->myCells.size(); i++)
 		{
-			// Cell *thisCell = this->myCells[i];
-			// int this_rel_x = thisCell->x - this->x;
-			// int this_rel_y = thisCell->y - this->y;
-			// replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, *thisCell->Clone());
+			Cell *thisCell = this->myCells[i];
+			int this_rel_x = thisCell->x - this->x;
+			int this_rel_y = thisCell->y - this->y;
+			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, thisCell->Clone());
 		}
 		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_MULTIPLIER);
 		replicated->energy = replicated->myCells.size() * 5;

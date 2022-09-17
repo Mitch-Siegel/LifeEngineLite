@@ -12,6 +12,7 @@ class Board
 public:
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
+    std::vector<Cell *> FoodCells;
 
     std::vector<Organism *> Organisms;
 
@@ -29,8 +30,3 @@ public:
 
 };
 
-// #ifndef board
-// #include "lifeforms.h"
-// class Cell;
-// extern Cell *board[BOARD_DIM][BOARD_DIM];
-// #endif

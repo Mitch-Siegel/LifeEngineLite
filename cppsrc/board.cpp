@@ -3,6 +3,7 @@
 
 #include <curses.h>
 #include <iostream>
+#include <algorithm>
 
 int directions[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
 extern Board board;
@@ -36,6 +37,11 @@ Board::Board(const int _dim_x, const int _dim_y)
 
 void Board::Tick()
 {
+	for(Cell *c : this->FoodCells)
+	{
+		c->Tick();
+	}
+
 	for (size_t i = 0; i < this->Organisms.size(); i++)
 	{
 		// mvprintw(BOARD_DIM + i, 0, "%lu", i);
@@ -52,8 +58,7 @@ void Board::Tick()
 
 			if (replicated != nullptr)
 			{
-				Organism replicatedObj = *replicated;
-				// Organisms.push_back(replicatedObj);
+				Organisms.push_back(replicated);
 			}
 		}
 	}
@@ -88,10 +93,18 @@ Cell *Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		exit(1);
 		return nullptr;
 	}
-	// delete this->cells[_y][_x];
+	if(this->cells[_y][_x]->type == cell_food)
+	{
+		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
+	}
+	delete this->cells[_y][_x];
 	// otherwise return the cell we just replaced
-	// _cell.x = _x;
-	// _cell.y = _y;
+	_cell->x = _x;
+	_cell->y = _y;
+	if(_cell->type == cell_food)
+	{
+		this->FoodCells.push_back(_cell);
+	}
 	this->cells[_y][_x] = _cell;
 	return this->cells[_y][_x];
 }

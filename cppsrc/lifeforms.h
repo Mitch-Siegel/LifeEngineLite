@@ -55,17 +55,12 @@ public:
 	enum CellTypes type;
 	int x, y;
 
-	// virtual Cell();
-
-	~Cell() {};
-	// Cell();
-	// Cell(int _x, int _y, enum CellTypes _type, Organism *_myOrganism);
-
-	// Cell(enum CellTypes _type, Organism *_myOrganism);
+	virtual ~Cell() = 0;
 
 	virtual void Tick() = 0;
 
-	// virtual Cell *Clone() = 0;
+	virtual Cell *Clone() = 0;
+
 };
 
 
@@ -73,12 +68,15 @@ public:
 class Cell_Empty : public Cell
 {
 public:
+
+	~Cell_Empty() override;
+
 	Cell_Empty();
 	// Cell_Empty(/*int _x, int _y*/);
 
 	void Tick() override;
 
-	// Cell_Empty *Clone() override;
+	Cell_Empty *Clone() override;
 };
 
 class Cell_Food : public Cell
@@ -86,13 +84,16 @@ class Cell_Food : public Cell
 	int ticksUntilSpoil;
 
 public:
+
+	~Cell_Food() override;
+
 	Cell_Food();
 
 	Cell_Food(/*int _x, int _y, */int _ticksUntilSpoil);
 
 	void Tick() override;
 
-	// Cell_Food *Clone() override;
+	Cell_Food *Clone() override;
 };
 
 class Cell_Leaf : public Cell
@@ -100,6 +101,9 @@ class Cell_Leaf : public Cell
 	int photosynthesisCooldown;
 
 public:
+
+	~Cell_Leaf() override;
+
 	Cell_Leaf();
 
 	Cell_Leaf(/*int _x, int _y, */Organism *_myOrganism);
@@ -108,5 +112,5 @@ public:
 
 	void Tick() override;
 
-	// Cell_Leaf *Clone() override;
+	Cell_Leaf *Clone() override;
 };

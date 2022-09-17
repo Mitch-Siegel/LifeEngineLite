@@ -4,37 +4,7 @@
 #include <stdlib.h>
 #include <curses.h>
 
-extern std::vector<Cell *> foodCells;
-
-/*
-Cell::Cell()
-{
-	this->x = -1;
-	this->y = -1;
-	this->myOrganism = nullptr;
-	this->type = cell_null;
-	std::cout << "Default cell constructor" << std::endl;
-}
-*/
-
-/*
-Cell::Cell(int _x, int _y, enum CellTypes _type, Organism *_myOrganism)
-{
-	this->x = _x;
-	this->y = _y;
-	this->type = _type;
-	this->myOrganism = _myOrganism;
-}
-
-Cell::Cell(enum CellTypes _type, Organism *_myOrganism)
-{
-	this->x = -1;
-	this->y = -1;
-	this->type = _type;
-	this->myOrganism = _myOrganism;
-}*/
-
-
+extern Board board;
 /*
 void Cell::Tick()
 {
@@ -140,8 +110,16 @@ Cell *Cell::Clone()
 	return new Cell(*this);
 }*/
 
+Cell::~Cell()
+{
+}
+
 
 // empty cell
+Cell_Empty::~Cell_Empty()
+{
+}
+
 Cell_Empty::Cell_Empty()
 {
 	this->type = cell_empty;
@@ -157,20 +135,25 @@ void Cell_Empty::Tick()
 {
 	
 }
-/*
+
 Cell_Empty *Cell_Empty::Clone()
 {
 	return new Cell_Empty(*this);
-}*/
+}
 
 // food cell
+
+Cell_Food::~Cell_Food()
+{
+}
+
 Cell_Food::Cell_Food()
 {
 	this->type = cell_food;
 	this->myOrganism = nullptr;
 }
 
-Cell_Food::Cell_Food(/*int _x, int _y, */int _ticksUntilSpoil)
+Cell_Food::Cell_Food(int _ticksUntilSpoil) : Cell_Food()
 {
 	this->ticksUntilSpoil = _ticksUntilSpoil;
 }
@@ -178,14 +161,24 @@ Cell_Food::Cell_Food(/*int _x, int _y, */int _ticksUntilSpoil)
 void Cell_Food::Tick()
 {
 	mvprintw(27, 0, "food::tick()");
+	this->ticksUntilSpoil--;
+	if(this->ticksUntilSpoil == 0)
+	{
+		board.replaceCellAt(this->x, this->y, new Cell_Empty());
+	}
 }
-/*
+
 Cell_Food *Cell_Food::Clone()
 {
 	return new Cell_Food(*this);
-}*/
+}
+
 
 // leaf cell
+Cell_Leaf::~Cell_Leaf()
+{
+}
+
 Cell_Leaf::Cell_Leaf()
 {
 	this->type = cell_leaf;
@@ -215,9 +208,10 @@ void Cell_Leaf::Tick()
 	this->photosynthesisCooldown = 1;
 	
 }
-/*
+
+
 Cell_Leaf *Cell_Leaf::Clone()
 {
 	return new Cell_Leaf(*this);
 }
-*/
+
