@@ -26,7 +26,7 @@ public:
 
 	Organism *Tick();
 
-	int AddCell(int x_rel, int y_rel, Cell _cell);
+	int AddCell(int x_rel, int y_rel, Cell *_cell);
 
 	void ExpendEnergy(int n);
 
@@ -46,6 +46,7 @@ class Organism;
 
 #define MUTATE_PROBABILITY 0.99
 
+#include <curses.h>
 
 class Cell
 {
@@ -54,31 +55,33 @@ public:
 	enum CellTypes type;
 	int x, y;
 
-	//Cell();
+	// virtual Cell();
+
+	~Cell() {};
+	// Cell();
 	// Cell(int _x, int _y, enum CellTypes _type, Organism *_myOrganism);
 
 	// Cell(enum CellTypes _type, Organism *_myOrganism);
 
-	virtual void Tick();
+	virtual void Tick() = 0;
 
-	virtual Cell *Clone();
+	// virtual Cell *Clone() = 0;
 };
 
 
 // template <class Cell>
-
-class Cell_Empty : public virtual Cell
+class Cell_Empty : public Cell
 {
 public:
 	Cell_Empty();
 	// Cell_Empty(/*int _x, int _y*/);
 
-	virtual void Tick();
+	void Tick() override;
 
-	Cell_Empty *Clone();
+	// Cell_Empty *Clone() override;
 };
 
-class Cell_Food : public virtual Cell
+class Cell_Food : public Cell
 {
 	int ticksUntilSpoil;
 
@@ -87,10 +90,12 @@ public:
 
 	Cell_Food(/*int _x, int _y, */int _ticksUntilSpoil);
 
-	virtual void Tick();
+	void Tick() override;
+
+	// Cell_Food *Clone() override;
 };
 
-class Cell_Leaf : public virtual Cell
+class Cell_Leaf : public Cell
 {
 	int photosynthesisCooldown;
 
@@ -99,9 +104,9 @@ public:
 
 	Cell_Leaf(/*int _x, int _y, */Organism *_myOrganism);
 
-	Cell_Leaf(const Cell_Leaf &c);
+	// Cell_Leaf(const Cell_Leaf &c);
 
-	virtual void Tick();
+	void Tick() override;
 
-	Cell_Leaf *Clone();
+	// Cell_Leaf *Clone() override;
 };

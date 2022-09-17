@@ -15,10 +15,10 @@ Board::Board(const int _dim_x, const int _dim_y)
 
 	for (int y = 0; y < _dim_y; y++)
 	{
-		this->cells.push_back(std::vector<Cell>());
+		this->cells.push_back(std::vector<Cell *>());
 		for(int x = 0; x < _dim_x; x++)
 		{
-			this->cells[y].push_back(Cell_Empty());
+			this->cells[y].push_back(new Cell_Empty());
 
 		}
 		// this->cells[y] = new Cell[_dim_x];
@@ -27,8 +27,8 @@ Board::Board(const int _dim_x, const int _dim_y)
 	{
 		for (int x = 0; x < _dim_x; x++)
 		{
-			this->cells[y][x].x = x;
-			this->cells[y][x].y = y;
+			this->cells[y][x]->x = x;
+			this->cells[y][x]->y = y;
 
 		}
 	}
@@ -76,10 +76,10 @@ bool Board::isCellOfType(int x, int y, enum CellTypes type)
 		return false;
 	}
 
-	return this->cells[y][x].type == type;
+	return this->cells[y][x]->type == type;
 }
 
-Cell *Board::replaceCellAt(const int _x, const int _y, const Cell &_cell)
+Cell *Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 {
 	// if out of bounds, return a cell with null type
 	if (this->boundCheckPos(_x, _y))
@@ -88,11 +88,12 @@ Cell *Board::replaceCellAt(const int _x, const int _y, const Cell &_cell)
 		exit(1);
 		return nullptr;
 	}
+	// delete this->cells[_y][_x];
 	// otherwise return the cell we just replaced
 	// _cell.x = _x;
 	// _cell.y = _y;
 	this->cells[_y][_x] = _cell;
-	return &this->cells[_y][_x];
+	return this->cells[_y][_x];
 }
 
 Organism *Board::createOrganism(const int _x, const int _y)

@@ -46,7 +46,8 @@ int main(int argc, char *argv[])
 	printw("Hello, World!");
 	refresh();
 	Organism *firstOrganism = board.createOrganism(5, 5);
-	if(firstOrganism->AddCell(0, 0, Cell_Leaf()))
+	// Cell_Leaf plantLeaf = Cell_Leaf();
+	if(firstOrganism->AddCell(0, 0, new Cell_Leaf()))
 	{
 		std::cerr << "Error adding cell!";
 	}
@@ -57,6 +58,7 @@ int main(int argc, char *argv[])
 	}
 	// plant->AddCell(1, 1, cell_leaf);
 	getch();
+	
 
 	while (running)
 	{
@@ -68,9 +70,9 @@ int main(int argc, char *argv[])
 			move(y, 0);
 			for (int x = 0; x < board.dim_x; x++)
 			{
-				Cell &thisCell = board.cells[y][x];
-				attron(COLOR_PAIR((int)thisCell.type));
-				switch (thisCell.type)
+				Cell *thisCell = board.cells[y][x];
+				attron(COLOR_PAIR((int)thisCell->type));
+				switch (thisCell->type)
 				{
 				case cell_empty:
 					addch(' ');

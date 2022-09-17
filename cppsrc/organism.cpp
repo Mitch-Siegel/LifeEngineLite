@@ -102,10 +102,10 @@ Organism *Organism::Reproduce()
 		Organism *replicated = new Organism(this->x + dir_x + baby_offset_x, this->y + dir_y + baby_offset_y);
 		for (size_t i = 0; i < this->myCells.size(); i++)
 		{
-			Cell *thisCell = this->myCells[i];
-			int this_rel_x = thisCell->x - this->x;
-			int this_rel_y = thisCell->y - this->y;
-			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, *thisCell->Clone());
+			// Cell *thisCell = this->myCells[i];
+			// int this_rel_x = thisCell->x - this->x;
+			// int this_rel_y = thisCell->y - this->y;
+			// replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, *thisCell->Clone());
 		}
 		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_MULTIPLIER);
 		replicated->energy = replicated->myCells.size() * 5;
@@ -172,7 +172,7 @@ void Organism::Mutate()
 }
 
 // return 1 if cell is occupied, else 0
-int Organism::AddCell(int x_rel, int y_rel, Cell _cell)
+int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 {
 	int x_abs = this->x + x_rel;
 	int y_abs = this->y + y_rel;
@@ -181,9 +181,9 @@ int Organism::AddCell(int x_rel, int y_rel, Cell _cell)
 		return 1;
 	}
 
-	_cell.x = x_abs;
-	_cell.y = y_abs;
-	_cell.myOrganism = this;
+	_cell->x = x_abs;
+	_cell->y = y_abs;
+	_cell->myOrganism = this;
 
 	this->myCells.push_back(board.replaceCellAt(x_abs, y_abs, _cell));
 

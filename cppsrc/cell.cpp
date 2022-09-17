@@ -134,74 +134,78 @@ case cell_food:
 }
 }*/
 
-void Cell::Tick()
-{
-	mvprintw(28, 28, "cell::Tick()");
-}
 /*
 Cell *Cell::Clone()
 {
 	return new Cell(*this);
 }*/
 
-Cell *Cell::Clone()
-{
-	return new Cell(*this);
-}
 
 // empty cell
-Cell_Empty::Cell_Empty()// : Cell(cell_empty, nullptr)
+Cell_Empty::Cell_Empty()
 {
 	this->type = cell_empty;
 	this->myOrganism = nullptr;
 }
 
+// Cell_Empty::~Cell()
+// {
+
+// }
+
 void Cell_Empty::Tick()
 {
+	
 }
-
+/*
 Cell_Empty *Cell_Empty::Clone()
 {
 	return new Cell_Empty(*this);
-}
+}*/
 
 // food cell
-Cell_Food::Cell_Food()// : Cell(cell_food, nullptr)
+Cell_Food::Cell_Food()
 {
 	this->type = cell_food;
 	this->myOrganism = nullptr;
 }
 
-Cell_Food::Cell_Food(/*int _x, int _y, */int _ticksUntilSpoil)// : Cell(/*_x, _y, */cell_food, nullptr)
+Cell_Food::Cell_Food(/*int _x, int _y, */int _ticksUntilSpoil)
 {
 	this->ticksUntilSpoil = _ticksUntilSpoil;
 }
 
 void Cell_Food::Tick()
 {
-
+	mvprintw(27, 0, "food::tick()");
 }
+/*
+Cell_Food *Cell_Food::Clone()
+{
+	return new Cell_Food(*this);
+}*/
 
 // leaf cell
-Cell_Leaf::Cell_Leaf()// : Cell(cell_leaf, nullptr)
+Cell_Leaf::Cell_Leaf()
 {
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
 }
 
-Cell_Leaf::Cell_Leaf(/*int _x, int _y, */Organism *_myOrganism)// : Cell(cell_leaf, nullptr)
+Cell_Leaf::Cell_Leaf(/*int _x, int _y, */Organism *_myOrganism)
 {
 	this->type = cell_leaf;
 	this->myOrganism = _myOrganism;
 }
 
-Cell_Leaf::Cell_Leaf(const Cell_Leaf &c) : Cell(c)
-{
-}
+// Cell_Leaf::Cell_Leaf(const Cell_Leaf &c) : Cell(c)
+// {
+// }
 
 void Cell_Leaf::Tick()
 {
 	mvprintw(27, 0, "leafcell::tick()");
+	
 	if (this->photosynthesisCooldown > 0)
 	{
 		this->photosynthesisCooldown--;
@@ -209,10 +213,11 @@ void Cell_Leaf::Tick()
 	}
 	this->myOrganism->energy++;
 	this->photosynthesisCooldown = 1;
+	
 }
-
+/*
 Cell_Leaf *Cell_Leaf::Clone()
 {
 	return new Cell_Leaf(*this);
 }
-
+*/

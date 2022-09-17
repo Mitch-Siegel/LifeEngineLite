@@ -17,3 +17,7 @@ cell.o: cell.cpp
 
 organism.o: organism.cpp
 	$(CC) -c $(CFLAGS) organism.cpp
+
+clean:
+	rm *.o
+	rm ./lel

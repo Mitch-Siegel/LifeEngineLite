@@ -11,7 +11,7 @@ class Board
 {
 public:
     int dim_x, dim_y;
-    std::vector<std::vector<Cell>> cells;
+    std::vector<std::vector<Cell *>> cells;
 
     std::vector<Organism *> Organisms;
 
@@ -23,7 +23,7 @@ public:
 
     bool isCellOfType(const int _x, const int _y, enum CellTypes type);
 
-    Cell *replaceCellAt(const int _x, const int _y, const Cell &_cell);
+    Cell *replaceCellAt(const int _x, const int _y, Cell *_cell);
 
     Organism *createOrganism(const int _x, const int _y);
 
