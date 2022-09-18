@@ -28,7 +28,7 @@ void Organism::Die()
 		Cell *thisCell = this->myCells[i];
 		board.replaceCellAt(thisCell->x, thisCell->y, new Cell_Food(10));
 	}
-	this->alive = 0;
+	this->alive = false;
 }
 
 Organism *Organism::Tick()

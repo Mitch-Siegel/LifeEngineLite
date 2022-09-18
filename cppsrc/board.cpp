@@ -31,6 +31,17 @@ Board::Board(const int _dim_x, const int _dim_y)
 	}
 }
 
+Board::~Board()
+{
+	for (int y = 0; y < this->dim_y; y++)
+	{
+		for (int x = 0; x < this->dim_x; x++)
+		{
+			delete this->cells[y][x];
+		}
+	}
+}
+
 void Board::Tick()
 {
 	for (size_t i = 0; i < this->FoodCells.size(); i++)
@@ -47,7 +58,9 @@ void Board::Tick()
 	{
 		if (!this->Organisms[i]->alive)
 		{
+			Organism *toRemove = this->Organisms[i];
 			this->Organisms.erase(this->Organisms.begin() + i);
+			delete toRemove;
 			i--;
 		}
 		else

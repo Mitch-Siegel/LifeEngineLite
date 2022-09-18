@@ -18,6 +18,8 @@ public:
 
     Board(const int _dim_x, const int _dim_y);
 
+    ~Board();
+
     void Tick();
 
     bool boundCheckPos(const int _x, const int _y);

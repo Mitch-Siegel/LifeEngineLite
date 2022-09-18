@@ -46,7 +46,6 @@ int main(int argc, char *argv[])
 		firstOrganism->lifespan = 100;
 		std::cout << "added leaf cell " << std::endl;
 	}
-	// plant->AddCell(1, 1, cell_leaf);
 	getch();
 	clear();
 	refresh();
