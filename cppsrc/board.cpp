@@ -86,14 +86,13 @@ bool Board::isCellOfType(int x, int y, enum CellTypes type)
 
 // replace the cell at a given position with another cell
 // automatically handles adding and removing from food list 
-Cell *Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
+void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 {
-	// if out of bounds, return a cell with null type
+	// if out of bounds, bail
 	if (this->boundCheckPos(_x, _y))
 	{
 		std::cerr << "Replacing cell at out-of-bounds position!";
 		exit(1);
-		return nullptr;
 	}
 	
 	if (this->cells[_y][_x]->type == cell_food)
@@ -109,7 +108,30 @@ Cell *Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		this->FoodCells.push_back(_cell);
 	}
 	this->cells[_y][_x] = _cell;
-	return this->cells[_y][_x];
+}
+
+void Board::replaceCell(Cell *_replaced, Cell *_newCell)
+{
+	this->replaceCellAt(_replaced->x, _replaced->y, _newCell);
+}
+
+void Board::swapCellAtIndex(int _x, int _y, Cell *a)
+{
+	// if out of bounds, bail
+	if (this->boundCheckPos(_x, _y))
+	{
+		std::cerr << "Swapping cell at out-of-bounds position!";
+		exit(1);
+	}
+	Cell *b = this->cells[_y][_x];
+	int a_oldx = a->x;
+	int a_oldy = a->y;
+	b->x = a->x;
+	b->y = a->y;
+	this->cells[_y][_x] = a;
+	this->cells[a_oldy][a_oldx] = b;
+	a->x = _x;
+	a->y = _y;
 }
 
 Organism *Board::createOrganism(const int _x, const int _y)

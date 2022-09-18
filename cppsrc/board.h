@@ -24,7 +24,11 @@ public:
 
     bool isCellOfType(const int _x, const int _y, enum CellTypes type);
 
-    Cell *replaceCellAt(const int _x, const int _y, Cell *_cell);
+    void replaceCellAt(const int _x, const int _y, Cell *_cell);
+
+    void replaceCell(Cell *_replaced, Cell *_newCell);
+
+    void swapCellAtIndex(int _x, int _y, Cell *_toSwap);
 
     Organism *createOrganism(const int _x, const int _y);
 

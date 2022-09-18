@@ -1,10 +1,11 @@
 #include "config.h"
+#include "brain.h"
 
 #include <vector>
 
 #pragma once
 
-enum CellTypes;
+// enum CellTypes;
 
 class Cell;
 
@@ -16,9 +17,11 @@ public:
 	std::size_t currentHealth, maxHealth;
 	std::size_t energy;
 	bool alive;
+	bool canMove;
 	std::vector<Cell *> myCells;
 	int reproductionCooldown;
 	int lifespan;
+	Brain brain;
 
 	Organism(int center_x, int center_y);
 
@@ -26,9 +29,13 @@ public:
 
 	Organism *Tick();
 
+	void Move();
+
 	int AddCell(int x_rel, int y_rel, Cell *_cell);
 
 	void ExpendEnergy(int n);
+
+	bool CanOccupyPosition(int _x_abs, int _y_abs);
 
 	Organism *Reproduce();
 
@@ -109,4 +116,36 @@ public:
 	void Tick() override;
 
 	Cell_Leaf *Clone() override;
+};
+
+class Cell_Flower : public Cell
+{
+	int bloomCooldown;
+
+public:
+	~Cell_Flower() override;
+
+	Cell_Flower();
+
+	Cell_Flower(/*int _x, int _y, */ Organism *_myOrganism);
+
+	void Tick() override;
+
+	Cell_Flower *Clone() override;
+};
+
+class Cell_Mover : public Cell
+{
+	// int bloomCooldown;
+
+public:
+	~Cell_Mover() override;
+
+	Cell_Mover();
+
+	Cell_Mover(/*int _x, int _y, */ Organism *_myOrganism);
+
+	void Tick() override;
+
+	Cell_Mover *Clone() override;
 };

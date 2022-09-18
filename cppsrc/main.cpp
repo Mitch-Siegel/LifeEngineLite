@@ -17,33 +17,23 @@ void intHandler(int dummy)
 
 Board board = Board(32, 32);
 
+
 int main(int argc, char *argv[])
 {
-	srand(0x134134u);
+	// srand(0x134134u);
 	initscr();
 	start_color();
 	init_pair(10, COLOR_WHITE, COLOR_BLACK);
-	/*
-	init_pair(cell_empty, COLOR_WHITE, COLOR_BLACK);
-	init_pair(cell_food, COLOR_BLUE, COLOR_BLACK);
-	init_pair(cell_producer, COLOR_GREEN, COLOR_BLACK);
-	init_pair(cell_mouth, COLOR_YELLOW, COLOR_BLACK);
-	*/
+
 	init_pair(cell_empty, COLOR_WHITE, COLOR_BLACK);
 	init_pair(cell_food, COLOR_WHITE, COLOR_BLUE);
 	init_pair(cell_leaf, COLOR_WHITE, COLOR_GREEN);
 	init_pair(cell_mouth, COLOR_WHITE, COLOR_YELLOW);
 	init_pair(cell_flower, COLOR_WHITE, COLOR_CYAN);
+	init_pair(cell_mover, COLOR_WHITE, COLOR_BLUE);
+	
 	signal(SIGINT, intHandler);
-	// board = new Cell *[BOARD_DIM];
-	/*for (int y = 0; y < BOARD_DIM; y++)
-	{
-		for (int x = 0; x < BOARD_DIM; x++)
-		{
-			board[y][x] = new Cell(x, y, cell_empty, NULL);
-		}
-	}*/
-	printw("Hello, World!");
+
 	refresh();
 	Organism *firstOrganism = board.createOrganism(5, 5);
 	// Cell_Leaf plantLeaf = Cell_Leaf();
@@ -87,6 +77,7 @@ int main(int argc, char *argv[])
 					addch('L');
 					break;
 
+				case cell_mover:
 				case cell_mouth:
 					addch('M');
 					break;
@@ -98,6 +89,7 @@ int main(int argc, char *argv[])
 				case cell_null:
 					addch('_');
 					break;
+
 				}
 				attron(COLOR_PAIR(10));
 			}

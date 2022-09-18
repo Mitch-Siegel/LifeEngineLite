@@ -2,7 +2,6 @@
 #include "board.h"
 #include <vector>
 #include <stdlib.h>
-#include <curses.h>
 
 extern Board board;
 /*
@@ -155,7 +154,6 @@ Cell_Food::Cell_Food(int _ticksUntilSpoil) : Cell_Food()
 
 void Cell_Food::Tick()
 {
-	mvprintw(27, 0, "food::tick()");
 	this->ticksUntilSpoil--;
 }
 
@@ -176,15 +174,11 @@ Cell_Leaf::Cell_Leaf()
 	this->myOrganism = nullptr;
 }
 
-Cell_Leaf::Cell_Leaf(/*int _x, int _y, */Organism *_myOrganism)
+Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 {
 	this->type = cell_leaf;
 	this->myOrganism = _myOrganism;
 }
-
-// Cell_Leaf::Cell_Leaf(const Cell_Leaf &c) : Cell(c)
-// {
-// }
 
 void Cell_Leaf::Tick()
 {
@@ -200,9 +194,66 @@ void Cell_Leaf::Tick()
 	
 }
 
-
 Cell_Leaf *Cell_Leaf::Clone()
 {
 	return new Cell_Leaf(*this);
 }
 
+// flower cell
+Cell_Flower::~Cell_Flower()
+{
+}
+
+Cell_Flower::Cell_Flower()
+{
+	this->type = cell_flower;
+	this->myOrganism = nullptr;
+}
+
+Cell_Flower::Cell_Flower(Organism *_myOrganism)
+{
+	this->type = cell_flower;
+	this->myOrganism = _myOrganism;
+}
+
+void Cell_Flower::Tick()
+{
+	if (this->bloomCooldown > 0)
+	{
+		this->bloomCooldown--;
+		return;
+	}
+}
+
+Cell_Flower *Cell_Flower::Clone()
+{
+	return new Cell_Flower(*this);
+}
+
+
+// mover cell
+Cell_Mover::~Cell_Mover()
+{
+}
+
+Cell_Mover::Cell_Mover()
+{
+	this->type = cell_mover;
+	this->myOrganism = nullptr;
+}
+
+Cell_Mover::Cell_Mover(/*int _x, int _y, */Organism *_myOrganism)
+{
+	this->type = cell_mover;
+	this->myOrganism = _myOrganism;
+}
+
+void Cell_Mover::Tick()
+{
+	
+}
+
+Cell_Mover *Cell_Mover::Clone()
+{
+	return new Cell_Mover(*this);
+}
