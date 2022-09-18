@@ -5,6 +5,44 @@
 #include "rng.h"
 
 extern Board board;
+
+Cell *GenerateRandomCell()
+{
+	/*
+	switch (randInt(0, 1))
+	{
+	case 0:
+		return new Cell_Leaf();
+
+		break;
+
+	case 1:
+		return new Cell_Leaf();
+
+		break;
+	}*/
+
+	switch (randInt(0, 3))
+	{
+	case 0:
+		return new Cell_Leaf();
+		break;
+
+	case 1:
+		return new Cell_Flower();
+		break;
+
+	case 2:
+		return new Cell_Mover();
+		break;
+
+	case 3:
+		return new Cell_Herbivore();
+		break;
+	}
+
+	return nullptr;
+}
 /*
 void Cell::Tick()
 {
@@ -186,9 +224,31 @@ void Cell_Leaf::Tick()
 		this->photosynthesisCooldown--;
 		return;
 	}
-	this->myOrganism->AddEnergy(1);
-	this->myOrganism->lifespan++;
-	this->photosynthesisCooldown = 1;
+	if (!(this->myOrganism->hasFlower) && this->myOrganism->GetEnergy() > FLOWER_COST && randPercent(FLOWER_PERCENT))
+	{
+		int checkDirIndex = randInt(0, 3);
+		for (int i = 0; i < 4; i++)
+		{
+			int *thisDirection = directions[(checkDirIndex + i) % 4];
+			int x_abs = this->x + thisDirection[0];
+			int y_abs = this->y + thisDirection[1];
+			if (board.isCellOfType(x_abs, y_abs, cell_empty))
+			{
+				int x_rel = x_abs - this->myOrganism->x;
+				int y_rel = y_abs - this->myOrganism->y;
+				this->myOrganism->ExpendEnergy(FLOWER_COST);
+				this->myOrganism->AddCell(x_rel, y_rel, new Cell_Flower());
+				this->myOrganism->CalculateMaxEnergy();
+				return;
+			}
+		}
+	}
+	else
+	{
+		this->myOrganism->AddEnergy(1);
+		// this->myOrganism->lifespan++;
+		this->photosynthesisCooldown = 0;
+	}
 }
 
 Cell_Leaf *Cell_Leaf::Clone()
@@ -219,12 +279,13 @@ void Cell_Flower::Tick()
 {
 	if (this->bloomCooldown > 0)
 	{
+		this->myOrganism->lifespan += 2;
 		this->bloomCooldown--;
 		return;
 	}
 	else
 	{
-		int checkDirIndex = randInt(0, 3);
+		/*int checkDirIndex = randInt(0, 3);
 		for (int i = 0; i < 4; i++)
 		{
 			int *thisDirection = directions[(checkDirIndex + i) % 4];
@@ -236,7 +297,31 @@ void Cell_Flower::Tick()
 				int y_rel = y_abs - this->myOrganism->y;
 				this->myOrganism->AddCell(x_rel, y_rel, new Cell_Leaf());
 			}
+		}*/
+		this->myOrganism->hasFlower = false;
+		/*
+		if (randPercent(FLOWER_MUTATION_PERCENT))
+		{
+			Organism *hatched = board.createOrganism(this->x, this->y);
+			hatched->AddCell(0, 0, GenerateRandomCell());
+			int checkedDirection = randInt(0, 7);
+			for(int i = 0; i < 7; i++)
+			{
+				int *thisDirection = directions[(checkedDirection + i) & 7];
+				if(board.isCellOfType(this->x + thisDirection[0], this->y + thisDirection[1], cell_empty))
+				{
+					hatched->AddCell(thisDirection[0], thisDirection[1], GenerateRandomCell());
+					break;
+				}
+			}
+			this->myOrganism->RemoveCell(this);
+
+
 		}
+		else
+		{*/
+		this->myOrganism->ReplaceCell(this, new Cell_Leaf());
+		// }
 	}
 }
 
@@ -306,7 +391,7 @@ void Cell_Herbivore::Tick()
 				std::vector<Cell *>::iterator foundLeaf = std::find(leafParent->myCells.begin(), leafParent->myCells.end(), eatenLeaf);
 				leafParent->myCells.erase(foundLeaf);
 				board.replaceCell(eatenLeaf, new Cell_Empty());
-				this->myOrganism->AddEnergy(10);
+				this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 #include "curses.h"
 #include <stdlib.h>
 #include <vector>
+#include <cmath>
 
 #include "lifeforms.h"
 #include "board.h"
@@ -20,6 +21,7 @@ Organism::Organism(int center_x, int center_y)
 	this->alive = 1;
 	this->reproductionCooldown = 0;
 	this->canMove = false;
+	this->hasFlower = false;
 }
 
 void Organism::Die()
@@ -35,13 +37,13 @@ void Organism::Die()
 
 void Organism::Remove()
 {
-	/*
+	
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
 		board.replaceCellAt(thisCell->x, thisCell->y, new Cell_Empty());
 	}
-	this->alive = false;*/
+	this->alive = false;
 }
 
 Organism *Organism::Tick()
@@ -50,13 +52,17 @@ Organism *Organism::Tick()
 	{
 		return nullptr;
 	}*/
-
+	// if (this->myCells.size() > 1)
+	// {
+		this->ExpendEnergy(1);
+	// }
 	if (this->currentEnergy == 0 /*|| this->currentHealth == 0*/ || this->lifespan == 0 || this->myCells.size() == 0)
 	{
 		this->Die();
 		return nullptr;
 	}
 	this->lifespan--;
+	
 
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
@@ -70,45 +76,40 @@ Organism *Organism::Tick()
 		this->Move();
 	}
 
-	if (this->reproductionCooldown == 0)
+	// don't allow organisms of size 1 to reproduce
+	if (this->reproductionCooldown == 0/* && (this->myCells.size() > 1 || board.Organisms.size() < 3)*/)
 	{
-		if (this->currentEnergy > ((this->myCells.size() + 1) * REPRODUCTION_MULTIPLIER))
+		if (this->currentEnergy > ((this->myCells.size() + 1) * REPRODUCTION_ENERGY_MULTIPLIER))
 		{
 			return this->Reproduce();
 		}
 	}
 	else
 	{
-		this->reproductionCooldown--;
+		if (this->reproductionCooldown > 0)
+		{
+			this->reproductionCooldown--;
+		}
 	}
 	return nullptr;
 }
 
 // disallow specific types of organisms from existing
 // return true if invalid
-/*
+
 bool Organism::CheckValidity()
 {
-	if (this->myCells.size() == 1)
+	bool allMouths = true;
+	for(size_t i = 0; i < this->myCells.size(); i++)
 	{
-		switch (this->myCells[0]->type)
-		{
-		// disallow organisms consisting only of a mouth
-		case cell_herbivore_mouth:
-			this->Remove();
-			return true;
-			break;
+		allMouths &= (this->myCells[0]->type == cell_herbivore_mouth);
 
-		default:
-			break;
-		}
 	}
-	return false;
-}*/
+	return allMouths;
+}
 
 void Organism::Move()
 {
-
 	int *moveDir = directions[this->brain.moveDirIndex];
 	if (this->CanOccupyPosition(this->x + moveDir[0], this->y + moveDir[1]))
 	{
@@ -124,7 +125,7 @@ void Organism::Move()
 
 void Organism::ExpendEnergy(size_t n)
 {
-	if(n > this->currentEnergy)
+	if (n > this->currentEnergy)
 	{
 		this->currentEnergy = 0;
 		return;
@@ -136,15 +137,25 @@ void Organism::ExpendEnergy(size_t n)
 void Organism::AddEnergy(size_t n)
 {
 	this->currentEnergy += n;
-	if(this->currentEnergy > this->maxEnergy)
+	if (this->currentEnergy > this->maxEnergy)
 	{
 		this->currentEnergy = this->maxEnergy;
 	}
 }
 
+void Organism::CalculateMaxEnergy()
+{
+	this->maxEnergy = this->myCells.size() * MAX_ENERGY_MULTIPLIER;
+}
+
 std::size_t Organism::GetEnergy()
 {
 	return this->currentEnergy;
+}
+
+std::size_t Organism::GetMaxEnergy()
+{
+	return this->maxEnergy;
 }
 
 bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
@@ -165,6 +176,9 @@ bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 
 Organism *Organism::Reproduce()
 {
+	this->ExpendEnergy(this->myCells.size() * REPRODUCTION_ENERGY_MULTIPLIER);
+	this->reproductionCooldown = this->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER;
+
 	int max_rel_x = 1;
 	int max_rel_y = 1;
 	for (size_t i = 0; i < this->myCells.size(); i++)
@@ -177,8 +191,8 @@ Organism *Organism::Reproduce()
 	}
 
 	int index = randInt(0, 3);
-	int dir_x = directions[index][0] * max_rel_x;
-	int dir_y = directions[index][1] * max_rel_y;
+	int dir_x = directions[index][0] * max_rel_x * 2;
+	int dir_y = directions[index][1] * max_rel_y * 2;
 	dir_x += (randInt(-1, 1)) * (randPercent(50));
 	dir_y += (randInt(-1, 1)) * (randPercent(50));
 	int baby_offset_x = 0;
@@ -202,11 +216,16 @@ Organism *Organism::Reproduce()
 			replicated->Mutate();
 		}
 
-		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_MULTIPLIER);
+		if (replicated->CheckValidity())
+		{
+			replicated->Remove();
+			delete replicated;
+			return nullptr;
+		}
+
 		replicated->currentEnergy = replicated->myCells.size() * 5;
 		replicated->maxEnergy = replicated->myCells.size() * MAX_ENERGY_MULTIPLIER;
-		this->reproductionCooldown = this->myCells.size() * 3;
-		replicated->reproductionCooldown = replicated->myCells.size() * 5;
+		replicated->reproductionCooldown = replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER;
 		replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
 
 		return replicated;
@@ -214,28 +233,6 @@ Organism *Organism::Reproduce()
 	return nullptr;
 }
 
-Cell *GenerateRandomCell()
-{
-	switch (randInt(0, 3))
-	{
-	case 0:
-		return new Cell_Leaf();
-		break;
-
-	case 1:
-		return new Cell_Flower();
-		break;
-
-	case 2:
-		return new Cell_Mover();
-		break;
-
-	case 3:
-		return new Cell_Herbivore();
-		break;
-	}
-	return nullptr;
-}
 
 // random generation using this method is super janky:
 // TODO: improve this
@@ -245,10 +242,10 @@ void Organism::Mutate()
 	if (randPercent(30) && this->myCells.size() > 1)
 	{
 		int switchedIndex = randInt(0, this->myCells.size() - 1);
-		
+
 		Cell *toReplace = this->myCells[switchedIndex];
 		this->myCells.erase(std::find(this->myCells.begin(), this->myCells.end(), toReplace));
-		
+
 		Cell *replacedWith = GenerateRandomCell();
 		replacedWith->myOrganism = this;
 
@@ -260,7 +257,7 @@ void Organism::Mutate()
 	else
 	{
 		// remove a cell
-		if (randPercent(50) && this->myCells.size() > 1)
+		if (randPercent(50) && this->myCells.size() > 2)
 		{
 			Cell *toRemove = this->myCells[randInt(0, this->myCells.size() - 1)];
 			this->myCells.erase(std::find(this->myCells.begin(), this->myCells.end(), toRemove));
@@ -333,4 +330,26 @@ int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	this->canMove |= (_cell->type == cell_mover);
 
 	return 0;
+}
+
+void Organism::RemoveCell(Cell *_myCell)
+{
+	std::vector<Cell *>::iterator cellIterator = std::find(this->myCells.begin(), this->myCells.end(), _myCell);
+	if (cellIterator == this->myCells.end())
+	{
+		std::cerr << "Bad call to remove cell with _myCell not from this organism!" << std::endl;
+		exit(1);
+	}
+	this->myCells.erase(cellIterator);
+}
+
+void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
+{
+	this->RemoveCell(_myCell);
+	_newCell->myOrganism = this;
+	this->myCells.push_back(_newCell);
+	// int x_rel = _myCell->x - this->x;
+	// int y_rel = _myCell->y - this->y;
+	board.replaceCell(_myCell, _newCell);
+	// this->AddCell(x_rel, y_rel, _newCell);
 }

@@ -14,6 +14,11 @@ public:
     
     enum Intent currentIntent;
     int moveDirIndex;
+    int conviction;
 
     void Decide();
+
+    void Reward();
+
+    void Punish();
 };

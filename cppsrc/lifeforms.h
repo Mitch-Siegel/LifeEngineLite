@@ -5,8 +5,6 @@
 
 #pragma once
 
-// enum CellTypes;
-
 class Cell;
 
 class Organism
@@ -14,6 +12,7 @@ class Organism
 private:
 	std::size_t currentHealth, maxHealth;
 	std::size_t currentEnergy, maxEnergy;
+
 
 public:
 	int x, y;
@@ -25,6 +24,8 @@ public:
 	int reproductionCooldown;
 	int lifespan;
 	Brain brain;
+	bool hasFlower;
+
 
 	Organism(int center_x, int center_y);
 
@@ -34,17 +35,25 @@ public:
 
 	Organism *Tick();
 
+	bool CheckValidity();
+
 	void Move();
 
 	int AddCell(int x_rel, int y_rel, Cell *_cell);
 
+	void RemoveCell(Cell *_myCell);
+
 	void ReplaceCell(Cell *_myCell, Cell *_newCell);
-	
+
 	std::size_t GetEnergy();
+	
+	std::size_t GetMaxEnergy();
 
 	void ExpendEnergy(std::size_t n);
 
 	void AddEnergy(std::size_t n);
+
+	void CalculateMaxEnergy();
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
 
@@ -55,15 +64,16 @@ public:
 
 class Organism;
 
-#define REPRODUCTION_MULTIPLIER 7
-#define LIFESPAN_MULTIPLIER 75
+#define REPRODUCTION_ENERGY_MULTIPLIER 1
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 15
+#define LIFESPAN_MULTIPLIER 250
 #define MAX_ENERGY_MULTIPLIER 15
 
-#define FLOWER_COOLDOWN 15
-#define FOOD_SPOILTIME 10
-#define FRUIT_SPOILTIME 20
+#define BIOMASS_FOOD_ENERGY 1000
 
-#define MUTATE_PROBABILITY 0.99
+#define FLOWER_COST 55
+#define FLOWER_PERCENT 2
+#define FLOWER_MUTATION_PERCENT 2
 
 #include <curses.h>
 
@@ -81,14 +91,14 @@ public:
 	virtual Cell *Clone() = 0;
 };
 
-// template <class Cell>
+Cell *GenerateRandomCell();
+
 class Cell_Empty : public Cell
 {
 public:
 	~Cell_Empty() override;
 
 	Cell_Empty();
-	// Cell_Empty();
 
 	void Tick() override;
 

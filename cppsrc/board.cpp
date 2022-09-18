@@ -5,11 +5,12 @@
 #include <iostream>
 #include <algorithm>
 
-int directions[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+int directions[8][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
 extern Board board;
 
 Board::Board(const int _dim_x, const int _dim_y)
 {
+	this->tickCount = 0;
 	this->dim_x = _dim_x;
 	this->dim_y = _dim_y;
 
@@ -19,6 +20,7 @@ Board::Board(const int _dim_x, const int _dim_y)
 		for (int x = 0; x < _dim_x; x++)
 		{
 			this->cells[y].push_back(new Cell_Empty());
+			this->DeltaCells.push_back(false);
 		}
 	}
 	for (int y = 0; y < _dim_y; y++)
@@ -44,8 +46,10 @@ Board::~Board()
 
 void Board::Tick()
 {
+	this->tickCount++;
 	size_t organismCellsCount = 0;
 	size_t organismEnergyCount = 0;
+	size_t organismLifespan = 0;
 	for (size_t i = 0; i < this->FoodCells.size(); i++)
 	{
 		this->FoodCells[i]->Tick();
@@ -69,8 +73,9 @@ void Board::Tick()
 		{
 			organismCellsCount += this->Organisms[i]->myCells.size();
 			organismEnergyCount += this->Organisms[i]->GetEnergy();
-			// mvprintw(this->dim_y + i + 1, 4, "%d %d: %lu energy, %lu cells (%lu ticks old, %d lifespan)",
-					//  Organisms[i]->x, Organisms[i]->y, Organisms[i]->energy, Organisms[i]->myCells.size(), Organisms[i]->age, Organisms[i]->lifespan);
+			organismLifespan += this->Organisms[i]->lifespan;
+			// printf("%d %d: %lu/%lu energy, %lu cells (%lu ticks old, %d lifespan), repcd %d\n",
+			//  Organisms[i]->x, Organisms[i]->y, Organisms[i]->GetEnergy(), Organisms[i]->GetMaxEnergy(), Organisms[i]->myCells.size(), Organisms[i]->age, Organisms[i]->lifespan, Organisms[i]->reproductionCooldown);
 			Organism *replicated = this->Organisms[i]->Tick();
 
 			if (replicated != nullptr)
@@ -79,8 +84,14 @@ void Board::Tick()
 			}
 		}
 	}
-
-	printf("%lu organisms, average size %.3f cells, %.3f energy\n", this->Organisms.size(), organismCellsCount / (float)(this->Organisms.size()), organismEnergyCount / (float)(this->Organisms.size()));
+	if (this->tickCount % 100 == 0)
+	{
+		printf("%lu organisms, average size %.3f cells, %.3f energy, %.3f lifespan\n\n",
+			   this->Organisms.size(),
+			   organismCellsCount / (float)(this->Organisms.size()),
+			   organismEnergyCount / (float)(this->Organisms.size()),
+			   organismLifespan / (float)(this->Organisms.size()));
+	}
 }
 // returns true if out of bounds, false otherwise
 bool Board::boundCheckPos(int x, int y)
@@ -104,7 +115,7 @@ bool Board::isCellOfType(int x, int y, enum CellTypes type)
 }
 
 // replace the cell at a given position with another cell
-// automatically handles adding and removing from food list 
+// automatically handles adding and removing from food list
 void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 {
 	// if out of bounds, bail
@@ -113,7 +124,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		std::cerr << "Replacing cell at out-of-bounds position!";
 		exit(1);
 	}
-	
+
 	if (this->cells[_y][_x]->type == cell_biomass)
 	{
 		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
@@ -127,6 +138,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		this->FoodCells.push_back(_cell);
 	}
 	this->cells[_y][_x] = _cell;
+	this->DeltaCells[(_y * this->dim_y) + _x] = true;
 }
 
 void Board::replaceCell(Cell *_replaced, Cell *_newCell)
@@ -151,6 +163,9 @@ void Board::swapCellAtIndex(int _x, int _y, Cell *a)
 	this->cells[a_oldy][a_oldx] = b;
 	a->x = _x;
 	a->y = _y;
+
+	this->DeltaCells[(_y * this->dim_y) + _x] = true;
+
 }
 
 Organism *Board::createOrganism(const int _x, const int _y)

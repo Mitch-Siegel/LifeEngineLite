@@ -4,14 +4,17 @@
 #include "lifeforms.h"
 
 #pragma once
-extern int directions[4][2];
+extern int directions[8][2];
 class Cell;
 
 class Board
 {
 public:
+    std::size_t tickCount;
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
+    std::vector<bool> DeltaCells;
+
     std::vector<Cell *> FoodCells;
 
     std::vector<Organism *> Organisms;
