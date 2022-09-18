@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <iostream>
-#include <curses.h>
 #include <signal.h>
 #include <vector>
+
+#include <SDL2/SDL.h>
 
 #include "lifeforms.h"
 #include "board.h"
@@ -15,28 +16,77 @@ void intHandler(int dummy)
 }
 // Cell *board[BOARD_DIM][BOARD_DIM];
 
-Board board = Board(32, 32);
+Board board = Board(64, 64);
 
+void TickAndRender(SDL_Window *window, SDL_Renderer *renderer)
+{
+	// erase();
+	board.Tick();
+
+	for (int y = 0; y < board.dim_y; y++)
+	{
+		for (int x = 0; x < board.dim_x; x++)
+		{
+			Cell *thisCell = board.cells[y][x];
+			// attron(COLOR_PAIR((int)thisCell->type));
+			switch (thisCell->type)
+			{
+			case cell_empty:
+				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+				break;
+
+			case cell_biomass:
+				SDL_SetRenderDrawColor(renderer, 25, 25, 100, 255);
+				break;
+
+			case cell_leaf:
+				SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+				break;
+
+			case cell_mover:
+				SDL_SetRenderDrawColor(renderer, 70, 70, 255, 255);
+				break;
+
+			case cell_herbivore_mouth:
+				SDL_SetRenderDrawColor(renderer, 200, 175, 0, 255);
+				break;
+
+			case cell_flower:
+				SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+				break;
+
+			case cell_null:
+				break;
+			}
+			SDL_RenderDrawPoint(renderer, x, y);
+			// attron(COLOR_PAIR(10));
+		}
+	}
+	SDL_RenderPresent(renderer);
+}
 
 int main(int argc, char *argv[])
 {
-	// srand(0x134134u);
-	initscr();
-	start_color();
-	init_pair(10, COLOR_WHITE, COLOR_BLACK);
 
-	init_pair(cell_empty, COLOR_WHITE, COLOR_BLACK);
-	init_pair(cell_food, COLOR_WHITE, COLOR_BLUE);
-	init_pair(cell_leaf, COLOR_WHITE, COLOR_GREEN);
-	init_pair(cell_herbivore_mouth, COLOR_WHITE, COLOR_YELLOW);
-	init_pair(cell_flower, COLOR_WHITE, COLOR_CYAN);
-	init_pair(cell_mover, COLOR_WHITE, COLOR_BLUE);
-	
+	SDL_Window *window = nullptr;
+	SDL_Renderer *renderer = nullptr;
+
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_CreateWindowAndRenderer(640, 640, 0, &window, &renderer);
+	SDL_RenderSetScale(renderer, 10, 10);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
+
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	SDL_RenderDrawPoint(renderer, 640 / 2, 640 / 2);
+
+	SDL_RenderPresent(renderer);
+
 	signal(SIGINT, intHandler);
 
-	refresh();
-	Organism *firstOrganism = board.createOrganism(5, 5);
-	firstOrganism->energy = 1;
+	// refresh();
+	Organism *firstOrganism = board.createOrganism(10, 10);
+	
 	// Cell_Leaf plantLeaf = Cell_Leaf();
 	if (firstOrganism->AddCell(0, 0, new Cell_Leaf()))
 	{
@@ -47,62 +97,60 @@ int main(int argc, char *argv[])
 		firstOrganism->lifespan = 100;
 		std::cout << "added leaf cell " << std::endl;
 	}
-	getch();
-	clear();
-	refresh();
+	Organism *realFirstOrganism = firstOrganism->Reproduce();
+	realFirstOrganism->AddEnergy(1);
+	board.Organisms.push_back(realFirstOrganism);
+
+
+	SDL_Event e;
+	bool autoplay = false;
+	// getch();
+	// clear();
+	// refresh();
 
 	while (running)
 	{
-		erase();
-		board.Tick();
-
-		for (int y = 0; y < board.dim_y; y++)
+		if (autoplay)
 		{
-			move(y, 0);
-			for (int x = 0; x < board.dim_x; x++)
+			SDL_Delay(10);
+			TickAndRender(window, renderer);
+		}
+		
+		while(SDL_PollEvent (&e))
+		{
+			if(e.type == SDL_QUIT)
 			{
-				Cell *thisCell = board.cells[y][x];
-				attron(COLOR_PAIR((int)thisCell->type));
-				switch (thisCell->type)
+				running = false;
+			}
+			if(e.type == SDL_KEYDOWN)
+			{
+
+				switch(e.key.keysym.sym)
 				{
-				case cell_empty:
-					addch(' ');
-					break;
+					case SDLK_RETURN:
+						TickAndRender(window, renderer);
+						break;
 
-				case cell_food:
-					addch('F');
-					break;
-
-				case cell_leaf:
-					addch('L');
-					break;
-
-				case cell_mover:
-				case cell_herbivore_mouth:
-					addch('M');
-					break;
-
-				case cell_flower:
-					addch('*');
-					break;
-
-				case cell_null:
-					addch('_');
-					break;
-
+					default:
+						autoplay = !autoplay;
+						break;
 				}
-				attron(COLOR_PAIR(10));
 			}
 		}
-		refresh();
-		attron(COLOR_PAIR(10));
-		getch();
+
+		// SDL_Delay(1000);
+		// refresh();
+		// attron(COLOR_PAIR(10));
+		// getch();
 	}
 
-	move(0, 0);
-	mvprintw(0, 0, "Press any key to exit");
-	refresh();
+	SDL_DestroyWindow(window);
+	SDL_DestroyRenderer(renderer);
 
-	getch();
-	endwin();
+	// move(0, 0);
+	// mvprintw(0, 0, "Press any key to exit");
+	// refresh();
+
+	// getch();
+	// endwin();
 }

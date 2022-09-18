@@ -44,10 +44,12 @@ Board::~Board()
 
 void Board::Tick()
 {
+	size_t organismCellsCount = 0;
+	size_t organismEnergyCount = 0;
 	for (size_t i = 0; i < this->FoodCells.size(); i++)
 	{
 		this->FoodCells[i]->Tick();
-		if (((Cell_Food *)this->FoodCells[i])->ticksUntilSpoil == 0)
+		if (((Cell_Biomass *)this->FoodCells[i])->ticksUntilSpoil == 0)
 		{
 			board.replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Empty());
 			i--;
@@ -65,8 +67,10 @@ void Board::Tick()
 		}
 		else
 		{
-			mvprintw(this->dim_y + i + 1, 4, "%d %d: %lu energy, %lu cells (%lu ticks old, %d lifespan)",
-					 Organisms[i]->x, Organisms[i]->y, Organisms[i]->energy, Organisms[i]->myCells.size(), Organisms[i]->age, Organisms[i]->lifespan);
+			organismCellsCount += this->Organisms[i]->myCells.size();
+			organismEnergyCount += this->Organisms[i]->GetEnergy();
+			// mvprintw(this->dim_y + i + 1, 4, "%d %d: %lu energy, %lu cells (%lu ticks old, %d lifespan)",
+					//  Organisms[i]->x, Organisms[i]->y, Organisms[i]->energy, Organisms[i]->myCells.size(), Organisms[i]->age, Organisms[i]->lifespan);
 			Organism *replicated = this->Organisms[i]->Tick();
 
 			if (replicated != nullptr)
@@ -75,6 +79,8 @@ void Board::Tick()
 			}
 		}
 	}
+
+	printf("%lu organisms, average size %.3f cells, %.3f energy\n", this->Organisms.size(), organismCellsCount / (float)(this->Organisms.size()), organismEnergyCount / (float)(this->Organisms.size()));
 }
 // returns true if out of bounds, false otherwise
 bool Board::boundCheckPos(int x, int y)
@@ -108,7 +114,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		exit(1);
 	}
 	
-	if (this->cells[_y][_x]->type == cell_food)
+	if (this->cells[_y][_x]->type == cell_biomass)
 	{
 		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
 	}
@@ -116,7 +122,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 
 	_cell->x = _x;
 	_cell->y = _y;
-	if (_cell->type == cell_food)
+	if (_cell->type == cell_biomass)
 	{
 		this->FoodCells.push_back(_cell);
 	}

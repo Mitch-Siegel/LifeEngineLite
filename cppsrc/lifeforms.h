@@ -11,11 +11,14 @@ class Cell;
 
 class Organism
 {
+private:
+	std::size_t currentHealth, maxHealth;
+	std::size_t currentEnergy, maxEnergy;
+
 public:
 	int x, y;
 	std::size_t age;
-	std::size_t currentHealth, maxHealth;
-	std::size_t energy;
+
 	bool alive;
 	bool canMove;
 	std::vector<Cell *> myCells;
@@ -35,7 +38,13 @@ public:
 
 	int AddCell(int x_rel, int y_rel, Cell *_cell);
 
-	void ExpendEnergy(int n);
+	void ReplaceCell(Cell *_myCell, Cell *_newCell);
+	
+	std::size_t GetEnergy();
+
+	void ExpendEnergy(std::size_t n);
+
+	void AddEnergy(std::size_t n);
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
 
@@ -46,8 +55,9 @@ public:
 
 class Organism;
 
-#define REPRODUCTION_MULTIPLIER 11
+#define REPRODUCTION_MULTIPLIER 7
 #define LIFESPAN_MULTIPLIER 75
+#define MAX_ENERGY_MULTIPLIER 15
 
 #define FLOWER_COOLDOWN 15
 #define FOOD_SPOILTIME 10
@@ -85,26 +95,27 @@ public:
 	Cell_Empty *Clone() override;
 };
 
-class Cell_Food : public Cell
+class Cell_Biomass : public Cell
 {
 public:
 	int ticksUntilSpoil;
 
 public:
-	~Cell_Food() override;
+	~Cell_Biomass() override;
 
-	Cell_Food();
+	Cell_Biomass();
 
-	Cell_Food(int _ticksUntilSpoil);
+	Cell_Biomass(int _ticksUntilSpoil);
 
 	void Tick() override;
 
-	Cell_Food *Clone() override;
+	Cell_Biomass *Clone() override;
 };
 
 class Cell_Leaf : public Cell
 {
 	int photosynthesisCooldown;
+
 public:
 	~Cell_Leaf() override;
 

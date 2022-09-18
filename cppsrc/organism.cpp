@@ -14,7 +14,8 @@ Organism::Organism(int center_x, int center_y)
 	// this->myCells = std::vector<Cell &>();
 	this->maxHealth = 0;
 	this->currentHealth = this->maxHealth;
-	this->energy = 0;
+	this->currentEnergy = 0;
+	this->maxEnergy = 0;
 	this->age = 0;
 	this->alive = 1;
 	this->reproductionCooldown = 0;
@@ -26,8 +27,9 @@ void Organism::Die()
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
-		board.replaceCellAt(thisCell->x, thisCell->y, new Cell_Food(10));
+		board.replaceCell(thisCell, new Cell_Biomass(10));
 	}
+	this->myCells.clear();
 	this->alive = false;
 }
 
@@ -49,7 +51,7 @@ Organism *Organism::Tick()
 		return nullptr;
 	}*/
 
-	if (this->energy == 0 /*|| this->currentHealth == 0*/ || this->lifespan == 0 || this->myCells.size() == 0)
+	if (this->currentEnergy == 0 /*|| this->currentHealth == 0*/ || this->lifespan == 0 || this->myCells.size() == 0)
 	{
 		this->Die();
 		return nullptr;
@@ -70,7 +72,7 @@ Organism *Organism::Tick()
 
 	if (this->reproductionCooldown == 0)
 	{
-		if (this->energy > ((this->myCells.size() + 1) * REPRODUCTION_MULTIPLIER))
+		if (this->currentEnergy > ((this->myCells.size() + 1) * REPRODUCTION_MULTIPLIER))
 		{
 			return this->Reproduce();
 		}
@@ -120,9 +122,29 @@ void Organism::Move()
 	}
 }
 
-void Organism::ExpendEnergy(int n)
+void Organism::ExpendEnergy(size_t n)
 {
-	this->energy -= n;
+	if(n > this->currentEnergy)
+	{
+		this->currentEnergy = 0;
+		return;
+	}
+
+	this->currentEnergy -= n;
+}
+
+void Organism::AddEnergy(size_t n)
+{
+	this->currentEnergy += n;
+	if(this->currentEnergy > this->maxEnergy)
+	{
+		this->currentEnergy = this->maxEnergy;
+	}
+}
+
+std::size_t Organism::GetEnergy()
+{
+	return this->currentEnergy;
 }
 
 bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
@@ -174,23 +196,18 @@ Organism *Organism::Reproduce()
 			replicatedCell->myOrganism = replicated;
 			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, replicatedCell);
 		}
-		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_MULTIPLIER);
-		replicated->energy = replicated->myCells.size() * 5;
-		this->reproductionCooldown = this->myCells.size() * 3;
-		replicated->reproductionCooldown = replicated->myCells.size() * 5;
-		replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
 
-		// mutate with 50% probability for testing
 		if (randPercent(10))
 		{
 			replicated->Mutate();
-			/*if(replicated->CheckValidity())
-			{
-				replicated->Remove();
-				delete replicated;
-				return nullptr;
-			}*/
 		}
+
+		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_MULTIPLIER);
+		replicated->currentEnergy = replicated->myCells.size() * 5;
+		replicated->maxEnergy = replicated->myCells.size() * MAX_ENERGY_MULTIPLIER;
+		this->reproductionCooldown = this->myCells.size() * 3;
+		replicated->reproductionCooldown = replicated->myCells.size() * 5;
+		replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
 
 		return replicated;
 	}
@@ -225,10 +242,18 @@ Cell *GenerateRandomCell()
 void Organism::Mutate()
 {
 	// change existing cell
-	if (randPercent(40) && this->myCells.size() > 1)
+	if (randPercent(30) && this->myCells.size() > 1)
 	{
-		Cell *toReplace = this->myCells[randInt(0, this->myCells.size() - 1)];
-		board.replaceCell(toReplace, GenerateRandomCell());
+		int switchedIndex = randInt(0, this->myCells.size() - 1);
+		
+		Cell *toReplace = this->myCells[switchedIndex];
+		this->myCells.erase(std::find(this->myCells.begin(), this->myCells.end(), toReplace));
+		
+		Cell *replacedWith = GenerateRandomCell();
+		replacedWith->myOrganism = this;
+
+		board.replaceCell(toReplace, replacedWith);
+		this->myCells.push_back(replacedWith);
 		// int cellIndex = (rand() >> 5) % this->myCells.size();
 		// this->myCells[cellIndex].type = (enum CellTypes)((rand() >> 5) % (int)cell_mouth);
 	}
@@ -290,22 +315,22 @@ void Organism::Mutate()
 	}
 }
 
-	// return 1 if cell is occupied, else 0
-	int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
+// return 1 if cell is occupied, else 0
+int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
+{
+	int x_abs = this->x + x_rel;
+	int y_abs = this->y + y_rel;
+	if (!board.isCellOfType(x_abs, y_abs, cell_empty))
 	{
-		int x_abs = this->x + x_rel;
-		int y_abs = this->y + y_rel;
-		if (!board.isCellOfType(x_abs, y_abs, cell_empty))
-		{
-			return 1;
-		}
-
-		_cell->x = x_abs;
-		_cell->y = y_abs;
-		_cell->myOrganism = this;
-		board.replaceCellAt(x_abs, y_abs, _cell);
-		this->myCells.push_back(_cell);
-		this->canMove |= (_cell->type == cell_mover);
-
-		return 0;
+		return 1;
 	}
+
+	_cell->x = x_abs;
+	_cell->y = y_abs;
+	_cell->myOrganism = this;
+	board.replaceCellAt(x_abs, y_abs, _cell);
+	this->myCells.push_back(_cell);
+	this->canMove |= (_cell->type == cell_mover);
+
+	return 0;
+}

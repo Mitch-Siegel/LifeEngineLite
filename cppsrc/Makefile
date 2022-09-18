@@ -3,7 +3,7 @@ CFLAGS = -g -Werror -Wall
 programs: lel
 
 lel: main.o organism.o cell.o board.o rng.o brain.o
-	$(CC) $(CFLAGS) -lncurses -o $@ $^
+	$(CC) $(CFLAGS) -lSDL2 -o $@ $^
 
 
 main.o: main.cpp 
