@@ -31,9 +31,25 @@ void Organism::Die()
 	this->alive = false;
 }
 
+void Organism::Remove()
+{
+	/*
+	for (size_t i = 0; i < this->myCells.size(); i++)
+	{
+		Cell *thisCell = this->myCells[i];
+		board.replaceCellAt(thisCell->x, thisCell->y, new Cell_Empty());
+	}
+	this->alive = false;*/
+}
+
 Organism *Organism::Tick()
 {
-	if (/*this->energy == 0 || this->currentHealth == 0 || */ this->lifespan == 0)
+	/*if (this->CheckValidity())
+	{
+		return nullptr;
+	}*/
+
+	if (this->energy == 0 /*|| this->currentHealth == 0*/ || this->lifespan == 0 || this->myCells.size() == 0)
 	{
 		this->Die();
 		return nullptr;
@@ -65,6 +81,28 @@ Organism *Organism::Tick()
 	}
 	return nullptr;
 }
+
+// disallow specific types of organisms from existing
+// return true if invalid
+/*
+bool Organism::CheckValidity()
+{
+	if (this->myCells.size() == 1)
+	{
+		switch (this->myCells[0]->type)
+		{
+		// disallow organisms consisting only of a mouth
+		case cell_herbivore_mouth:
+			this->Remove();
+			return true;
+			break;
+
+		default:
+			break;
+		}
+	}
+	return false;
+}*/
 
 void Organism::Move()
 {
@@ -143,12 +181,41 @@ Organism *Organism::Reproduce()
 		replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
 
 		// mutate with 50% probability for testing
-		if (randPercent(50))
+		if (randPercent(10))
 		{
 			replicated->Mutate();
+			/*if(replicated->CheckValidity())
+			{
+				replicated->Remove();
+				delete replicated;
+				return nullptr;
+			}*/
 		}
 
 		return replicated;
+	}
+	return nullptr;
+}
+
+Cell *GenerateRandomCell()
+{
+	switch (randInt(0, 3))
+	{
+	case 0:
+		return new Cell_Leaf();
+		break;
+
+	case 1:
+		return new Cell_Flower();
+		break;
+
+	case 2:
+		return new Cell_Mover();
+		break;
+
+	case 3:
+		return new Cell_Herbivore();
+		break;
 	}
 	return nullptr;
 }
@@ -158,8 +225,10 @@ Organism *Organism::Reproduce()
 void Organism::Mutate()
 {
 	// change existing cell
-	if (randPercent(50) && this->myCells.size() > 1)
+	if (randPercent(40) && this->myCells.size() > 1)
 	{
+		Cell *toReplace = this->myCells[randInt(0, this->myCells.size() - 1)];
+		board.replaceCell(toReplace, GenerateRandomCell());
 		// int cellIndex = (rand() >> 5) % this->myCells.size();
 		// this->myCells[cellIndex].type = (enum CellTypes)((rand() >> 5) % (int)cell_mouth);
 	}
@@ -215,41 +284,28 @@ void Organism::Mutate()
 
 			if (couldAdd)
 			{
-				switch (randInt(0, 2))
-				{
-				case 0:
-					this->AddCell(x_rel, y_rel, new Cell_Leaf());
-					break;
-
-				case 1:
-					this->AddCell(x_rel, y_rel, new Cell_Flower());
-					break;
-
-				case 2:
-					this->AddCell(x_rel, y_rel, new Cell_Mover());
-					break;
-				}
+				this->AddCell(x_rel, y_rel, GenerateRandomCell());
 			}
 		}
 	}
 }
 
-// return 1 if cell is occupied, else 0
-int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
-{
-	int x_abs = this->x + x_rel;
-	int y_abs = this->y + y_rel;
-	if (!board.isCellOfType(x_abs, y_abs, cell_empty))
+	// return 1 if cell is occupied, else 0
+	int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	{
-		return 1;
+		int x_abs = this->x + x_rel;
+		int y_abs = this->y + y_rel;
+		if (!board.isCellOfType(x_abs, y_abs, cell_empty))
+		{
+			return 1;
+		}
+
+		_cell->x = x_abs;
+		_cell->y = y_abs;
+		_cell->myOrganism = this;
+		board.replaceCellAt(x_abs, y_abs, _cell);
+		this->myCells.push_back(_cell);
+		this->canMove |= (_cell->type == cell_mover);
+
+		return 0;
 	}
-
-	_cell->x = x_abs;
-	_cell->y = y_abs;
-	_cell->myOrganism = this;
-	board.replaceCellAt(x_abs, y_abs, _cell);
-	this->myCells.push_back(_cell);
-	this->canMove |= (_cell->type == cell_mover);
-
-	return 0;
-}

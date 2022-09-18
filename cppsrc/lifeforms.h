@@ -27,6 +27,8 @@ public:
 
 	void Die();
 
+	void Remove();
+
 	Organism *Tick();
 
 	void Move();
@@ -76,7 +78,7 @@ public:
 	~Cell_Empty() override;
 
 	Cell_Empty();
-	// Cell_Empty(/*int _x, int _y*/);
+	// Cell_Empty();
 
 	void Tick() override;
 
@@ -93,7 +95,7 @@ public:
 
 	Cell_Food();
 
-	Cell_Food(/*int _x, int _y, */ int _ticksUntilSpoil);
+	Cell_Food(int _ticksUntilSpoil);
 
 	void Tick() override;
 
@@ -103,13 +105,12 @@ public:
 class Cell_Leaf : public Cell
 {
 	int photosynthesisCooldown;
-
 public:
 	~Cell_Leaf() override;
 
 	Cell_Leaf();
 
-	Cell_Leaf(/*int _x, int _y, */ Organism *_myOrganism);
+	Cell_Leaf(Organism *_myOrganism);
 
 	// Cell_Leaf(const Cell_Leaf &c);
 
@@ -127,7 +128,7 @@ public:
 
 	Cell_Flower();
 
-	Cell_Flower(/*int _x, int _y, */ Organism *_myOrganism);
+	Cell_Flower(Organism *_myOrganism);
 
 	void Tick() override;
 
@@ -143,9 +144,24 @@ public:
 
 	Cell_Mover();
 
-	Cell_Mover(/*int _x, int _y, */ Organism *_myOrganism);
+	Cell_Mover(Organism *_myOrganism);
 
 	void Tick() override;
 
 	Cell_Mover *Clone() override;
+};
+
+class Cell_Herbivore : public Cell
+{
+
+public:
+	~Cell_Herbivore() override;
+
+	Cell_Herbivore();
+
+	Cell_Herbivore(Organism *_myOrganism);
+
+	void Tick() override;
+
+	Cell_Herbivore *Clone() override;
 };

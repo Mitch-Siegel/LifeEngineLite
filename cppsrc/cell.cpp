@@ -1,7 +1,8 @@
+#include <vector>
+
 #include "lifeforms.h"
 #include "board.h"
-#include <vector>
-#include <stdlib.h>
+#include "rng.h"
 
 extern Board board;
 /*
@@ -182,8 +183,6 @@ Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 
 void Cell_Leaf::Tick()
 {
-	mvprintw(27, 0, "leafcell::tick()");
-	
 	if (this->photosynthesisCooldown > 0)
 	{
 		this->photosynthesisCooldown--;
@@ -198,6 +197,7 @@ Cell_Leaf *Cell_Leaf::Clone()
 {
 	return new Cell_Leaf(*this);
 }
+
 
 // flower cell
 Cell_Flower::~Cell_Flower()
@@ -242,7 +242,7 @@ Cell_Mover::Cell_Mover()
 	this->myOrganism = nullptr;
 }
 
-Cell_Mover::Cell_Mover(/*int _x, int _y, */Organism *_myOrganism)
+Cell_Mover::Cell_Mover(Organism *_myOrganism)
 {
 	this->type = cell_mover;
 	this->myOrganism = _myOrganism;
@@ -256,4 +256,46 @@ void Cell_Mover::Tick()
 Cell_Mover *Cell_Mover::Clone()
 {
 	return new Cell_Mover(*this);
+}
+
+// herbivore mouth cell
+Cell_Herbivore::~Cell_Herbivore()
+{
+}
+
+Cell_Herbivore::Cell_Herbivore()
+{
+	this->type = cell_herbivore_mouth;
+	this->myOrganism = nullptr;
+}
+
+Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
+{
+	this->type = cell_herbivore_mouth;
+	this->myOrganism = _myOrganism;
+}
+
+void Cell_Herbivore::Tick()
+{
+	int checkDirIndex = randInt(0, 3);
+	for(int i = 0; i < 4; i++)
+	{
+		int *thisDirection = directions[checkDirIndex + i % 4];
+		int x_abs = this->x + thisDirection[0];
+		int y_abs = this->y + thisDirection[1];
+		if(board.isCellOfType(x_abs, y_abs, cell_leaf))
+		{
+			Cell *eatenLeaf = board.cells[y_abs][x_abs];
+			Organism *leafParent = eatenLeaf->myOrganism;
+			std::vector<Cell *>::iterator foundLeaf = std::find(leafParent->myCells.begin(), leafParent->myCells.end(), eatenLeaf);
+			leafParent->myCells.erase(foundLeaf);
+			board.replaceCell(eatenLeaf, new Cell_Empty());
+			this->myOrganism->energy += 10;
+		}
+	}
+}
+
+Cell_Herbivore *Cell_Herbivore::Clone()
+{
+	return new Cell_Herbivore(*this);
 }

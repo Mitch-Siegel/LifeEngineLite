@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 	init_pair(cell_empty, COLOR_WHITE, COLOR_BLACK);
 	init_pair(cell_food, COLOR_WHITE, COLOR_BLUE);
 	init_pair(cell_leaf, COLOR_WHITE, COLOR_GREEN);
-	init_pair(cell_mouth, COLOR_WHITE, COLOR_YELLOW);
+	init_pair(cell_herbivore_mouth, COLOR_WHITE, COLOR_YELLOW);
 	init_pair(cell_flower, COLOR_WHITE, COLOR_CYAN);
 	init_pair(cell_mover, COLOR_WHITE, COLOR_BLUE);
 	
@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 
 	refresh();
 	Organism *firstOrganism = board.createOrganism(5, 5);
+	firstOrganism->energy = 1;
 	// Cell_Leaf plantLeaf = Cell_Leaf();
 	if (firstOrganism->AddCell(0, 0, new Cell_Leaf()))
 	{
@@ -52,7 +53,7 @@ int main(int argc, char *argv[])
 
 	while (running)
 	{
-		// erase();
+		erase();
 		board.Tick();
 
 		for (int y = 0; y < board.dim_y; y++)
@@ -77,7 +78,7 @@ int main(int argc, char *argv[])
 					break;
 
 				case cell_mover:
-				case cell_mouth:
+				case cell_herbivore_mouth:
 					addch('M');
 					break;
 
