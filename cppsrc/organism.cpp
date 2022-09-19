@@ -271,7 +271,7 @@ Organism *Organism::Reproduce()
 			return nullptr;
 		}
 
-		replicated->reproductionCooldown = replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER * 2;
+		replicated->reproductionCooldown = (replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER) + randInt(0, (replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER));
 		replicated->currentEnergy = randInt(1, maxEnergy / 3);
 		replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
 		replicated->RecalculateStats();
@@ -315,11 +315,35 @@ void Organism::Mutate()
 			int x_rel = 0;
 			int y_rel = 0;
 			bool couldAdd = 0;
-			size_t nTries = 0;
-			int prevDirectionIndex = -1;
+
+			int numCells = this->myCells.size();
+			int cellIndex = 0;
+			if(numCells > 1)
+			{
+				cellIndex = randInt(0, numCells - 1);
+			}
+			for(int i = 0; (i < numCells) && !couldAdd; i++)
+			{
+				Cell *thisAttempt = this->myCells[(cellIndex + i) % numCells];
+				int thisDirectionIndex = randInt(0, 7);
+				for(int j = 0; j < 8; j++)
+				{
+					int *thisDirection = directions[(thisDirectionIndex + j) % 8];
+					int x_abs = thisAttempt->x + thisDirection[0];
+					int y_abs = thisAttempt->y + thisDirection[1];
+					if(board.isCellOfType(x_abs, y_abs, cell_empty))
+					{
+						x_rel = x_abs - this->x;
+						y_rel = y_abs - this->y;
+						couldAdd = true;
+						break;
+					}
+				}
+			}
+
 
 			// this is wildly inefficient but it's an easy way to choose a random position and ensure it stays in bounds
-			while (!couldAdd && nTries < 2)
+			/*while (!couldAdd && nTries < 2)
 			{
 				int thisDirectionIndex = randInt(0, 3);
 				// make sure we don't immediately choose an opposite direction
@@ -355,7 +379,7 @@ void Organism::Mutate()
 						}
 					}
 				}
-			}
+			}*/
 
 			if (couldAdd)
 			{
