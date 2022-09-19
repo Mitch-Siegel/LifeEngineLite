@@ -37,7 +37,7 @@ void Organism::Die()
 
 void Organism::Remove()
 {
-	
+
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
@@ -52,9 +52,18 @@ Organism *Organism::Tick()
 	{
 		return nullptr;
 	}*/
+	/*if (this->myCells.size() > 2)
+	{
+		this->ExpendEnergy(this->myCells.size() - 1);
+	}
+	else
+	{*/
+	this->ExpendEnergy(1);
+	//}
 	// if (this->myCells.size() > 1)
 	// {
-		this->ExpendEnergy(1);
+	// this->ExpendEnergy(this->myCells.size() - 1);
+	// }
 	// }
 	if (this->currentEnergy == 0 /*|| this->currentHealth == 0*/ || this->lifespan == 0 || this->myCells.size() == 0)
 	{
@@ -62,7 +71,6 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 	this->lifespan--;
-	
 
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
@@ -77,7 +85,7 @@ Organism *Organism::Tick()
 	}
 
 	// don't allow organisms of size 1 to reproduce
-	if (this->reproductionCooldown == 0/* && (this->myCells.size() > 1 || board.Organisms.size() < 3)*/)
+	if (this->reproductionCooldown == 0 /* && (this->myCells.size() > 1 || board.Organisms.size() < 3)*/)
 	{
 		if (this->currentEnergy > ((this->myCells.size() + 1) * REPRODUCTION_ENERGY_MULTIPLIER))
 		{
@@ -94,16 +102,32 @@ Organism *Organism::Tick()
 	return nullptr;
 }
 
+void Organism::RecalculateStats()
+{
+	this->canMove = false;
+	for (size_t i = 0; i < this->myCells.size(); i++)
+	{
+		if (this->myCells[i]->type == cell_mover)
+		{
+			this->canMove = true;
+			break;
+		}
+	}
+
+	this->maxHealth = this->myCells.size() * MAX_HEALTH_MULTIPLIER;
+	this->currentEnergy = randInt(1, (this->myCells.size() * MAX_ENERGY_MULTIPLIER) / 3);
+	this->maxEnergy = this->myCells.size() * MAX_ENERGY_MULTIPLIER;
+}
+
 // disallow specific types of organisms from existing
 // return true if invalid
 
 bool Organism::CheckValidity()
 {
 	bool allMouths = true;
-	for(size_t i = 0; i < this->myCells.size(); i++)
+	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		allMouths &= (this->myCells[0]->type == cell_herbivore_mouth);
-
 	}
 	return allMouths;
 }
@@ -120,6 +144,10 @@ void Organism::Move()
 			int newY = movedCell->y + moveDir[1];
 			board.swapCellAtIndex(newX, newY, movedCell);
 		}
+	}
+	else
+	{
+		this->brain.Punish();
 	}
 }
 
@@ -176,7 +204,6 @@ bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 
 Organism *Organism::Reproduce()
 {
-	this->ExpendEnergy(this->myCells.size() * REPRODUCTION_ENERGY_MULTIPLIER);
 	this->reproductionCooldown = this->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER;
 
 	int max_rel_x = 1;
@@ -200,18 +227,28 @@ Organism *Organism::Reproduce()
 
 	if (this->CanOccupyPosition(this->x + dir_x, this->y + dir_y))
 	{
+		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_ENERGY_MULTIPLIER);
+
 		Organism *replicated = new Organism(this->x + dir_x + baby_offset_x, this->y + dir_y + baby_offset_y);
 		for (size_t i = 0; i < this->myCells.size(); i++)
 		{
 			Cell *thisCell = this->myCells[i];
-			int this_rel_x = thisCell->x - this->x;
-			int this_rel_y = thisCell->y - this->y;
-			Cell *replicatedCell = thisCell->Clone();
-			replicatedCell->myOrganism = replicated;
-			replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, replicatedCell);
+			switch (thisCell->type)
+			{
+			case cell_flower:
+			case cell_fruit:
+				break;
+
+			default:
+				int this_rel_x = thisCell->x - this->x;
+				int this_rel_y = thisCell->y - this->y;
+				Cell *replicatedCell = thisCell->Clone();
+				replicatedCell->myOrganism = replicated;
+				replicated->AddCell(this_rel_x + baby_offset_x, this_rel_y + baby_offset_y, replicatedCell);
+			}
 		}
 
-		if (randPercent(10))
+		if (randPercent(20))
 		{
 			replicated->Mutate();
 		}
@@ -223,16 +260,14 @@ Organism *Organism::Reproduce()
 			return nullptr;
 		}
 
-		replicated->currentEnergy = replicated->myCells.size() * 5;
-		replicated->maxEnergy = replicated->myCells.size() * MAX_ENERGY_MULTIPLIER;
-		replicated->reproductionCooldown = replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER;
+		replicated->RecalculateStats();
+		replicated->reproductionCooldown = replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER * 2;
 		replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
 
 		return replicated;
 	}
 	return nullptr;
 }
-
 
 // random generation using this method is super janky:
 // TODO: improve this

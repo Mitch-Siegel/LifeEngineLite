@@ -5,20 +5,46 @@ Brain::Brain()
 {
     this->currentIntent = intent_changeDir;
     this->moveDirIndex = -1;
+    this->conviction = 0;
+    this->maxConviction = 1;
+}
+
+void Brain::Reward()
+{
+    this->conviction++;
+    if (this->conviction > maxConviction)
+    {
+        this->conviction = maxConviction;
+    }
+}
+
+void Brain::Punish()
+{
+    this->conviction--;
+    if (this->conviction < (-1 * maxConviction))
+    {
+        this->conviction = (-1 * maxConviction);
+    }
 }
 
 void Brain::Decide()
 {
-    switch(this->currentIntent)
+    if((randInt(0,  2 * maxConviction) - maxConviction) > conviction || randPercent(10))
     {
-        case intent_continue:
-            break;
+        this->currentIntent = intent_changeDir;
+    }
+    switch (this->currentIntent)
+    {
+    case intent_continue:
+        break;
 
-        case intent_changeDir:
-            this->moveDirIndex = randInt(0, 3);
-            break;
+    case intent_changeDir:
+        this->moveDirIndex = randInt(0, 3);
+        this->currentIntent = intent_continue;
+        this->conviction = 0;
+        break;
 
-        case intent_rotate:
-            break;
+    case intent_rotate:
+        break;
     }
 }

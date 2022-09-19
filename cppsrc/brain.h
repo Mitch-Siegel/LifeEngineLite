@@ -14,7 +14,7 @@ public:
     
     enum Intent currentIntent;
     int moveDirIndex;
-    int conviction;
+    int conviction, maxConviction;
 
     void Decide();
 

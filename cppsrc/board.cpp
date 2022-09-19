@@ -84,14 +84,14 @@ void Board::Tick()
 			}
 		}
 	}
-	if (this->tickCount % 100 == 0)
-	{
+	//if (this->tickCount % 100 == 0)
+	//{
 		printf("%lu organisms, average size %.3f cells, %.3f energy, %.3f lifespan\n\n",
 			   this->Organisms.size(),
 			   organismCellsCount / (float)(this->Organisms.size()),
 			   organismEnergyCount / (float)(this->Organisms.size()),
 			   organismLifespan / (float)(this->Organisms.size()));
-	}
+	//}
 }
 // returns true if out of bounds, false otherwise
 bool Board::boundCheckPos(int x, int y)

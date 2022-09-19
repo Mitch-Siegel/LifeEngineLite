@@ -224,7 +224,7 @@ void Cell_Leaf::Tick()
 		this->photosynthesisCooldown--;
 		return;
 	}
-	if (!(this->myOrganism->hasFlower) && this->myOrganism->GetEnergy() > FLOWER_COST && randPercent(FLOWER_PERCENT))
+	if (this->myOrganism->GetEnergy() > FLOWER_COST && randPercent(FLOWER_PERCENT) && randPercent(FLOWER_PERCENT))
 	{
 		int checkDirIndex = randInt(0, 3);
 		for (int i = 0; i < 4; i++)
@@ -234,11 +234,10 @@ void Cell_Leaf::Tick()
 			int y_abs = this->y + thisDirection[1];
 			if (board.isCellOfType(x_abs, y_abs, cell_empty))
 			{
-				int x_rel = x_abs - this->myOrganism->x;
-				int y_rel = y_abs - this->myOrganism->y;
+				// int x_rel = x_abs - this->myOrganism->x;
+				// int y_rel = y_abs - this->myOrganism->y;
 				this->myOrganism->ExpendEnergy(FLOWER_COST);
-				this->myOrganism->AddCell(x_rel, y_rel, new Cell_Flower());
-				this->myOrganism->CalculateMaxEnergy();
+				this->myOrganism->ReplaceCell(this, new Cell_Flower());
 				return;
 			}
 		}
@@ -279,13 +278,13 @@ void Cell_Flower::Tick()
 {
 	if (this->bloomCooldown > 0)
 	{
-		this->myOrganism->lifespan += 2;
+		// this->myOrganism->lifespan += 2;
 		this->bloomCooldown--;
 		return;
 	}
 	else
 	{
-		/*int checkDirIndex = randInt(0, 3);
+		int checkDirIndex = randInt(0, 3);
 		for (int i = 0; i < 4; i++)
 		{
 			int *thisDirection = directions[(checkDirIndex + i) % 4];
@@ -295,9 +294,9 @@ void Cell_Flower::Tick()
 			{
 				int x_rel = x_abs - this->myOrganism->x;
 				int y_rel = y_abs - this->myOrganism->y;
-				this->myOrganism->AddCell(x_rel, y_rel, new Cell_Leaf());
+				this->myOrganism->AddCell(x_rel, y_rel, new Cell_Fruit());
 			}
-		}*/
+		}
 		this->myOrganism->hasFlower = false;
 		/*
 		if (randPercent(FLOWER_MUTATION_PERCENT))
@@ -330,6 +329,33 @@ Cell_Flower *Cell_Flower::Clone()
 	return new Cell_Flower(*this);
 }
 
+// fruit cell
+Cell_Fruit::~Cell_Fruit()
+{
+}
+
+Cell_Fruit::Cell_Fruit()
+{
+	this->type = cell_fruit;
+	this->myOrganism = nullptr;
+}
+
+Cell_Fruit::Cell_Fruit(Organism *_myOrganism)
+{
+	this->type = cell_fruit;
+	this->myOrganism = _myOrganism;
+}
+
+void Cell_Fruit::Tick()
+{
+	// this->myOrganism->ExpendEnergy(1);
+}
+
+Cell_Fruit *Cell_Fruit::Clone()
+{
+	return new Cell_Fruit(*this);
+}
+
 // mover cell
 Cell_Mover::~Cell_Mover()
 {
@@ -349,7 +375,9 @@ Cell_Mover::Cell_Mover(Organism *_myOrganism)
 
 void Cell_Mover::Tick()
 {
-	this->myOrganism->ExpendEnergy(1);
+	int moveCost = this->myOrganism->myCells.size() / 3;
+	moveCost = (moveCost > 0) ? moveCost : 1;
+	this->myOrganism->ExpendEnergy(moveCost);
 }
 
 Cell_Mover *Cell_Mover::Clone()
@@ -376,22 +404,48 @@ Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
 
 void Cell_Herbivore::Tick()
 {
+	this->myOrganism->ExpendEnergy(1);
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board.isCellOfType(x_abs, y_abs, cell_leaf))
+		if (board.isCellOfType(x_abs, y_abs, cell_leaf) || board.isCellOfType(x_abs, y_abs, cell_flower) || board.isCellOfType(x_abs, y_abs, cell_fruit) || board.isCellOfType(x_abs, y_abs, cell_biomass))
 		{
-			Cell *eatenLeaf = board.cells[y_abs][x_abs];
-			Organism *leafParent = eatenLeaf->myOrganism;
-			if (leafParent != this->myOrganism)
+			Cell *eaten = board.cells[y_abs][x_abs];
+			Organism *eatenParent = eaten->myOrganism;
+			if (eatenParent != this->myOrganism)
 			{
-				std::vector<Cell *>::iterator foundLeaf = std::find(leafParent->myCells.begin(), leafParent->myCells.end(), eatenLeaf);
-				leafParent->myCells.erase(foundLeaf);
-				board.replaceCell(eatenLeaf, new Cell_Empty());
-				this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
+				if (eatenParent != nullptr)
+				{
+					std::vector<Cell *>::iterator foundLeaf = std::find(eatenParent->myCells.begin(), eatenParent->myCells.end(), eaten);
+					eatenParent->myCells.erase(foundLeaf);
+				}
+				switch (eaten->type)
+				{
+				case cell_leaf:
+					this->myOrganism->AddEnergy(LEAF_FOOD_ENERGY);
+					break;
+
+				case cell_flower:
+					this->myOrganism->AddEnergy(FLOWER_FOOD_ENERGY);
+					break;
+
+				case cell_fruit:
+					this->myOrganism->AddEnergy(FRUIT_FOOD_ENERGY);
+					break;
+
+				case cell_biomass:
+					this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
+					break;
+
+				default:
+					std::cerr << "Impossible case for herbivore cell to eat something it shouldn't!" << std::endl;
+					exit(1);
+				}
+				board.replaceCell(eaten, new Cell_Empty());
+				this->myOrganism->brain.Reward();
 			}
 		}
 	}

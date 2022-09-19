@@ -27,39 +27,43 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 		{
 			// if (board.DeltaCells[(y * board.dim_y) + x])
 			// {
-				Cell *thisCell = board.cells[y][x];
-				// attron(COLOR_PAIR((int)thisCell->type));
-				switch (thisCell->type)
-				{
-				case cell_empty:
-					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-					break;
+			Cell *thisCell = board.cells[y][x];
+			// attron(COLOR_PAIR((int)thisCell->type));
+			switch (thisCell->type)
+			{
+			case cell_empty:
+				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+				break;
 
-				case cell_biomass:
-					SDL_SetRenderDrawColor(renderer, 25, 25, 100, 255);
-					break;
+			case cell_biomass:
+				SDL_SetRenderDrawColor(renderer, 25, 25, 150, 255);
+				break;
 
-				case cell_leaf:
-					SDL_SetRenderDrawColor(renderer, 0, 200, 0, 255);
-					break;
+			case cell_leaf:
+				SDL_SetRenderDrawColor(renderer, 0, 200, 0, 255);
+				break;
 
-				case cell_mover:
-					SDL_SetRenderDrawColor(renderer, 70, 70, 255, 255);
-					break;
+			case cell_mover:
+				SDL_SetRenderDrawColor(renderer, 70, 150, 255, 255);
+				break;
 
-				case cell_herbivore_mouth:
-					SDL_SetRenderDrawColor(renderer, 200, 175, 0, 255);
-					break;
+			case cell_herbivore_mouth:
+				SDL_SetRenderDrawColor(renderer, 200, 175, 0, 255);
+				break;
 
-				case cell_flower:
-					SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-					break;
+			case cell_flower:
+				SDL_SetRenderDrawColor(renderer, 100, 255, 100, 255);
+				break;
 
-				case cell_null:
-					break;
-				}
-				SDL_RenderDrawPoint(renderer, x, y);
-				// board.DeltaCells[(y * board.dim_y) + x] = false;
+			case cell_fruit:
+				SDL_SetRenderDrawColor(renderer, 50, 50, 255, 255);
+				break;
+
+			case cell_null:
+				break;
+			}
+			SDL_RenderDrawPoint(renderer, x, y);
+			// board.DeltaCells[(y * board.dim_y) + x] = false;
 			// }
 			// attron(COLOR_PAIR(10));
 		}
@@ -74,8 +78,8 @@ int main(int argc, char *argv[])
 	SDL_Renderer *renderer = nullptr;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(1024, 512, 0, &window, &renderer);
-	SDL_RenderSetScale(renderer, 4, 4);
+	SDL_CreateWindowAndRenderer(2048, 1024, 0, &window, &renderer);
+	SDL_RenderSetScale(renderer, 8, 8);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
@@ -88,9 +92,11 @@ int main(int argc, char *argv[])
 
 	// refresh();
 	Organism *firstOrganism = board.createOrganism(10, 10);
-
+	firstOrganism->AddCell(0, 0, new Cell_Leaf());
+	firstOrganism->AddCell(1, 0, new Cell_Leaf());
+	firstOrganism->AddCell(1, 1, new Cell_Leaf());
 	// Cell_Leaf plantLeaf = Cell_Leaf();
-	if (firstOrganism->AddCell(0, 0, new Cell_Leaf()))
+	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))
 	{
 		std::cerr << "Error adding cell!";
 	}
@@ -153,10 +159,10 @@ int main(int argc, char *argv[])
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);
 
-	// move(0, 0);
-	// mvprintw(0, 0, "Press any key to exit");
-	// refresh();
+// move(0, 0);
+// mvprintw(0, 0, "Press any key to exit");
+// refresh();
 
-	// getch();
-	// endwin();
+// getch();
+// endwin();
 }

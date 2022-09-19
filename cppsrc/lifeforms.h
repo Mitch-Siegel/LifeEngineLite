@@ -13,7 +13,6 @@ private:
 	std::size_t currentHealth, maxHealth;
 	std::size_t currentEnergy, maxEnergy;
 
-
 public:
 	int x, y;
 	std::size_t age;
@@ -26,7 +25,6 @@ public:
 	Brain brain;
 	bool hasFlower;
 
-
 	Organism(int center_x, int center_y);
 
 	void Die();
@@ -34,6 +32,8 @@ public:
 	void Remove();
 
 	Organism *Tick();
+
+	void RecalculateStats();
 
 	bool CheckValidity();
 
@@ -46,7 +46,7 @@ public:
 	void ReplaceCell(Cell *_myCell, Cell *_newCell);
 
 	std::size_t GetEnergy();
-	
+
 	std::size_t GetMaxEnergy();
 
 	void ExpendEnergy(std::size_t n);
@@ -64,16 +64,23 @@ public:
 
 class Organism;
 
-#define REPRODUCTION_ENERGY_MULTIPLIER 1
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 15
+#define REPRODUCTION_ENERGY_MULTIPLIER 5
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 10
 #define LIFESPAN_MULTIPLIER 250
 #define MAX_ENERGY_MULTIPLIER 15
+#define MAX_HEALTH_MULTIPLIER 1
 
-#define BIOMASS_FOOD_ENERGY 1000
+#define LEAF_FOOD_ENERGY 4
+#define FLOWER_FOOD_ENERGY 10
+#define FRUIT_FOOD_ENERGY 25
 
-#define FLOWER_COST 55
-#define FLOWER_PERCENT 2
-#define FLOWER_MUTATION_PERCENT 2
+#define BIOMASS_FOOD_ENERGY 100
+
+
+#define FLOWER_COST 15
+
+// is actually squared
+#define FLOWER_PERCENT 4
 
 #include <curses.h>
 
@@ -156,10 +163,22 @@ public:
 	Cell_Flower *Clone() override;
 };
 
+class Cell_Fruit : public Cell
+{
+public:
+	~Cell_Fruit() override;
+
+	Cell_Fruit();
+
+	Cell_Fruit(Organism *_myOrganism);
+
+	void Tick() override;
+
+	Cell_Fruit *Clone() override;
+};
+
 class Cell_Mover : public Cell
 {
-	// int bloomCooldown;
-
 public:
 	~Cell_Mover() override;
 
