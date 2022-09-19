@@ -12,3 +12,5 @@ enum CellTypes
 	cell_null,
 };
 
+extern int CellEnergyDensities[cell_null];
+

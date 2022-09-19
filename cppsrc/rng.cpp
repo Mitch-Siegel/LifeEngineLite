@@ -1,6 +1,6 @@
 #include "rng.h"
 
-boost::mt19937 rng;
+boost::mt19937 rng (time(0));
 
 // on range [min, max)
 float randFloat(float min, float max)
@@ -21,7 +21,7 @@ int randInt(int min, int max)
 // given a percent value, return whether or not the event happens
 bool randPercent(int percent)
 {
-    boost::uniform_real<float> u(0, 100);
-    boost::variate_generator<boost::mt19937&, boost::uniform_real<float> > gen(rng, u);
+    boost::uniform_int<int> u(0, 100);
+    boost::variate_generator<boost::mt19937&, boost::uniform_int<int> > gen(rng, u);
     return gen() <= percent;
 }

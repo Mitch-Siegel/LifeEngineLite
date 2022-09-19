@@ -36,11 +36,11 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_biomass:
-				SDL_SetRenderDrawColor(renderer, 25, 25, 150, 255);
+				SDL_SetRenderDrawColor(renderer, 25, 75, 25, 255);
 				break;
 
 			case cell_leaf:
-				SDL_SetRenderDrawColor(renderer, 0, 200, 0, 255);
+				SDL_SetRenderDrawColor(renderer, 0, 150, 0, 255);
 				break;
 
 			case cell_mover:
@@ -56,7 +56,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_fruit:
-				SDL_SetRenderDrawColor(renderer, 50, 50, 255, 255);
+				SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
 				break;
 
 			case cell_null:
@@ -70,10 +70,9 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 	}
 	SDL_RenderPresent(renderer);
 }
-
+#include "rng.h"
 int main(int argc, char *argv[])
 {
-
 	SDL_Window *window = nullptr;
 	SDL_Renderer *renderer = nullptr;
 
@@ -91,7 +90,7 @@ int main(int argc, char *argv[])
 	signal(SIGINT, intHandler);
 
 	// refresh();
-	Organism *firstOrganism = board.createOrganism(10, 10);
+	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
 	firstOrganism->AddCell(0, 0, new Cell_Leaf());
 	firstOrganism->AddCell(1, 0, new Cell_Leaf());
 	firstOrganism->AddCell(1, 1, new Cell_Leaf());
@@ -104,26 +103,30 @@ int main(int argc, char *argv[])
 	{
 		std::cout << "added leaf cell " << std::endl;
 	}
-	Organism *realFirstOrganism = firstOrganism->Reproduce();
-	realFirstOrganism->AddEnergy(1);
-	board.Organisms.push_back(realFirstOrganism);
+	// Organism *realFirstOrganism = firstOrganism->Reproduce();
+	firstOrganism->RecalculateStats();
+	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->myCells.size();
+	// firstOrganism->mutability = 50;
+	firstOrganism->AddEnergy(2);
+	// board.Organisms.push_back(firstOrganism);
 
 	SDL_Event e;
 	bool autoplay = false;
 	// getch();
 	// clear();
 	// refresh();
-
+	int autoplaySpeed = 1000;
 	while (running)
 	{
 		if (autoplay)
 		{
 			board.Tick();
+			SDL_Delay(autoplaySpeed);
 
-			if (board.tickCount % 100 == 0)
-			{
+			/*if (board.tickCount % (1000 / autoplaySpeed) == 0)
+			{*/
 				Render(window, renderer);
-			}
+			//}
 			// SDL_Delay(1);
 		}
 
@@ -139,12 +142,45 @@ int main(int argc, char *argv[])
 				switch (e.key.keysym.sym)
 				{
 				case SDLK_RETURN:
+					autoplay = false;
 					board.Tick();
 					Render(window, renderer);
 					break;
 
+				case SDLK_UP:
+					if (!autoplay)
+					{
+						autoplaySpeed = 1000;
+						autoplay = true;
+					}
+					else
+					{
+						autoplaySpeed /= 2;
+						if (autoplaySpeed < 1)
+						{
+							autoplaySpeed = 1;
+						}
+					}
+					break;
+
+				case SDLK_DOWN:
+					if (!autoplay)
+					{
+						autoplaySpeed = 1000;
+						autoplay = true;
+					}
+					else
+					{
+						autoplaySpeed *= 2;
+						if(autoplaySpeed > 5000)
+						{
+							autoplaySpeed = 5000;
+						}
+					}
+					break;
+
 				default:
-					autoplay = !autoplay;
+					autoplay = false;
 					break;
 				}
 			}
@@ -159,10 +195,10 @@ int main(int argc, char *argv[])
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);
 
-// move(0, 0);
-// mvprintw(0, 0, "Press any key to exit");
-// refresh();
+	// move(0, 0);
+	// mvprintw(0, 0, "Press any key to exit");
+	// refresh();
 
-// getch();
-// endwin();
+	// getch();
+	// endwin();
 }

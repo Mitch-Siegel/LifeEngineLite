@@ -16,7 +16,7 @@ private:
 public:
 	int x, y;
 	std::size_t age;
-
+	int mutability;
 	bool alive;
 	bool canMove;
 	std::vector<Cell *> myCells;
@@ -64,23 +64,34 @@ public:
 
 class Organism;
 
-#define REPRODUCTION_ENERGY_MULTIPLIER 5
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 10
-#define LIFESPAN_MULTIPLIER 250
-#define MAX_ENERGY_MULTIPLIER 15
+#define DEFAULT_MUTABILITY 25
+
+// as proportion of max energy
+#define REPRODUCTION_ENERGY_MULTIPLIER .3
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 1
+#define LIFESPAN_MULTIPLIER 1000
+#define ENERGY_DENSITY_MULTIPLIER 3
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define LEAF_FOOD_ENERGY 4
-#define FLOWER_FOOD_ENERGY 10
+#define LEAF_FOOD_ENERGY 12
+#define FLOWER_FOOD_ENERGY 17 
 #define FRUIT_FOOD_ENERGY 25
 
-#define BIOMASS_FOOD_ENERGY 100
+#define FRUIT_SPOIL_TIME 30
+#define FRUIT_GROW_PERCENT 100
+
+#define BIOMASS_SPOIL_TIME 50
+
+#define BIOMASS_FOOD_ENERGY 35
 
 
-#define FLOWER_COST 15
+#define FLOWER_COST 10
+// is actually squared (runs same percent twice and only occurs if both happen)
+#define FLOWER_PERCENT 3
 
-// is actually squared
-#define FLOWER_PERCENT 4
+#define FLOWER_BLOOM_COOLDOWN 15
+#define FLOWER_BLOOM_COST 8
+
 
 #include <curses.h>
 
@@ -166,9 +177,15 @@ public:
 class Cell_Fruit : public Cell
 {
 public:
+	int ticksUntilSpoil;
+	int parentMutability;
+
+public:
 	~Cell_Fruit() override;
 
 	Cell_Fruit();
+
+	Cell_Fruit(int parentMutability);
 
 	Cell_Fruit(Organism *_myOrganism);
 

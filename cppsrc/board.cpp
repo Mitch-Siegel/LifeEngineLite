@@ -1,5 +1,6 @@
 #include "board.h"
 #include "lifeforms.h"
+#include "rng.h"
 
 #include <curses.h>
 #include <iostream>
@@ -50,13 +51,41 @@ void Board::Tick()
 	size_t organismCellsCount = 0;
 	size_t organismEnergyCount = 0;
 	size_t organismLifespan = 0;
+	size_t mutabilityTotal = 0;
 	for (size_t i = 0; i < this->FoodCells.size(); i++)
 	{
 		this->FoodCells[i]->Tick();
-		if (((Cell_Biomass *)this->FoodCells[i])->ticksUntilSpoil == 0)
+		switch (this->FoodCells[i]->type)
 		{
-			board.replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Empty());
-			i--;
+		case cell_biomass:
+			if (((Cell_Biomass *)this->FoodCells[i])->ticksUntilSpoil == 0)
+			{
+				board.replaceCell(this->FoodCells[i], new Cell_Empty());
+				i--;
+			}
+			break;
+
+		case cell_fruit:
+			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
+			{
+				/*if (1)
+				{
+					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
+					grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
+					board.replaceCell(this->FoodCells[i], new Cell_Empty());
+					grownFruit->AddCell(0, 0, new Cell_Leaf());
+				}
+				else
+				{*/
+					board.replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Biomass());
+				//}
+				i--;
+			}
+			break;
+
+		default:
+			std::cerr << "Impossible case for food cell to be something it shouldn't!" << std::endl;
+			exit(1);
 		}
 	}
 
@@ -74,6 +103,7 @@ void Board::Tick()
 			organismCellsCount += this->Organisms[i]->myCells.size();
 			organismEnergyCount += this->Organisms[i]->GetEnergy();
 			organismLifespan += this->Organisms[i]->lifespan;
+			mutabilityTotal += this->Organisms[i]->mutability;
 			// printf("%d %d: %lu/%lu energy, %lu cells (%lu ticks old, %d lifespan), repcd %d\n",
 			//  Organisms[i]->x, Organisms[i]->y, Organisms[i]->GetEnergy(), Organisms[i]->GetMaxEnergy(), Organisms[i]->myCells.size(), Organisms[i]->age, Organisms[i]->lifespan, Organisms[i]->reproductionCooldown);
 			Organism *replicated = this->Organisms[i]->Tick();
@@ -84,13 +114,14 @@ void Board::Tick()
 			}
 		}
 	}
-	//if (this->tickCount % 100 == 0)
+	// if (this->tickCount % 100 == 0)
 	//{
-		printf("%lu organisms, average size %.3f cells, %.3f energy, %.3f lifespan\n\n",
-			   this->Organisms.size(),
-			   organismCellsCount / (float)(this->Organisms.size()),
-			   organismEnergyCount / (float)(this->Organisms.size()),
-			   organismLifespan / (float)(this->Organisms.size()));
+	printf("%lu organisms, average size %.3f cells, %.3f energy, %.3f lifespan, %f%% mutability\n\n",
+		   this->Organisms.size(),
+		   organismCellsCount / (float)(this->Organisms.size()),
+		   organismEnergyCount / (float)(this->Organisms.size()),
+		   organismLifespan / (float)(this->Organisms.size()),
+		   mutabilityTotal / (float)(this->Organisms.size()));
 	//}
 }
 // returns true if out of bounds, false otherwise
@@ -125,17 +156,29 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		exit(1);
 	}
 
-	if (this->cells[_y][_x]->type == cell_biomass)
+	switch (this->cells[_y][_x]->type)
 	{
+	case cell_biomass:
+	case cell_fruit:
 		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
+		break;
+
+	default:
+		break;
 	}
 	delete this->cells[_y][_x];
 
 	_cell->x = _x;
 	_cell->y = _y;
-	if (_cell->type == cell_biomass)
+	switch (_cell->type)
 	{
+	case cell_biomass:
+	case cell_fruit:
 		this->FoodCells.push_back(_cell);
+		break;
+
+	default:
+		break;
 	}
 	this->cells[_y][_x] = _cell;
 	this->DeltaCells[(_y * this->dim_y) + _x] = true;
@@ -165,7 +208,6 @@ void Board::swapCellAtIndex(int _x, int _y, Cell *a)
 	a->y = _y;
 
 	this->DeltaCells[(_y * this->dim_y) + _x] = true;
-
 }
 
 Organism *Board::createOrganism(const int _x, const int _y)

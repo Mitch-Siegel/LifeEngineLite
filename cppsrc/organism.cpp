@@ -21,7 +21,7 @@ Organism::Organism(int center_x, int center_y)
 	this->alive = 1;
 	this->reproductionCooldown = 0;
 	this->canMove = false;
-	this->hasFlower = false;
+	this->mutability = DEFAULT_MUTABILITY;
 }
 
 void Organism::Die()
@@ -29,7 +29,7 @@ void Organism::Die()
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
-		board.replaceCell(thisCell, new Cell_Biomass(10));
+		board.replaceCell(thisCell, new Cell_Biomass(BIOMASS_SPOIL_TIME));
 	}
 	this->myCells.clear();
 	this->alive = false;
@@ -81,13 +81,16 @@ Organism *Organism::Tick()
 	if (this->canMove)
 	{
 		this->brain.Decide();
-		this->Move();
+		if (this->currentEnergy > 2)
+		{
+			this->Move();
+		}
 	}
 
 	// don't allow organisms of size 1 to reproduce
 	if (this->reproductionCooldown == 0 /* && (this->myCells.size() > 1 || board.Organisms.size() < 3)*/)
 	{
-		if (this->currentEnergy > ((this->myCells.size() + 1) * REPRODUCTION_ENERGY_MULTIPLIER))
+		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.25))
 		{
 			return this->Reproduce();
 		}
@@ -105,18 +108,18 @@ Organism *Organism::Tick()
 void Organism::RecalculateStats()
 {
 	this->canMove = false;
+	this->maxEnergy = 0;
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		if (this->myCells[i]->type == cell_mover)
 		{
 			this->canMove = true;
-			break;
 		}
+		this->maxEnergy += CellEnergyDensities[this->myCells[i]->type];
 	}
-
+	this->maxEnergy *= ENERGY_DENSITY_MULTIPLIER;
 	this->maxHealth = this->myCells.size() * MAX_HEALTH_MULTIPLIER;
-	this->currentEnergy = randInt(1, (this->myCells.size() * MAX_ENERGY_MULTIPLIER) / 3);
-	this->maxEnergy = this->myCells.size() * MAX_ENERGY_MULTIPLIER;
+	// this->maxEnergy = this->myCells.size() * MAX_ENERGY_MULTIPLIER;
 }
 
 // disallow specific types of organisms from existing
@@ -171,11 +174,6 @@ void Organism::AddEnergy(size_t n)
 	}
 }
 
-void Organism::CalculateMaxEnergy()
-{
-	this->maxEnergy = this->myCells.size() * MAX_ENERGY_MULTIPLIER;
-}
-
 std::size_t Organism::GetEnergy()
 {
 	return this->currentEnergy;
@@ -227,9 +225,10 @@ Organism *Organism::Reproduce()
 
 	if (this->CanOccupyPosition(this->x + dir_x, this->y + dir_y))
 	{
-		this->ExpendEnergy(this->myCells.size() * REPRODUCTION_ENERGY_MULTIPLIER);
+		this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER);
 
 		Organism *replicated = new Organism(this->x + dir_x + baby_offset_x, this->y + dir_y + baby_offset_y);
+		replicated->mutability = this->mutability;
 		for (size_t i = 0; i < this->myCells.size(); i++)
 		{
 			Cell *thisCell = this->myCells[i];
@@ -248,9 +247,21 @@ Organism *Organism::Reproduce()
 			}
 		}
 
-		if (randPercent(20))
+		if (randPercent(this->mutability))
 		{
 			replicated->Mutate();
+		}
+		replicated->mutability += randInt(-1, 1);
+		if (replicated->mutability < 0)
+		{
+			replicated->mutability = 0;
+		}
+		else
+		{
+			if (replicated->mutability > 100)
+			{
+				replicated->mutability = 100;
+			}
 		}
 
 		if (replicated->CheckValidity())
@@ -260,10 +271,10 @@ Organism *Organism::Reproduce()
 			return nullptr;
 		}
 
-		replicated->RecalculateStats();
 		replicated->reproductionCooldown = replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER * 2;
+		replicated->currentEnergy = randInt(1, maxEnergy / 3);
 		replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
-
+		replicated->RecalculateStats();
 		return replicated;
 	}
 	return nullptr;
@@ -308,11 +319,11 @@ void Organism::Mutate()
 			int prevDirectionIndex = -1;
 
 			// this is wildly inefficient but it's an easy way to choose a random position and ensure it stays in bounds
-			while (!couldAdd && nTries < this->myCells.size())
+			while (!couldAdd && nTries < 2)
 			{
 				int thisDirectionIndex = randInt(0, 3);
 				// make sure we don't immediately choose an opposite direction
-				while (thisDirectionIndex + 2 % 4 == prevDirectionIndex)
+				while ((thisDirectionIndex + 2) % 4 == prevDirectionIndex)
 				{
 					thisDirectionIndex = randInt(0, 3);
 				}
@@ -336,6 +347,13 @@ void Organism::Mutate()
 					{
 						couldAdd = true;
 					}
+					else
+					{
+						if(board.cells[y_abs][x_abs]->myOrganism == this)
+						{
+							nTries--;
+						}
+					}
 				}
 			}
 
@@ -345,6 +363,7 @@ void Organism::Mutate()
 			}
 		}
 	}
+	this->RecalculateStats();
 }
 
 // return 1 if cell is occupied, else 0
@@ -354,7 +373,7 @@ int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	int y_abs = this->y + y_rel;
 	if (!board.isCellOfType(x_abs, y_abs, cell_empty))
 	{
-		return 1;
+		return true;
 	}
 
 	_cell->x = x_abs;
@@ -363,8 +382,9 @@ int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	board.replaceCellAt(x_abs, y_abs, _cell);
 	this->myCells.push_back(_cell);
 	this->canMove |= (_cell->type == cell_mover);
+	this->RecalculateStats();
 
-	return 0;
+	return false;
 }
 
 void Organism::RemoveCell(Cell *_myCell)
@@ -376,6 +396,7 @@ void Organism::RemoveCell(Cell *_myCell)
 		exit(1);
 	}
 	this->myCells.erase(cellIterator);
+	this->RecalculateStats();
 }
 
 void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
@@ -386,5 +407,6 @@ void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 	// int x_rel = _myCell->x - this->x;
 	// int y_rel = _myCell->y - this->y;
 	board.replaceCell(_myCell, _newCell);
+	this->RecalculateStats();
 	// this->AddCell(x_rel, y_rel, _newCell);
 }
