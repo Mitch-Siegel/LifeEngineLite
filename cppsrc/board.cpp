@@ -67,13 +67,15 @@ void Board::Tick()
 
 		case cell_fruit:
 			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
-			{
-				/*if (1)
+			{/*
+				if (1)
 				{
 					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
 					grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
 					board.replaceCell(this->FoodCells[i], new Cell_Empty());
 					grownFruit->AddCell(0, 0, new Cell_Leaf());
+					grownFruit->RecalculateStats();
+					grownFruit->AddEnergy(2);
 				}
 				else
 				{*/
@@ -208,6 +210,7 @@ void Board::swapCellAtIndex(int _x, int _y, Cell *a)
 	a->y = _y;
 
 	this->DeltaCells[(_y * this->dim_y) + _x] = true;
+	this->DeltaCells[(a_oldx * this->dim_y) + a_oldx] = true;
 }
 
 Organism *Board::createOrganism(const int _x, const int _y)

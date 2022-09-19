@@ -23,6 +23,7 @@ public:
 	int reproductionCooldown;
 	int lifespan;
 	Brain brain;
+	bool hasLeaf;
 	bool hasFlower;
 
 	Organism(int center_x, int center_y);
@@ -67,29 +68,32 @@ class Organism;
 #define DEFAULT_MUTABILITY 25
 
 // as proportion of max energy
-#define REPRODUCTION_ENERGY_MULTIPLIER .3
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 1
-#define LIFESPAN_MULTIPLIER 1000
+#define REPRODUCTION_ENERGY_MULTIPLIER .35
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 2
+#define LIFESPAN_MULTIPLIER 500
 #define ENERGY_DENSITY_MULTIPLIER 3
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define LEAF_FOOD_ENERGY 8
-#define FLOWER_FOOD_ENERGY 10
-#define FRUIT_FOOD_ENERGY 15
+#define HERB_FOOD_MULTIPLIER 10
+
+#define LEAF_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
+#define FLOWER_FOOD_ENERGY 5 * HERB_FOOD_MULTIPLIER
+#define FRUIT_FOOD_ENERGY 9 * HERB_FOOD_MULTIPLIER
 
 #define FRUIT_SPOIL_TIME 30
 #define FRUIT_GROW_PERCENT 100
 
-#define BIOMASS_SPOIL_TIME 30
+#define BIOMASS_SPOIL_TIME 120
 
-#define BIOMASS_FOOD_ENERGY 20
+#define BIOMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
 
 
 #define FLOWER_COST 10
-// is actually squared (runs same percent twice and only occurs if both happen)
-#define FLOWER_PERCENT 3
+// must roll this and parent mutability to produce flower
+#define FLOWER_PERCENT 2
 
 #define FLOWER_BLOOM_COOLDOWN 15
+#define FLOWER_WILT_CHANCE 25
 #define FLOWER_BLOOM_COST 8
 
 

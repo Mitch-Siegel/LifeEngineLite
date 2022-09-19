@@ -22,6 +22,8 @@ Organism::Organism(int center_x, int center_y)
 	this->reproductionCooldown = 0;
 	this->canMove = false;
 	this->mutability = DEFAULT_MUTABILITY;
+	this->hasLeaf = false;
+	this->hasFlower = false;
 }
 
 void Organism::Die()
@@ -58,7 +60,10 @@ Organism *Organism::Tick()
 	}
 	else
 	{*/
-	this->ExpendEnergy(1);
+	if (this->myCells.size() > 1 || this->myCells[0]->type != cell_leaf)
+	{
+		this->ExpendEnergy(1);
+	}
 	//}
 	// if (this->myCells.size() > 1)
 	// {
@@ -111,9 +116,22 @@ void Organism::RecalculateStats()
 	this->maxEnergy = 0;
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
-		if (this->myCells[i]->type == cell_mover)
+		switch (this->myCells[i]->type)
 		{
+		case cell_mover:
 			this->canMove = true;
+			break;
+
+		case cell_leaf:
+			this->hasLeaf = true;
+			break;
+
+		case cell_flower:
+			this->hasFlower = true;
+			break;
+
+		default:
+			break;
 		}
 		this->maxEnergy += CellEnergyDensities[this->myCells[i]->type];
 	}
@@ -130,7 +148,7 @@ bool Organism::CheckValidity()
 	bool allMouths = true;
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
-		allMouths &= (this->myCells[0]->type == cell_herbivore_mouth);
+		allMouths = allMouths && (this->myCells[0]->type == cell_herbivore_mouth);
 	}
 	return allMouths;
 }
@@ -209,17 +227,17 @@ Organism *Organism::Reproduce()
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
-		int this_rel_x = this->x - thisCell->x;
-		int this_rel_y = this->y - thisCell->y;
+		int this_rel_x = abs(this->x - thisCell->x);
+		int this_rel_y = abs(this->y - thisCell->y);
 		max_rel_x = (this_rel_x > max_rel_x) ? this_rel_x : max_rel_x;
 		max_rel_y = (this_rel_x > max_rel_y) ? this_rel_y : max_rel_y;
 	}
 
 	int index = randInt(0, 3);
-	int dir_x = directions[index][0] * max_rel_x * 2;
-	int dir_y = directions[index][1] * max_rel_y * 2;
-	dir_x += (randInt(-1, 1)) * (randPercent(50));
-	dir_y += (randInt(-1, 1)) * (randPercent(50));
+	int dir_x = directions[index][0] * (max_rel_x * 2) + randInt(0, 1);
+	int dir_y = directions[index][1] * (max_rel_y * 2) + randInt(0, 1);
+	// dir_x += (randInt(-1, 1)) * (randPercent(50));
+	// dir_y += (randInt(-1, 1)) * (randPercent(50));
 	int baby_offset_x = 0;
 	int baby_offset_y = 0;
 
@@ -318,20 +336,20 @@ void Organism::Mutate()
 
 			int numCells = this->myCells.size();
 			int cellIndex = 0;
-			if(numCells > 1)
+			if (numCells > 1)
 			{
 				cellIndex = randInt(0, numCells - 1);
 			}
-			for(int i = 0; (i < numCells) && !couldAdd; i++)
+			for (int i = 0; (i < numCells) && !couldAdd; i++)
 			{
 				Cell *thisAttempt = this->myCells[(cellIndex + i) % numCells];
 				int thisDirectionIndex = randInt(0, 7);
-				for(int j = 0; j < 8; j++)
+				for (int j = 0; j < 8; j++)
 				{
 					int *thisDirection = directions[(thisDirectionIndex + j) % 8];
 					int x_abs = thisAttempt->x + thisDirection[0];
 					int y_abs = thisAttempt->y + thisDirection[1];
-					if(board.isCellOfType(x_abs, y_abs, cell_empty))
+					if (board.isCellOfType(x_abs, y_abs, cell_empty))
 					{
 						x_rel = x_abs - this->x;
 						y_rel = y_abs - this->y;
@@ -340,7 +358,6 @@ void Organism::Mutate()
 					}
 				}
 			}
-
 
 			// this is wildly inefficient but it's an easy way to choose a random position and ensure it stays in bounds
 			/*while (!couldAdd && nTries < 2)

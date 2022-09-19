@@ -11,7 +11,7 @@ int CellEnergyDensities[cell_null] = {
 	4,
 	5,
 	0,
-	30,
+	-4,
 	30,
 };
 
@@ -234,7 +234,7 @@ void Cell_Leaf::Tick()
 		this->photosynthesisCooldown--;
 		return;
 	}
-	if (this->myOrganism->GetEnergy() > FLOWER_COST && randPercent(FLOWER_PERCENT) && randPercent(FLOWER_PERCENT))
+	if (this->myOrganism->GetEnergy() > FLOWER_COST && randPercent(this->myOrganism->mutability) && randPercent(FLOWER_PERCENT))
 	{
 		int checkDirIndex = randInt(0, 3);
 		for (int i = 0; i < 4; i++)
@@ -247,7 +247,8 @@ void Cell_Leaf::Tick()
 				// int x_rel = x_abs - this->myOrganism->x;
 				// int y_rel = y_abs - this->myOrganism->y;
 				this->myOrganism->ExpendEnergy(FLOWER_COST);
-				this->myOrganism->ReplaceCell(this, new Cell_Flower());
+				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
+				// this->myOrganism->ReplaceCell(this, new Cell_Flower());
 				return;
 			}
 		}
@@ -294,6 +295,7 @@ void Cell_Flower::Tick()
 	}
 	else
 	{
+		bool couldBloom = false;
 		if (this->myOrganism->GetEnergy() > FLOWER_BLOOM_COST)
 		{
 			int checkDirIndex = randInt(0, 3);
@@ -309,9 +311,18 @@ void Cell_Flower::Tick()
 					// this->myOrganism->AddCell(x_rel, y_rel, new Cell_Fruit());
 				}
 			}
+			couldBloom = true;
 			this->myOrganism->ExpendEnergy(FLOWER_BLOOM_COST);
 		}
 		this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
+
+		if (couldBloom)
+		{
+			if (randPercent(FLOWER_WILT_CHANCE))
+			{
+				this->myOrganism->ReplaceCell(this, new Cell_Leaf());
+			}
+		}
 
 		/*if (randPercent(FLOWER_PERCENT))
 		{
@@ -403,7 +414,7 @@ Cell_Mover::Cell_Mover(Organism *_myOrganism)
 
 void Cell_Mover::Tick()
 {
-	int moveCost = 0; // this->myOrganism->myCells.size() / 3;
+	int moveCost = this->myOrganism->myCells.size() - 2;
 	moveCost = (moveCost > 0) ? moveCost : 1;
 	this->myOrganism->ExpendEnergy(moveCost);
 }
@@ -432,7 +443,10 @@ Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
 
 void Cell_Herbivore::Tick()
 {
-	this->myOrganism->ExpendEnergy(1);
+	if (!this->myOrganism->canMove)
+	{
+		this->myOrganism->ExpendEnergy(randInt(1, 2));
+	}
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)
 	{
@@ -443,7 +457,11 @@ void Cell_Herbivore::Tick()
 		{
 			Cell *eaten = board.cells[y_abs][x_abs];
 			Organism *eatenParent = eaten->myOrganism;
-			if (eatenParent != this->myOrganism || eaten->type != cell_leaf)
+			if (eatenParent != this->myOrganism /* &&
+				 this->myOrganism->canMove*/
+												/*((!this->myOrganism->hasLeaf && eaten->type == cell_leaf) ||
+												 (!this->myOrganism->hasFlower && eaten->type == cell_flower))*/
+			)
 			{
 				/*if (eatenParent != nullptr)
 				{

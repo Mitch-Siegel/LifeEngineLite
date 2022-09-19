@@ -16,7 +16,7 @@ void intHandler(int dummy)
 }
 // Cell *board[BOARD_DIM][BOARD_DIM];
 
-Board board = Board(429, 178);
+Board board = Board(256, 256);
 
 void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
@@ -77,8 +77,8 @@ int main(int argc, char *argv[])
 	SDL_Renderer *renderer = nullptr;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(3440, 1440, 0, &window, &renderer);
-	SDL_RenderSetScale(renderer, 8, 8);
+	SDL_CreateWindowAndRenderer(1024, 1024, 0, &window, &renderer);
+	SDL_RenderSetScale(renderer, 4, 4);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
@@ -172,9 +172,9 @@ int main(int argc, char *argv[])
 					else
 					{
 						autoplaySpeed *= 2;
-						if(autoplaySpeed > 5000)
+						if(autoplaySpeed > 1000)
 						{
-							autoplaySpeed = 5000;
+							autoplaySpeed = 1000;
 						}
 					}
 					break;
