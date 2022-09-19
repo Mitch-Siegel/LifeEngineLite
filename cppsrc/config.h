@@ -4,6 +4,7 @@ enum CellTypes
 {
 	cell_empty,
 	cell_plantmass,
+	cell_biomass,
 	cell_leaf,
 	cell_flower,
 	cell_fruit,

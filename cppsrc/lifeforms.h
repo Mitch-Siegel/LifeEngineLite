@@ -83,7 +83,7 @@ class Organism;
 #define FRUIT_GROW_PERCENT 5
 
 #define PLANTMASS_SPOIL_TIME 240
-#define BIOMASS_SPOIL_TIME 60
+#define BIOMASS_SPOIL_TIME 600
 
 #define PLANTMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
 
@@ -142,6 +142,23 @@ public:
 	void Tick() override;
 
 	Cell_Plantmass *Clone() override;
+};
+
+class Cell_Biomass : public Cell
+{
+public:
+	int ticksUntilSpoil;
+
+public:
+	~Cell_Biomass() override;
+
+	Cell_Biomass();
+
+	Cell_Biomass(int _ticksUntilSpoil);
+
+	void Tick() override;
+
+	Cell_Biomass *Clone() override;
 };
 
 class Cell_Leaf : public Cell

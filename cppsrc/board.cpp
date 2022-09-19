@@ -60,6 +60,14 @@ void Board::Tick()
 		this->FoodCells[i]->Tick();
 		switch (this->FoodCells[i]->type)
 		{
+		case cell_biomass:
+			if (((Cell_Biomass *)this->FoodCells[i])->ticksUntilSpoil == 0)
+			{
+				board.replaceCell(this->FoodCells[i], new Cell_Empty());
+				i--;
+			}
+			break;
+
 		case cell_plantmass:
 			if (((Cell_Plantmass *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
@@ -89,7 +97,7 @@ void Board::Tick()
 							break;
 						}
 					}
-					if(!couldAddSecond)
+					if (!couldAddSecond)
 					{
 						delete secondRandomCell;
 					}
@@ -187,6 +195,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 	switch (this->cells[_y][_x]->type)
 	{
 	case cell_plantmass:
+	case cell_biomass:
 	case cell_fruit:
 		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
 		break;
@@ -201,6 +210,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 	switch (_cell->type)
 	{
 	case cell_plantmass:
+	case cell_biomass:
 	case cell_fruit:
 		this->FoodCells.push_back(_cell);
 		break;

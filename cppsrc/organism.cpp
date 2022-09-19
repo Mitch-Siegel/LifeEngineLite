@@ -33,7 +33,29 @@ void Organism::Die()
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
-		board.replaceCell(thisCell, new Cell_Plantmass(PLANTMASS_SPOIL_TIME));
+		Cell *replacedWith;
+		switch(thisCell->type)
+		{
+			case cell_null:
+			case cell_empty:
+			case cell_biomass:
+			case cell_plantmass:
+			case cell_fruit:
+				std::cerr << "Wrong cell type contained within organism!" << std::endl;
+				exit(1);
+
+			case cell_leaf:
+			case cell_flower:
+				replacedWith = new Cell_Plantmass(PLANTMASS_SPOIL_TIME);
+				break;
+
+			case cell_mover:
+			case cell_herbivore_mouth:
+				replacedWith = new Cell_Biomass(BIOMASS_SPOIL_TIME);
+
+
+		}
+		board.replaceCell(thisCell, replacedWith);
 	}
 	this->myCells.clear();
 	this->alive = false;

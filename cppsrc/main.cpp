@@ -40,6 +40,10 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				SDL_SetRenderDrawColor(renderer, 25, 60, 25, 255);
 				break;
 
+			case cell_biomass:
+				SDL_SetRenderDrawColor(renderer, 65, 25, 25, 255);
+				break;
+
 			case cell_leaf:
 				SDL_SetRenderDrawColor(renderer, 0, 150, 0, 255);
 				break;
@@ -118,7 +122,7 @@ int main(int argc, char *argv[])
 	// clear();
 	// refresh();
 	int autoplaySpeed = 1;
-	while (running/* && board.tickCount < 100*/)
+	while (running /* && board.tickCount < 100*/)
 	{
 		if (autoplay)
 		{
@@ -129,7 +133,7 @@ int main(int argc, char *argv[])
 			{*/
 			// if (board.tickCount % 10 == 0)
 			// {
-				Render(window, renderer);
+			Render(window, renderer);
 			// }
 			//}
 			// SDL_Delay(1);

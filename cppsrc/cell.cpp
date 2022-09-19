@@ -208,6 +208,37 @@ Cell_Plantmass *Cell_Plantmass::Clone()
 	return new Cell_Plantmass(*this);
 }
 
+// biomass
+Cell_Biomass::~Cell_Biomass()
+{
+}
+
+Cell_Biomass::Cell_Biomass()
+{
+	this->type = cell_biomass;
+	this->myOrganism = nullptr;
+	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME;
+}
+
+Cell_Biomass::Cell_Biomass(int _ticksUntilSpoil) : Cell_Biomass()
+{
+	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME;
+}
+
+void Cell_Biomass::Tick()
+{
+	this->ticksUntilSpoil--;
+	if (this->ticksUntilSpoil < 0)
+	{
+		this->ticksUntilSpoil = 0;
+	}
+}
+
+Cell_Biomass *Cell_Biomass::Clone()
+{
+	return new Cell_Biomass(*this);
+}
+
 // leaf cell
 Cell_Leaf::~Cell_Leaf()
 {
@@ -310,27 +341,6 @@ void Cell_Flower::Tick()
 				this->myOrganism->ReplaceCell(this, new Cell_Leaf());
 			}
 		}
-
-		/*if (randPercent(FLOWER_PERCENT))
-		{
-			Organism *hatched = board.createOrganism(this->x, this->y);
-			hatched->AddCell(0, 0, GenerateRandomCell());
-			int checkedDirection = randInt(0, 7);
-			for (int i = 0; i < 7; i++)
-			{
-				int *thisDirection = directions[(checkedDirection + i) & 7];
-				if (board.isCellOfType(this->x + thisDirection[0], this->y + thisDirection[1], cell_empty))
-				{
-					hatched->AddCell(thisDirection[0], thisDirection[1], GenerateRandomCell());
-					break;
-				}
-			}
-			this->myOrganism->RemoveCell(this);
-		}
-		else
-		{
-			this->myOrganism->ReplaceCell(this, new Cell_Leaf());
-		}*/
 	}
 }
 
