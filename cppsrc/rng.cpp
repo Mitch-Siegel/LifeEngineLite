@@ -1,6 +1,6 @@
 #include "rng.h"
 
-boost::mt19937 rng (0);
+boost::mt19937 rng (time(0));
 
 // on range [min, max)
 float randFloat(float min, float max)

@@ -23,5 +23,7 @@ public:
     void Punish();
 
     void Mutate();
-    
+
+    Brain Clone();
+
 };

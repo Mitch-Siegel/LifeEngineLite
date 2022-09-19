@@ -255,9 +255,15 @@ Organism *Organism::Reproduce()
 					replicated->Remove();
 					return replicated;
 				}
+
 				int newReproductioncooldown = (this->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
 				replicated->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
 				replicated->RecalculateStats();
+				replicated->brain = this->brain.Clone();
+				if (replicated->cellCounts[cell_mover])
+				{
+					replicated->brain.Mutate();
+				}
 				replicated->currentEnergy = randInt(1, replicated->maxEnergy / 3);
 				replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
 				return replicated;

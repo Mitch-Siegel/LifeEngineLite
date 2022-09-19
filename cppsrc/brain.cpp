@@ -57,3 +57,8 @@ void Brain::Mutate()
         this->maxConviction = 1;
     }
 }
+
+Brain Brain::Clone()
+{
+    return Brain(*this);
+}

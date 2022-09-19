@@ -37,7 +37,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_plantmass:
-				SDL_SetRenderDrawColor(renderer, 25, 75, 25, 255);
+				SDL_SetRenderDrawColor(renderer, 25, 60, 25, 255);
 				break;
 
 			case cell_leaf:
@@ -45,7 +45,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_mover:
-				SDL_SetRenderDrawColor(renderer, 70, 150, 255, 255);
+				SDL_SetRenderDrawColor(renderer, 50, 120, 255, 255);
 				break;
 
 			case cell_herbivore_mouth:

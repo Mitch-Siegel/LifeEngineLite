@@ -51,6 +51,8 @@ void Board::Tick()
 	this->tickCount++;
 	size_t organismCellsCount = 0;
 	size_t organismEnergyCount = 0;
+	size_t organismMaxEnergyCount = 0;
+	size_t organismMaxConvictionCount = 0;
 	size_t organismLifespan = 0;
 	size_t mutabilityTotal = 0;
 	for (size_t i = 0; i < this->FoodCells.size(); i++)
@@ -124,6 +126,8 @@ void Board::Tick()
 		{
 			organismCellsCount += this->Organisms[i]->myCells.size();
 			organismEnergyCount += this->Organisms[i]->GetEnergy();
+			organismMaxEnergyCount += this->Organisms[i]->GetMaxEnergy();
+			organismMaxConvictionCount += this->Organisms[i]->brain.maxConviction;
 			organismLifespan += this->Organisms[i]->lifespan;
 			mutabilityTotal += this->Organisms[i]->mutability;
 			// printf("%d %d: %lu/%lu energy, %lu cells (%lu ticks old, %d lifespan), repcd %d\n",
@@ -139,12 +143,13 @@ void Board::Tick()
 	if (this->tickCount % 100 == 0)
 	{
 
-		printf("%lu organisms, average size %.1f cells, %.1f energy, %.0f lifespan, %.1f%% mutability\n\n",
+		printf("%lu organisms, average size %.2f cells\n%.2f%% energy, %.0f lifespan\n%.1f%% mutability, %.3f max conviction\n\n",
 			   this->Organisms.size(),
 			   organismCellsCount / (float)(this->Organisms.size()),
-			   organismEnergyCount / (float)(this->Organisms.size()),
+			   organismEnergyCount / ((float)organismMaxEnergyCount) * 100,
 			   organismLifespan / (float)(this->Organisms.size()),
-			   mutabilityTotal / (float)(this->Organisms.size()));
+			   mutabilityTotal / (float)(this->Organisms.size()),
+			   organismMaxConvictionCount / (float)(this->Organisms.size()));
 	}
 }
 // returns true if out of bounds, false otherwise

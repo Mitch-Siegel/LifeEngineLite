@@ -90,7 +90,7 @@ class Organism;
 
 #define FLOWER_COST 10
 // must roll this percent and mutability percent in a row
-#define FLOWER_PERCENT 15
+#define FLOWER_PERCENT 20
 
 #define FLOWER_BLOOM_COOLDOWN 15
 #define FLOWER_WILT_CHANCE 30
