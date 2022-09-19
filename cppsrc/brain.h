@@ -21,4 +21,7 @@ public:
     void Reward();
 
     void Punish();
+
+    void Mutate();
+    
 };

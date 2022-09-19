@@ -18,13 +18,13 @@ public:
 	std::size_t age;
 	int mutability;
 	bool alive;
-	bool canMove;
 	std::vector<Cell *> myCells;
 	int reproductionCooldown;
-	int lifespan;
+	std::size_t lifespan;
 	Brain brain;
-	bool hasLeaf;
-	bool hasFlower;
+	int cellCounts[cell_null];
+	// bool hasLeaf;
+	// bool hasFlower;
 
 	Organism(int center_x, int center_y);
 
@@ -54,8 +54,6 @@ public:
 
 	void AddEnergy(std::size_t n);
 
-	void CalculateMaxEnergy();
-
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
 
 	Organism *Reproduce();
@@ -65,35 +63,37 @@ public:
 
 class Organism;
 
-#define DEFAULT_MUTABILITY 25
+#define DEFAULT_MUTABILITY 15
 
 // as proportion of max energy
-#define REPRODUCTION_ENERGY_MULTIPLIER .35
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 2
-#define LIFESPAN_MULTIPLIER 500
+#define REPRODUCTION_ENERGY_MULTIPLIER .45
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.3
+#define LIFESPAN_MULTIPLIER 250
 #define ENERGY_DENSITY_MULTIPLIER 3
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 10
+#define HERB_FOOD_MULTIPLIER 2
 
 #define LEAF_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 5 * HERB_FOOD_MULTIPLIER
-#define FRUIT_FOOD_ENERGY 9 * HERB_FOOD_MULTIPLIER
+#define FRUIT_FOOD_ENERGY 10 * HERB_FOOD_MULTIPLIER
 
 #define FRUIT_SPOIL_TIME 30
-#define FRUIT_GROW_PERCENT 100
+// must roll 2x in a row
+#define FRUIT_GROW_PERCENT 5
 
-#define BIOMASS_SPOIL_TIME 120
+#define PLANTMASS_SPOIL_TIME 240
+#define BIOMASS_SPOIL_TIME 60
 
-#define BIOMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
+#define PLANTMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
 
 
 #define FLOWER_COST 10
-// must roll this and parent mutability to produce flower
-#define FLOWER_PERCENT 2
+// must roll this percent and mutability percent in a row
+#define FLOWER_PERCENT 15
 
 #define FLOWER_BLOOM_COOLDOWN 15
-#define FLOWER_WILT_CHANCE 25
+#define FLOWER_WILT_CHANCE 30
 #define FLOWER_BLOOM_COST 8
 
 
@@ -127,27 +127,25 @@ public:
 	Cell_Empty *Clone() override;
 };
 
-class Cell_Biomass : public Cell
+class Cell_Plantmass : public Cell
 {
 public:
 	int ticksUntilSpoil;
 
 public:
-	~Cell_Biomass() override;
+	~Cell_Plantmass() override;
 
-	Cell_Biomass();
+	Cell_Plantmass();
 
-	Cell_Biomass(int _ticksUntilSpoil);
+	Cell_Plantmass(int _ticksUntilSpoil);
 
 	void Tick() override;
 
-	Cell_Biomass *Clone() override;
+	Cell_Plantmass *Clone() override;
 };
 
 class Cell_Leaf : public Cell
 {
-	int photosynthesisCooldown;
-
 public:
 	~Cell_Leaf() override;
 

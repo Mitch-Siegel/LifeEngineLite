@@ -16,7 +16,8 @@ void intHandler(int dummy)
 }
 // Cell *board[BOARD_DIM][BOARD_DIM];
 
-Board board = Board(256, 256);
+// Board board = Board(512, 256);
+Board board = Board(192, 192);
 
 void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
@@ -35,7 +36,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 				break;
 
-			case cell_biomass:
+			case cell_plantmass:
 				SDL_SetRenderDrawColor(renderer, 25, 75, 25, 255);
 				break;
 
@@ -77,8 +78,9 @@ int main(int argc, char *argv[])
 	SDL_Renderer *renderer = nullptr;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(1024, 1024, 0, &window, &renderer);
-	SDL_RenderSetScale(renderer, 4, 4);
+	// SDL_CreateWindowAndRenderer(2560, 1280, 0, &window, &renderer);
+	SDL_CreateWindowAndRenderer(1344, 1344, 0, &window, &renderer);
+	SDL_RenderSetScale(renderer, 7, 7);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
@@ -111,12 +113,12 @@ int main(int argc, char *argv[])
 	// board.Organisms.push_back(firstOrganism);
 
 	SDL_Event e;
-	bool autoplay = false;
+	bool autoplay = true;
 	// getch();
 	// clear();
 	// refresh();
-	int autoplaySpeed = 1000;
-	while (running)
+	int autoplaySpeed = 1;
+	while (running/* && board.tickCount < 100*/)
 	{
 		if (autoplay)
 		{
@@ -125,7 +127,10 @@ int main(int argc, char *argv[])
 
 			/*if (board.tickCount % (1000 / autoplaySpeed) == 0)
 			{*/
+			// if (board.tickCount % 10 == 0)
+			// {
 				Render(window, renderer);
+			// }
 			//}
 			// SDL_Delay(1);
 		}
@@ -172,7 +177,7 @@ int main(int argc, char *argv[])
 					else
 					{
 						autoplaySpeed *= 2;
-						if(autoplaySpeed > 1000)
+						if (autoplaySpeed > 1000)
 						{
 							autoplaySpeed = 1000;
 						}

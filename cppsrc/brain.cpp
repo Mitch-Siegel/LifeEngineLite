@@ -48,3 +48,12 @@ void Brain::Decide()
         break;
     }
 }
+
+void Brain::Mutate()
+{
+    this->maxConviction += (randInt(-1, 1));
+    if(this->maxConviction < 1)
+    {
+        this->maxConviction = 1;
+    }
+}

@@ -14,6 +14,7 @@ Board::Board(const int _dim_x, const int _dim_y)
 	this->tickCount = 0;
 	this->dim_x = _dim_x;
 	this->dim_y = _dim_y;
+	this->Organisms = std::vector<Organism *>();
 
 	for (int y = 0; y < _dim_y; y++)
 	{
@@ -57,8 +58,8 @@ void Board::Tick()
 		this->FoodCells[i]->Tick();
 		switch (this->FoodCells[i]->type)
 		{
-		case cell_biomass:
-			if (((Cell_Biomass *)this->FoodCells[i])->ticksUntilSpoil == 0)
+		case cell_plantmass:
+			if (((Cell_Plantmass *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
 				board.replaceCell(this->FoodCells[i], new Cell_Empty());
 				i--;
@@ -67,20 +68,39 @@ void Board::Tick()
 
 		case cell_fruit:
 			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
-			{/*
-				if (1)
+			{
+				if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
 				{
 					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
 					grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
 					board.replaceCell(this->FoodCells[i], new Cell_Empty());
-					grownFruit->AddCell(0, 0, new Cell_Leaf());
+					grownFruit->AddCell(0, 0, GenerateRandomCell());
+					Cell *secondRandomCell = GenerateRandomCell();
+					bool couldAddSecond = false;
+					int dirIndex = randInt(0, 7);
+					for (int i = 0; i < 8; i++)
+					{
+						int *thisDirection = directions[(i + dirIndex) % 8];
+						if (grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell) == 0)
+						{
+							couldAddSecond = true;
+							break;
+						}
+					}
+					if(!couldAddSecond)
+					{
+						delete secondRandomCell;
+					}
+
 					grownFruit->RecalculateStats();
-					grownFruit->AddEnergy(2);
+					grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
+					// grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
+					grownFruit->AddEnergy(grownFruit->GetMaxEnergy());
 				}
 				else
-				{*/
-					board.replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Biomass());
-				//}
+				{
+					board.replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Plantmass(FRUIT_SPOIL_TIME));
+				}
 				i--;
 			}
 			break;
@@ -116,15 +136,16 @@ void Board::Tick()
 			}
 		}
 	}
-	// if (this->tickCount % 100 == 0)
-	//{
-	printf("%lu organisms, average size %.3f cells, %.3f energy, %.3f lifespan, %f%% mutability\n\n",
-		   this->Organisms.size(),
-		   organismCellsCount / (float)(this->Organisms.size()),
-		   organismEnergyCount / (float)(this->Organisms.size()),
-		   organismLifespan / (float)(this->Organisms.size()),
-		   mutabilityTotal / (float)(this->Organisms.size()));
-	//}
+	if (this->tickCount % 100 == 0)
+	{
+
+		printf("%lu organisms, average size %.1f cells, %.1f energy, %.0f lifespan, %.1f%% mutability\n\n",
+			   this->Organisms.size(),
+			   organismCellsCount / (float)(this->Organisms.size()),
+			   organismEnergyCount / (float)(this->Organisms.size()),
+			   organismLifespan / (float)(this->Organisms.size()),
+			   mutabilityTotal / (float)(this->Organisms.size()));
+	}
 }
 // returns true if out of bounds, false otherwise
 bool Board::boundCheckPos(int x, int y)
@@ -160,7 +181,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 
 	switch (this->cells[_y][_x]->type)
 	{
-	case cell_biomass:
+	case cell_plantmass:
 	case cell_fruit:
 		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
 		break;
@@ -174,7 +195,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 	_cell->y = _y;
 	switch (_cell->type)
 	{
-	case cell_biomass:
+	case cell_plantmass:
 	case cell_fruit:
 		this->FoodCells.push_back(_cell);
 		break;

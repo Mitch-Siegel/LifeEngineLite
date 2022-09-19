@@ -11,8 +11,8 @@ int CellEnergyDensities[cell_null] = {
 	4,
 	5,
 	0,
-	-4,
-	30,
+	-5,
+	55,
 };
 
 Cell *GenerateRandomCell()
@@ -74,7 +74,7 @@ for (int i = 0; i < 4; i++)
 {
 	int x_abs = this->x + directions[i][0];
 	int y_abs = this->y + directions[i][1];
-	if (isCellOfType(x_abs, y_abs, Cell_Biomass))
+	if (isCellOfType(x_abs, y_abs, cell_plantmass))
 	{
 		delete board[y_abs][x_abs];
 
@@ -109,9 +109,9 @@ case cell_flower:
 		  int y_abs = this->y + directions[index][1];
 		  if (isCellOfType(x_abs, y_abs, cell_empty))
 		  {
-			  // couldPlace = this->myOrganism->AddCell(x_rel, y_rel, Cell_Biomass);
+			  // couldPlace = this->myOrganism->AddCell(x_rel, y_rel, cell_plantmass);
 			  delete board[y_abs][x_abs];
-			  Cell *droppedFood = new Cell(x_abs, y_abs, Cell_Biomass, this->myOrganism);
+			  Cell *droppedFood = new Cell(x_abs, y_abs, cell_plantmass, this->myOrganism);
 			  droppedFood->actionCooldown = FRUIT_SPOILTIME;
 			  board[y_abs][x_abs] = droppedFood;
 			  foodCells.push_back(droppedFood);
@@ -142,7 +142,7 @@ case cell_leaf:
   this->actionCooldown = 1;
   break;
 
-case Cell_Biomass:
+case cell_plantmass:
   break;
 }
 }*/
@@ -177,24 +177,24 @@ Cell_Empty *Cell_Empty::Clone()
 	return new Cell_Empty(*this);
 }
 
-// food cell
-Cell_Biomass::~Cell_Biomass()
+// plantmass
+Cell_Plantmass::~Cell_Plantmass()
 {
 }
 
-Cell_Biomass::Cell_Biomass()
+Cell_Plantmass::Cell_Plantmass()
 {
-	this->type = cell_biomass;
+	this->type = cell_plantmass;
 	this->myOrganism = nullptr;
 	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME;
 }
 
-Cell_Biomass::Cell_Biomass(int _ticksUntilSpoil) : Cell_Biomass()
+Cell_Plantmass::Cell_Plantmass(int _ticksUntilSpoil) : Cell_Plantmass()
 {
 	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME;
 }
 
-void Cell_Biomass::Tick()
+void Cell_Plantmass::Tick()
 {
 	this->ticksUntilSpoil--;
 	if (this->ticksUntilSpoil < 0)
@@ -203,9 +203,9 @@ void Cell_Biomass::Tick()
 	}
 }
 
-Cell_Biomass *Cell_Biomass::Clone()
+Cell_Plantmass *Cell_Plantmass::Clone()
 {
-	return new Cell_Biomass(*this);
+	return new Cell_Plantmass(*this);
 }
 
 // leaf cell
@@ -217,23 +217,16 @@ Cell_Leaf::Cell_Leaf()
 {
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
-	this->photosynthesisCooldown = 0;
 }
 
 Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 {
 	this->type = cell_leaf;
 	this->myOrganism = _myOrganism;
-	this->photosynthesisCooldown = 0;
 }
 
 void Cell_Leaf::Tick()
 {
-	if (this->photosynthesisCooldown > 0)
-	{
-		this->photosynthesisCooldown--;
-		return;
-	}
 	if (this->myOrganism->GetEnergy() > FLOWER_COST && randPercent(this->myOrganism->mutability) && randPercent(FLOWER_PERCENT))
 	{
 		int checkDirIndex = randInt(0, 3);
@@ -244,11 +237,8 @@ void Cell_Leaf::Tick()
 			int y_abs = this->y + thisDirection[1];
 			if (board.isCellOfType(x_abs, y_abs, cell_empty))
 			{
-				// int x_rel = x_abs - this->myOrganism->x;
-				// int y_rel = y_abs - this->myOrganism->y;
 				this->myOrganism->ExpendEnergy(FLOWER_COST);
 				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
-				// this->myOrganism->ReplaceCell(this, new Cell_Flower());
 				return;
 			}
 		}
@@ -256,8 +246,6 @@ void Cell_Leaf::Tick()
 	else
 	{
 		this->myOrganism->AddEnergy(1);
-		// this->myOrganism->lifespan++;
-		this->photosynthesisCooldown = 0;
 	}
 }
 
@@ -289,7 +277,6 @@ void Cell_Flower::Tick()
 {
 	if (this->bloomCooldown > 0)
 	{
-		// this->myOrganism->lifespan += 2;
 		this->bloomCooldown--;
 		return;
 	}
@@ -443,7 +430,7 @@ Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
 
 void Cell_Herbivore::Tick()
 {
-	if (!this->myOrganism->canMove)
+	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
 	{
 		this->myOrganism->ExpendEnergy(randInt(1, 2));
 	}
@@ -453,7 +440,7 @@ void Cell_Herbivore::Tick()
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board.isCellOfType(x_abs, y_abs, cell_leaf) || board.isCellOfType(x_abs, y_abs, cell_flower) || board.isCellOfType(x_abs, y_abs, cell_fruit) || board.isCellOfType(x_abs, y_abs, cell_biomass))
+		if (board.isCellOfType(x_abs, y_abs, cell_leaf) || board.isCellOfType(x_abs, y_abs, cell_flower) || board.isCellOfType(x_abs, y_abs, cell_fruit) || board.isCellOfType(x_abs, y_abs, cell_plantmass))
 		{
 			Cell *eaten = board.cells[y_abs][x_abs];
 			Organism *eatenParent = eaten->myOrganism;
@@ -482,8 +469,8 @@ void Cell_Herbivore::Tick()
 					this->myOrganism->AddEnergy(FRUIT_FOOD_ENERGY);
 					break;
 
-				case cell_biomass:
-					this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
+				case cell_plantmass:
+					this->myOrganism->AddEnergy(PLANTMASS_FOOD_ENERGY);
 					break;
 
 				default:
