@@ -46,12 +46,13 @@ void Organism::Die()
 
 			case cell_leaf:
 			case cell_flower:
-				replacedWith = new Cell_Plantmass(PLANTMASS_SPOIL_TIME);
+				replacedWith = new Cell_Plantmass(this->myCells.size() * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 				break;
 
 			case cell_mover:
 			case cell_herbivore_mouth:
-				replacedWith = new Cell_Biomass(BIOMASS_SPOIL_TIME);
+			case cell_carnivore_mouth:
+				replacedWith = new Cell_Biomass(this->myCells.size() * BIOMASS_SPOIL_TIME_MULTIPLIER);
 
 
 		}
@@ -225,7 +226,7 @@ Organism *Organism::Reproduce()
 	for (int i = 0; i < 8; i++)
 	{
 		int *thisDir = directions[(dirIndex + i) % 8];
-		for (int j = 1; j < 4; j++)
+		for (int j = 1; j < (sqrt(this->myCells.size())); j++)
 		{
 			int dir_x = thisDir[0] * j;
 			int dir_y = thisDir[1] * j;

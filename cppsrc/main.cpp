@@ -37,7 +37,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_plantmass:
-				SDL_SetRenderDrawColor(renderer, 25, 60, 25, 255);
+				SDL_SetRenderDrawColor(renderer, 15, 40, 15, 255);
 				break;
 
 			case cell_biomass:
@@ -45,7 +45,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_leaf:
-				SDL_SetRenderDrawColor(renderer, 0, 150, 0, 255);
+				SDL_SetRenderDrawColor(renderer, 30, 120, 30, 255);
 				break;
 
 			case cell_mover:
@@ -53,11 +53,15 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_herbivore_mouth:
-				SDL_SetRenderDrawColor(renderer, 200, 175, 0, 255);
+				SDL_SetRenderDrawColor(renderer, 100, 200, 100, 255);
+				break;
+
+			case cell_carnivore_mouth:
+				SDL_SetRenderDrawColor(renderer, 200, 100, 100, 255);
 				break;
 
 			case cell_flower:
-				SDL_SetRenderDrawColor(renderer, 100, 255, 100, 255);
+				SDL_SetRenderDrawColor(renderer, 50, 250, 150, 255);
 				break;
 
 			case cell_fruit:

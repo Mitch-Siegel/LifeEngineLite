@@ -9,6 +9,7 @@ enum CellTypes
 	cell_flower,
 	cell_fruit,
 	cell_herbivore_mouth,	
+	cell_carnivore_mouth,
 	cell_mover,
 	cell_null,
 };

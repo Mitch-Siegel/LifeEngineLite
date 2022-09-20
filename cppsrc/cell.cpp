@@ -8,10 +8,12 @@ extern Board board;
 int CellEnergyDensities[cell_null] = {
 	0,
 	0,
+	0,
 	4,
 	5,
 	0,
 	-5,
+	300,
 	55,
 };
 
@@ -31,7 +33,7 @@ Cell *GenerateRandomCell()
 		break;
 	}*/
 
-	switch (randInt(0, 2))
+	switch (randInt(0, 3))
 	{
 	case 0:
 		return new Cell_Mover();
@@ -43,6 +45,10 @@ Cell *GenerateRandomCell()
 
 	case 2:
 		return new Cell_Herbivore();
+		break;
+
+	case 3:
+		return new Cell_Carnivore();
 		break;
 	}
 
@@ -186,12 +192,12 @@ Cell_Plantmass::Cell_Plantmass()
 {
 	this->type = cell_plantmass;
 	this->myOrganism = nullptr;
-	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME;
+	this->ticksUntilSpoil = PLANTMASS_SPOIL_TIME_MULTIPLIER;
 }
 
 Cell_Plantmass::Cell_Plantmass(int _ticksUntilSpoil) : Cell_Plantmass()
 {
-	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME;
+	this->ticksUntilSpoil = PLANTMASS_SPOIL_TIME_MULTIPLIER;
 }
 
 void Cell_Plantmass::Tick()
@@ -217,12 +223,12 @@ Cell_Biomass::Cell_Biomass()
 {
 	this->type = cell_biomass;
 	this->myOrganism = nullptr;
-	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME;
+	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME_MULTIPLIER;
 }
 
 Cell_Biomass::Cell_Biomass(int _ticksUntilSpoil) : Cell_Biomass()
 {
-	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME;
+	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME_MULTIPLIER;
 }
 
 void Cell_Biomass::Tick()
@@ -505,4 +511,79 @@ void Cell_Herbivore::Tick()
 Cell_Herbivore *Cell_Herbivore::Clone()
 {
 	return new Cell_Herbivore(*this);
+}
+
+
+// herbivore mouth cell
+Cell_Carnivore::~Cell_Carnivore()
+{
+}
+
+Cell_Carnivore::Cell_Carnivore()
+{
+	this->type = cell_carnivore_mouth;
+	this->myOrganism = nullptr;
+}
+
+Cell_Carnivore::Cell_Carnivore(Organism *_myOrganism)
+{
+	this->type = cell_carnivore_mouth;
+	this->myOrganism = _myOrganism;
+}
+
+void Cell_Carnivore::Tick()
+{
+	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
+	{
+		this->myOrganism->ExpendEnergy(randInt(1, 2));
+	}
+	int checkDirIndex = randInt(0, 3);
+	for (int i = 0; i < 4; i++)
+	{
+		int *thisDirection = directions[(checkDirIndex + i) % 4];
+		int x_abs = this->x + thisDirection[0];
+		int y_abs = this->y + thisDirection[1];
+		if (board.isCellOfType(x_abs, y_abs, cell_biomass))
+		{
+			Cell *eaten = board.cells[y_abs][x_abs];
+			Organism *eatenParent = eaten->myOrganism;
+			if (eatenParent != this->myOrganism /* &&
+				 this->myOrganism->canMove*/
+												/*((!this->myOrganism->hasLeaf && eaten->type == cell_leaf) ||
+												 (!this->myOrganism->hasFlower && eaten->type == cell_flower))*/
+			)
+			{
+				/*if (eatenParent != nullptr)
+				{
+					std::vector<Cell *>::iterator foundLeaf = std::find(eatenParent->myCells.begin(), eatenParent->myCells.end(), eaten);
+					eatenParent->myCells.erase(foundLeaf);
+				}*/
+				switch (eaten->type)
+				{
+				case cell_biomass:
+					this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
+					break;
+
+				default:
+					std::cerr << "Impossible case for carnivore cell to eat something it shouldn't!" << std::endl;
+					exit(1);
+				}
+				if (eaten->myOrganism != nullptr)
+				{
+					eaten->myOrganism->RemoveCell(eaten);
+					board.replaceCell(eaten, new Cell_Empty());
+				}
+				else
+				{
+					board.replaceCell(eaten, new Cell_Empty());
+				}
+				this->myOrganism->brain.Reward();
+			}
+		}
+	}
+}
+
+Cell_Carnivore *Cell_Carnivore::Clone()
+{
+	return new Cell_Carnivore(*this);
 }

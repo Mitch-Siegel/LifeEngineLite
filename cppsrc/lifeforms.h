@@ -72,7 +72,7 @@ class Organism;
 #define ENERGY_DENSITY_MULTIPLIER 3
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 2
+#define HERB_FOOD_MULTIPLIER 3
 
 #define LEAF_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 5 * HERB_FOOD_MULTIPLIER
@@ -82,15 +82,16 @@ class Organism;
 // must roll 2x in a row
 #define FRUIT_GROW_PERCENT 5
 
-#define PLANTMASS_SPOIL_TIME 240
-#define BIOMASS_SPOIL_TIME 600
+#define PLANTMASS_SPOIL_TIME_MULTIPLIER 100
+#define BIOMASS_SPOIL_TIME_MULTIPLIER 100
 
 #define PLANTMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
+#define BIOMASS_FOOD_ENERGY 50
 
 
 #define FLOWER_COST 10
 // must roll this percent and mutability percent in a row
-#define FLOWER_PERCENT 20
+#define FLOWER_PERCENT 10
 
 #define FLOWER_BLOOM_COOLDOWN 15
 #define FLOWER_WILT_CHANCE 30
@@ -240,4 +241,20 @@ public:
 	void Tick() override;
 
 	Cell_Herbivore *Clone() override;
+};
+
+
+class Cell_Carnivore : public Cell
+{
+
+public:
+	~Cell_Carnivore() override;
+
+	Cell_Carnivore();
+
+	Cell_Carnivore(Organism *_myOrganism);
+
+	void Tick() override;
+
+	Cell_Carnivore *Clone() override;
 };
