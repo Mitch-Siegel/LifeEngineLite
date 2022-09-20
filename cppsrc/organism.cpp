@@ -122,6 +122,7 @@ Organism *Organism::Tick()
 void Organism::RecalculateStats()
 {
 	this->maxEnergy = 10;
+	int calculatedMaxEnergy = 10;
 	for (int i = 0; i < cell_null; i++)
 	{
 		cellCounts[i] = 0;
@@ -129,12 +130,16 @@ void Organism::RecalculateStats()
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		cellCounts[this->myCells[i]->type]++;
-		this->maxEnergy += CellEnergyDensities[this->myCells[i]->type];
+		calculatedMaxEnergy += CellEnergyDensities[this->myCells[i]->type];
 	}
-	this->maxEnergy *= ENERGY_DENSITY_MULTIPLIER;
-	if (this->maxEnergy < 0)
+	calculatedMaxEnergy *= ENERGY_DENSITY_MULTIPLIER;
+	if (calculatedMaxEnergy < 0)
 	{
 		this->maxEnergy = 0;
+	}
+	else
+	{
+		this->maxEnergy = calculatedMaxEnergy;
 	}
 	this->maxHealth = this->myCells.size() * MAX_HEALTH_MULTIPLIER;
 	if (this->lifespan > this->myCells.size() * LIFESPAN_MULTIPLIER)
@@ -237,9 +242,9 @@ Organism *Organism::Reproduce()
 
 				Organism *replicated = new Organism(this->x + dir_x, this->y + dir_y);
 				replicated->mutability = this->mutability;
-				for (size_t i = 0; i < this->myCells.size(); i++)
+				for (size_t k = 0; k < this->myCells.size(); k++)
 				{
-					Cell *thisCell = this->myCells[i];
+					Cell *thisCell = this->myCells[k];
 					switch (thisCell->type)
 					{
 					case cell_flower:

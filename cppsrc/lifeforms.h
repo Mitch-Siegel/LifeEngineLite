@@ -14,7 +14,8 @@ private:
 	std::size_t currentEnergy, maxEnergy;
 
 public:
-	int x, y;
+	int x = -1;
+	int y = -1;
 	std::size_t age;
 	int mutability;
 	bool alive;
@@ -103,9 +104,10 @@ class Organism;
 class Cell
 {
 public:
-	Organism *myOrganism;
-	enum CellTypes type;
-	int x, y;
+	Organism *myOrganism = nullptr;
+	enum CellTypes type = cell_null;
+	int x = -1;
+	int y = -1;
 
 	virtual ~Cell() = 0;
 
@@ -138,7 +140,7 @@ public:
 
 	Cell_Plantmass();
 
-	Cell_Plantmass(int _ticksUntilSpoil);
+	explicit Cell_Plantmass(int _ticksUntilSpoil);
 
 	void Tick() override;
 
@@ -155,7 +157,7 @@ public:
 
 	Cell_Biomass();
 
-	Cell_Biomass(int _ticksUntilSpoil);
+	explicit Cell_Biomass(int _ticksUntilSpoil);
 
 	void Tick() override;
 
@@ -169,7 +171,7 @@ public:
 
 	Cell_Leaf();
 
-	Cell_Leaf(Organism *_myOrganism);
+	explicit Cell_Leaf(Organism *_myOrganism);
 
 	// Cell_Leaf(const Cell_Leaf &c);
 
@@ -187,7 +189,7 @@ public:
 
 	Cell_Flower();
 
-	Cell_Flower(Organism *_myOrganism);
+	explicit Cell_Flower(Organism *_myOrganism);
 
 	void Tick() override;
 
@@ -205,9 +207,9 @@ public:
 
 	Cell_Fruit();
 
-	Cell_Fruit(int parentMutability);
+	explicit Cell_Fruit(int parentMutability);
 
-	Cell_Fruit(Organism *_myOrganism);
+	explicit Cell_Fruit(Organism *_myOrganism);
 
 	void Tick() override;
 
@@ -221,7 +223,7 @@ public:
 
 	Cell_Mover();
 
-	Cell_Mover(Organism *_myOrganism);
+	explicit Cell_Mover(Organism *_myOrganism);
 
 	void Tick() override;
 
@@ -236,7 +238,7 @@ public:
 
 	Cell_Herbivore();
 
-	Cell_Herbivore(Organism *_myOrganism);
+	explicit Cell_Herbivore(Organism *_myOrganism);
 
 	void Tick() override;
 
@@ -252,7 +254,7 @@ public:
 
 	Cell_Carnivore();
 
-	Cell_Carnivore(Organism *_myOrganism);
+	explicit Cell_Carnivore(Organism *_myOrganism);
 
 	void Tick() override;
 
