@@ -146,6 +146,10 @@ void Organism::RecalculateStats()
 	{
 		this->lifespan = this->myCells.size() * LIFESPAN_MULTIPLIER;
 	}
+	if(this->currentEnergy > this->maxEnergy)
+	{
+		this->currentEnergy = this->maxEnergy;
+	}
 }
 
 // disallow specific types of organisms from existing

@@ -39,7 +39,7 @@ void Brain::Decide()
         break;
 
     case intent_changeDir:
-        this->moveDirIndex = randInt(0, 3);
+        this->moveDirIndex = randInt(0, 3999) % 4;
         this->currentIntent = intent_continue;
         this->conviction = 0;
         break;

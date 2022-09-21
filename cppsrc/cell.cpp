@@ -417,7 +417,7 @@ Cell_Mover::Cell_Mover(Organism *_myOrganism)
 
 void Cell_Mover::Tick()
 {
-	int moveCost = this->myOrganism->myCells.size() - 2;
+	int moveCost = (this->myOrganism->myCells.size() - 2) / 2;
 	moveCost = (moveCost > 0) ? moveCost : 1;
 	this->myOrganism->ExpendEnergy(moveCost);
 }
