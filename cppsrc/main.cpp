@@ -53,11 +53,11 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_herbivore_mouth:
-				SDL_SetRenderDrawColor(renderer, 100, 200, 100, 255);
+				SDL_SetRenderDrawColor(renderer, 255, 200, 0, 255);
 				break;
 
 			case cell_carnivore_mouth:
-				SDL_SetRenderDrawColor(renderer, 200, 100, 100, 255);
+				SDL_SetRenderDrawColor(renderer, 255, 75, 75, 255);
 				break;
 
 			case cell_flower:
