@@ -24,8 +24,6 @@ public:
 	std::size_t lifespan;
 	Brain brain;
 	int cellCounts[cell_null];
-	// bool hasLeaf;
-	// bool hasFlower;
 
 	Organism(int center_x, int center_y);
 
@@ -73,7 +71,7 @@ class Organism;
 #define ENERGY_DENSITY_MULTIPLIER 7
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 3
+#define HERB_FOOD_MULTIPLIER 4
 
 #define LEAF_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 5 * HERB_FOOD_MULTIPLIER

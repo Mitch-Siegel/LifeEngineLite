@@ -102,7 +102,7 @@ Organism *Organism::Tick()
 	}
 
 	// don't allow organisms of size 1 to reproduce
-	if (this->reproductionCooldown == 0 && (this->myCells.size() > 1 || board.Organisms.size() < 3))
+	if (this->reproductionCooldown == 0 && (this->myCells.size() > 1 || this->myCells[0]->type == cell_leaf))
 	{
 		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.25))
 		{
@@ -349,7 +349,7 @@ void Organism::Mutate()
 		{
 			int x_rel = 0;
 			int y_rel = 0;
-			bool couldAdd = 0;
+			bool couldAdd = false;
 
 			int numCells = this->myCells.size();
 			int cellIndex = 0;
@@ -359,11 +359,11 @@ void Organism::Mutate()
 			}
 			for (int i = 0; (i < numCells) && !couldAdd; i++)
 			{
-				Cell *thisAttempt = this->myCells[(cellIndex + i) % numCells];
+				Cell *thisAttempt = this->myCells[(cellIndex + randInt(0, numCells - 1)) % numCells];
 				int thisDirectionIndex = randInt(0, 7);
 				for (int j = 0; j < 8; j++)
 				{
-					int *thisDirection = directions[(thisDirectionIndex + j) % 8];
+					int *thisDirection = directions[(thisDirectionIndex + randInt(0, 7)) % 8];
 					int x_abs = thisAttempt->x + thisDirection[0];
 					int y_abs = thisAttempt->y + thisDirection[1];
 					if (board.isCellOfType(x_abs, y_abs, cell_empty))
@@ -375,45 +375,6 @@ void Organism::Mutate()
 					}
 				}
 			}
-
-			// this is wildly inefficient but it's an easy way to choose a random position and ensure it stays in bounds
-			/*while (!couldAdd && nTries < 2)
-			{
-				int thisDirectionIndex = randInt(0, 3);
-				// make sure we don't immediately choose an opposite direction
-				while ((thisDirectionIndex + 2) % 4 == prevDirectionIndex)
-				{
-					thisDirectionIndex = randInt(0, 3);
-				}
-				nTries++;
-
-				prevDirectionIndex = thisDirectionIndex;
-				int *thisDirection = directions[thisDirectionIndex];
-				x_rel += thisDirection[0];
-				y_rel += thisDirection[1];
-				int x_abs = this->x + x_rel;
-				int y_abs = this->y + y_rel;
-				if (board.boundCheckPos(x_abs, y_abs))
-				{
-					x_rel -= thisDirection[0];
-					y_rel -= thisDirection[1];
-					continue;
-				}
-				else
-				{
-					if (board.isCellOfType(x_abs, y_abs, cell_empty))
-					{
-						couldAdd = true;
-					}
-					else
-					{
-						if(board.cells[y_abs][x_abs]->myOrganism == this)
-						{
-							nTries--;
-						}
-					}
-				}
-			}*/
 
 			if (couldAdd)
 			{

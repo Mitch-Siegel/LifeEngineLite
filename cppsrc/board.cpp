@@ -79,33 +79,48 @@ void Board::Tick()
 		case cell_fruit:
 			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
-				if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
+				if (randPercent(FRUIT_GROW_PERCENT))
 				{
+					// if we roll grow percent 2x, create a new random organism
 					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
-					grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
-					board.replaceCell(this->FoodCells[i], new Cell_Empty());
-					grownFruit->AddCell(0, 0, GenerateRandomCell());
-					Cell *secondRandomCell = GenerateRandomCell();
-					bool couldAddSecond = false;
-					int dirIndex = randInt(0, 7);
-					for (int j = 0; j < 8; j++)
+					if (randPercent(FRUIT_GROW_PERCENT))
 					{
-						int *thisDirection = directions[(j + dirIndex) % 8];
-						if (grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell) == 0)
+						grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
+						board.replaceCell(this->FoodCells[i], new Cell_Empty());
+						grownFruit->AddCell(0, 0, GenerateRandomCell());
+						Cell *secondRandomCell = GenerateRandomCell();
+						bool couldAddSecond = false;
+						int dirIndex = randInt(0, 7);
+						for (int j = 0; j < 8; j++)
 						{
-							couldAddSecond = true;
-							break;
+							int *thisDirection = directions[(j + dirIndex) % 8];
+							if (grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell) == 0)
+							{
+								couldAddSecond = true;
+								break;
+							}
 						}
-					}
-					if (!couldAddSecond)
-					{
-						delete secondRandomCell;
-					}
+						if (!couldAddSecond)
+						{
+							delete secondRandomCell;
+						}
 
-					grownFruit->RecalculateStats();
-					grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
-					// grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
-					grownFruit->AddEnergy(grownFruit->GetMaxEnergy());
+						grownFruit->RecalculateStats();
+						grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
+						grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
+						// grownFruit->AddEnergy(grownFruit->GetMaxEnergy());
+					}
+					// if only rolled 1x, just create a new single-celled plant
+					else
+					{
+						grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
+						board.replaceCell(this->FoodCells[i], new Cell_Empty());
+						grownFruit->AddCell(0, 0, new Cell_Leaf());
+						grownFruit->RecalculateStats();
+						grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
+						// grownFruit->AddEnergy(2);
+						grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
+					}
 				}
 				else
 				{
