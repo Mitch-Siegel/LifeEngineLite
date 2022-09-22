@@ -264,7 +264,10 @@ Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 
 void Cell_Leaf::Tick()
 {
-	if (this->myOrganism->GetEnergy() > FLOWER_COST && randPercent(this->myOrganism->mutability) && randPercent(FLOWER_PERCENT))
+	if ((this->myOrganism->myCells.size() > 2) && 
+		this->myOrganism->GetEnergy() > FLOWER_COST && 
+		randPercent(this->myOrganism->mutability) && 
+		randPercent(FLOWER_PERCENT))
 	{
 		int checkDirIndex = randInt(0, 3);
 		for (int i = 0; i < 4; i++)

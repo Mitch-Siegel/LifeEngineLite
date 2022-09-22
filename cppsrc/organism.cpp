@@ -235,7 +235,7 @@ Organism *Organism::Reproduce()
 	for (int i = 0; i < 8; i++)
 	{
 		int *thisDir = directions[(dirIndex + i) % 8];
-		for (int j = 1; j < (sqrt(this->myCells.size())); j++)
+		for (int j = 1; j < (ceil(sqrt(this->myCells.size())) + 1); j++)
 		{
 			int dir_x = thisDir[0] * j;
 			int dir_y = thisDir[1] * j;
@@ -284,6 +284,7 @@ Organism *Organism::Reproduce()
 
 				if (replicated->CheckValidity())
 				{
+
 					replicated->Remove();
 					return replicated;
 				}

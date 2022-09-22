@@ -79,11 +79,11 @@ void Board::Tick()
 		case cell_fruit:
 			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
-				if (randPercent(FRUIT_GROW_PERCENT))
+				if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
 				{
 					// if we roll grow percent 2x, create a new random organism
 					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
-					if (randPercent(FRUIT_GROW_PERCENT))
+					if (randPercent(FRUIT_MUTATE_PERCENT))
 					{
 						grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
 						board.replaceCell(this->FoodCells[i], new Cell_Empty());
@@ -105,9 +105,6 @@ void Board::Tick()
 							delete secondRandomCell;
 						}
 
-						grownFruit->RecalculateStats();
-						grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
-						grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
 						// grownFruit->AddEnergy(grownFruit->GetMaxEnergy());
 					}
 					// if only rolled 1x, just create a new single-celled plant
@@ -116,11 +113,13 @@ void Board::Tick()
 						grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
 						board.replaceCell(this->FoodCells[i], new Cell_Empty());
 						grownFruit->AddCell(0, 0, new Cell_Leaf());
-						grownFruit->RecalculateStats();
-						grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
 						// grownFruit->AddEnergy(2);
-						grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
 					}
+					grownFruit->RecalculateStats();
+					grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
+					grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
+					int newReproductioncooldown = (grownFruit->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
+					grownFruit->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
 				}
 				else
 				{

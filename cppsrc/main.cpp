@@ -104,7 +104,9 @@ int main(int argc, char *argv[])
 	firstOrganism->AddCell(0, 0, new Cell_Leaf());
 	firstOrganism->AddCell(1, 0, new Cell_Leaf());
 	firstOrganism->AddCell(1, 1, new Cell_Leaf());
+	firstOrganism->AddCell(0, 1, new Cell_Leaf());
 	// Cell_Leaf plantLeaf = Cell_Leaf();
+	/*
 	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))
 	{
 		std::cerr << "Error adding cell!";
@@ -112,12 +114,13 @@ int main(int argc, char *argv[])
 	else
 	{
 		std::cout << "added leaf cell " << std::endl;
-	}
+	}*/
 	// Organism *realFirstOrganism = firstOrganism->Reproduce();
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->myCells.size();
 	// firstOrganism->mutability = 50;
 	firstOrganism->AddEnergy(2);
+	firstOrganism->reproductionCooldown = 0;
 	// board.Organisms.push_back(firstOrganism);
 
 	SDL_Event e;
