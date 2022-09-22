@@ -6,7 +6,7 @@ Brain::Brain()
     this->currentIntent = intent_changeDir;
     this->moveDirIndex = -1;
     this->conviction = 0;
-    this->maxConviction = 1;
+    this->maxConviction = 2;
 }
 
 void Brain::Reward()
@@ -41,7 +41,7 @@ void Brain::Decide()
     case intent_changeDir:
         this->moveDirIndex = randInt(0, 3999) % 4;
         this->currentIntent = intent_continue;
-        this->conviction = 0;
+        this->conviction = 1;
         break;
 
     case intent_rotate:
