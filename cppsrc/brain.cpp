@@ -27,32 +27,61 @@ void Brain::Punish()
     }
 }
 
-void Brain::Decide()
+enum Intent Brain::Decide()
 {
-    if((randInt(0,  2 * maxConviction) - maxConviction) > conviction || randPercent(10))
+    if ((randInt(0, 2 * maxConviction) - maxConviction) > conviction || randPercent(10))
     {
-        this->currentIntent = intent_changeDir;
+        if (randPercent(50))
+        {
+            this->currentIntent = intent_changeDir;
+        }
+        else
+        {
+            if (randPercent(50))
+            {
+                this->currentIntent = intent_rotateClockwise;
+            }
+            else
+            {
+                this->currentIntent = intent_rotateCounterClockwise;
+            }
+        }
     }
     switch (this->currentIntent)
     {
     case intent_continue:
-        break;
+        return intent_continue;
 
     case intent_changeDir:
         this->moveDirIndex = randInt(0, 3999) % 4;
         this->currentIntent = intent_continue;
         this->conviction = 1;
-        break;
+        return intent_continue;
 
-    case intent_rotate:
-        break;
+    case intent_rotateClockwise:
+        this->currentIntent = intent_continue;
+        ++this->moveDirIndex %= 4;
+        this->conviction = 1;
+        return intent_rotateClockwise;
+
+    case intent_rotateCounterClockwise:
+        this->currentIntent = intent_continue;
+        this->conviction = 1;
+        if(--this->moveDirIndex < 0)
+        {
+            this->moveDirIndex = 3;
+        }
+        return intent_rotateCounterClockwise;
     }
+
+    // really, G++ can't figure out that this is unreachable?!
+    return this->currentIntent;
 }
 
 void Brain::Mutate()
 {
     this->maxConviction += (randInt(-1, 1));
-    if(this->maxConviction < 1)
+    if (this->maxConviction < 1)
     {
         this->maxConviction = 1;
     }

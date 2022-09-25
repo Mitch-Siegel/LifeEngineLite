@@ -4,7 +4,8 @@ enum Intent
 {
     intent_continue,
     intent_changeDir,
-    intent_rotate,
+    intent_rotateClockwise,
+    intent_rotateCounterClockwise,
 };
 
 class Brain
@@ -16,7 +17,7 @@ public:
     int moveDirIndex;
     int conviction, maxConviction;
 
-    void Decide();
+    enum Intent Decide();
 
     void Reward();
 

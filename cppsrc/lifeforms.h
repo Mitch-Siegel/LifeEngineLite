@@ -39,6 +39,8 @@ public:
 
 	void Move();
 
+	void Rotate(bool clockwise);
+
 	int AddCell(int x_rel, int y_rel, Cell *_cell);
 
 	void RemoveCell(Cell *_myCell);

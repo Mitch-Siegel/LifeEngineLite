@@ -1,6 +1,7 @@
 #include "curses.h"
 #include <stdlib.h>
 #include <vector>
+#include <unordered_map>
 #include <cmath>
 
 #include "lifeforms.h"
@@ -34,27 +35,25 @@ void Organism::Die()
 	{
 		Cell *thisCell = this->myCells[i];
 		Cell *replacedWith;
-		switch(thisCell->type)
+		switch (thisCell->type)
 		{
-			case cell_null:
-			case cell_empty:
-			case cell_biomass:
-			case cell_plantmass:
-			case cell_fruit:
-				std::cerr << "Wrong cell type contained within organism!" << std::endl;
-				exit(1);
+		case cell_null:
+		case cell_empty:
+		case cell_biomass:
+		case cell_plantmass:
+		case cell_fruit:
+			std::cerr << "Wrong cell type contained within organism!" << std::endl;
+			exit(1);
 
-			case cell_leaf:
-			case cell_flower:
-				replacedWith = new Cell_Plantmass(this->myCells.size() * PLANTMASS_SPOIL_TIME_MULTIPLIER);
-				break;
+		case cell_leaf:
+		case cell_flower:
+			replacedWith = new Cell_Plantmass(this->myCells.size() * PLANTMASS_SPOIL_TIME_MULTIPLIER);
+			break;
 
-			case cell_mover:
-			case cell_herbivore_mouth:
-			case cell_carnivore_mouth:
-				replacedWith = new Cell_Biomass(this->myCells.size() * BIOMASS_SPOIL_TIME_MULTIPLIER);
-
-
+		case cell_mover:
+		case cell_herbivore_mouth:
+		case cell_carnivore_mouth:
+			replacedWith = new Cell_Biomass(this->myCells.size() * BIOMASS_SPOIL_TIME_MULTIPLIER);
 		}
 		board.replaceCell(thisCell, replacedWith);
 	}
@@ -94,10 +93,23 @@ Organism *Organism::Tick()
 
 	if (this->cellCounts[cell_mover])
 	{
-		this->brain.Decide();
 		if (this->currentEnergy > 2)
 		{
-			this->Move();
+			switch (this->brain.Decide())
+			{
+			case intent_changeDir:
+			case intent_continue:
+				this->Move();
+				break;
+
+			case intent_rotateClockwise:
+				this->Rotate(true);
+				break;
+
+			case intent_rotateCounterClockwise:
+				this->Rotate(false);
+				break;
+			}
 		}
 	}
 
@@ -146,7 +158,7 @@ void Organism::RecalculateStats()
 	{
 		this->lifespan = this->myCells.size() * LIFESPAN_MULTIPLIER;
 	}
-	if(this->currentEnergy > this->maxEnergy)
+	if (this->currentEnergy > this->maxEnergy)
 	{
 		this->currentEnergy = this->maxEnergy;
 	}
@@ -174,10 +186,75 @@ void Organism::Move()
 			int newY = movedCell->y + moveDir[1];
 			board.swapCellAtIndex(newX, newY, movedCell);
 		}
+		this->x += moveDir[0];
+		this->y += moveDir[1];
 	}
 	else
 	{
 		this->brain.Punish();
+	}
+}
+
+void Organism::Rotate(bool clockwise)
+{
+	// .first is this organism's cell
+	// .second is the cell being swapped with
+	std::vector<std::pair<Cell *, Cell *>> swaps;
+
+	// track which cells we have looked at
+	// prevents double-swapping if 2 cells from this organism just trade places
+	std::unordered_map<Cell *, bool> swappedMap;
+
+	for (Cell *c : this->myCells)
+	{
+		if (!swappedMap[c])
+		{
+			int x_rel = c->x - this->x;
+			int y_rel = c->y - this->y;
+			int new_x, new_y;
+
+			if (clockwise)
+			{
+				new_x = this->x + (y_rel * -1);
+				new_y = this->y + x_rel;
+			}
+			else
+			{
+				new_x = this->x + y_rel;
+				new_y = this->y + (x_rel * -1);
+			}
+
+			Cell *swappedWith = board.cells[new_y][new_x];
+			// can't rotate!
+			if (swappedWith->type != cell_empty && swappedWith->myOrganism != this)
+			{
+				this->brain.Punish();
+				return;
+			}
+
+			swappedMap[c] = true;
+			// redundant check but doesn't hurt
+			if (!swappedMap[swappedWith])
+			{
+				swappedMap[swappedWith] = true;
+				swaps.push_back(std::pair<Cell *, Cell *>(c, swappedWith));
+			}
+		}
+	}
+
+	for (std::pair<Cell *, Cell *> thisSwap : swaps)
+	{
+		Cell *a = thisSwap.first;
+		Cell *b = thisSwap.second;
+		int oldX = a->x;
+		int oldY = a->y;
+		a->x = b->x;
+		a->y = b->y;
+		board.cells[a->y][a->x] = a;
+
+		b->x = oldX;
+		b->y = oldY;
+		board.cells[b->y][b->x] = b;
 	}
 }
 
