@@ -285,7 +285,10 @@ void Cell_Leaf::Tick()
 	}
 	else
 	{
-		this->myOrganism->AddEnergy(1);
+		if (this->myOrganism->age % 2 == 0 || this->myOrganism->age % 3 == 0)
+		{
+			this->myOrganism->AddEnergy(1);
+		}
 	}
 }
 
