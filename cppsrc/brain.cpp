@@ -92,12 +92,12 @@ void Brain::RotateSuccess(bool clockwise)
 
 void Brain::Mutate()
 {
-    this->maxConviction += (randInt(-1, 1));// * (randPercent(50) * randInt(1, 4)));
+    this->maxConviction += (randInt(-1, 1) * (randPercent(50) * randInt(1, 4)));
     if (this->maxConviction < 1)
     {
         this->maxConviction = 1;
     }
-    this->rotatevschange += (randInt(-1, 1));// * (randPercent(50) * randInt(1, 12)));
+    this->rotatevschange += (randInt(-1, 1) * (randPercent(50) * randInt(1, 12)));
     if (this->rotatevschange < 1)
     {
         this->rotatevschange = 1;

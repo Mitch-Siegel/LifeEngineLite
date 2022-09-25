@@ -179,6 +179,7 @@ int main(int argc, char *argv[])
 				{
 				case SDLK_RETURN:
 					autoplay = false;
+					frameToRender = 1;
 					board.Tick();
 					Render(window, renderer);
 					break;
@@ -247,6 +248,7 @@ int main(int argc, char *argv[])
 
 				default:
 					autoplay = false;
+					frameToRender = 1;
 					break;
 				}
 			}

@@ -495,8 +495,8 @@ void Organism::Mutate()
 					int y_abs = thisAttempt->y + thisDirection[1];
 					if (board.isCellOfType(x_abs, y_abs, cell_empty))
 					{
-						x_rel = x_abs - this->x;
-						y_rel = y_abs - this->y;
+						x_rel = this->x - x_abs;
+						y_rel = this->y - y_abs;
 						couldAdd = true;
 						break;
 					}

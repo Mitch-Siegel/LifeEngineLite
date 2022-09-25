@@ -175,7 +175,8 @@ void Board::Stats()
 	auto now = std::chrono::high_resolution_clock::now();
 	auto diff = now - lastFrame;
 	size_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
-	printf("TICK %lu (%.2f t/s)\n", this->tickCount, millis / 100.0);
+	printf("TICK %lu (%.2f t/s)\n", this->tickCount, (60000 / (float)millis));
+	lastFrame = now;
 	for (Organism *o : this->Organisms)
 	{
 		if (o->cellCounts[cell_mover])
