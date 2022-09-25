@@ -101,12 +101,12 @@ int main(int argc, char *argv[])
 
 	// refresh();
 	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
-	// firstOrganism->AddCell(0, 0, new Cell_Leaf());
-	firstOrganism->AddCell(0, 0, new Cell_Mover());
-	firstOrganism->AddCell(0, 1, new Cell_Carnivore());
-	// firstOrganism->AddCell(1, 0, new Cell_Leaf());
-	// firstOrganism->AddCell(1, 1, new Cell_Leaf());
-	// firstOrganism->AddCell(0, 1, new Cell_Leaf());
+	firstOrganism->AddCell(0, 0, new Cell_Leaf());
+	// firstOrganism->AddCell(0, 0, new Cell_Mover());
+	// firstOrganism->AddCell(0, 1, new Cell_Carnivore());
+	firstOrganism->AddCell(1, 0, new Cell_Leaf());
+	firstOrganism->AddCell(1, 1, new Cell_Leaf());
+	firstOrganism->AddCell(0, 1, new Cell_Leaf());
 	// Cell_Leaf plantLeaf = Cell_Leaf();
 	/*
 	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))
@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->myCells.size();
 	// firstOrganism->mutability = 50;
-	firstOrganism->AddEnergy(20000);
-	firstOrganism->reproductionCooldown = 111110;
+	firstOrganism->AddEnergy(2);
+	firstOrganism->reproductionCooldown = 10;
 	// board.Organisms.push_back(firstOrganism);
 
 	SDL_Event e;

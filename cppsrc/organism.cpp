@@ -224,6 +224,12 @@ void Organism::Rotate(bool clockwise)
 				new_y = this->y + (x_rel * -1);
 			}
 
+			if(board.boundCheckPos(new_x, new_y))
+			{
+				this->brain.Punish();
+				return;
+			}
+
 			Cell *swappedWith = board.cells[new_y][new_x];
 			// can't rotate!
 			if (swappedWith->type != cell_empty && swappedWith->myOrganism != this)
@@ -312,7 +318,7 @@ Organism *Organism::Reproduce()
 	for (int i = 0; i < 8; i++)
 	{
 		int *thisDir = directions[(dirIndex + i) % 8];
-		for (int j = 1; j < (ceil(sqrt(this->myCells.size())) + 1); j++)
+		for (int j = 1; j < ceil(sqrt(this->myCells.size())) + 1; j++)
 		{
 			int dir_x = thisDir[0] * j;
 			int dir_y = thisDir[1] * j;
