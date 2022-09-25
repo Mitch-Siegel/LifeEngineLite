@@ -66,6 +66,7 @@ class Organism;
 
 #define DEFAULT_MUTABILITY 15
 
+
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .55
 #define REPRODUCTION_COOLDOWN_MULTIPLIER 0.5
@@ -73,7 +74,7 @@ class Organism;
 #define ENERGY_DENSITY_MULTIPLIER 7
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 6
+#define HERB_FOOD_MULTIPLIER 4
 
 #define LEAF_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 5 * HERB_FOOD_MULTIPLIER
@@ -81,24 +82,28 @@ class Organism;
 
 #define FRUIT_SPOIL_TIME 30
 // must roll 2x in a row
-#define FRUIT_GROW_PERCENT 2
+#define FRUIT_GROW_PERCENT 10
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
-#define FRUIT_MUTATE_PERCENT 10
+#define FRUIT_MUTATE_PERCENT 15
 
 #define PLANTMASS_SPOIL_TIME_MULTIPLIER 100
-#define BIOMASS_SPOIL_TIME_MULTIPLIER 100
+#define BIOMASS_SPOIL_TIME_MULTIPLIER 300
 
 #define PLANTMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
-#define BIOMASS_FOOD_ENERGY 50
+#define BIOMASS_FOOD_ENERGY 14 * HERB_FOOD_MULTIPLIER
 
 
 #define FLOWER_COST 11 * ENERGY_DENSITY_MULTIPLIER
+#define LEAF_COST 2 * ENERGY_DENSITY_MULTIPLIER
 // must roll this percent and mutability percent in a row
-#define FLOWER_PERCENT 5
+#define PLANT_GROW_PERCENT 5
+
+// percent to grow a flower vs just expanding 1 leaf
+#define FLOWER_PERCENT 35
 
 #define FLOWER_BLOOM_COOLDOWN 15
-#define FLOWER_WILT_CHANCE 30
-#define FLOWER_BLOOM_COST 4 * ENERGY_DENSITY_MULTIPLIER
+#define FLOWER_WILT_CHANCE 35
+#define FLOWER_BLOOM_COST 6 * ENERGY_DENSITY_MULTIPLIER
 
 
 #include <curses.h>

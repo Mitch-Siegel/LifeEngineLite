@@ -17,7 +17,7 @@ void intHandler(int dummy)
 // Cell *board[BOARD_DIM][BOARD_DIM];
 
 // Board board = Board(512, 256);
-Board board = Board(128, 64);
+Board board = Board(192, 192);
 
 void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
@@ -87,8 +87,8 @@ int main(int argc, char *argv[])
 
 	SDL_Init(SDL_INIT_VIDEO);
 	// SDL_CreateWindowAndRenderer(2560, 1280, 0, &window, &renderer);
-	SDL_CreateWindowAndRenderer(2048, 1024, 0, &window, &renderer);
-	SDL_RenderSetScale(renderer, 16, 16);
+	SDL_CreateWindowAndRenderer(1152, 1152, 0, &window, &renderer);
+	SDL_RenderSetScale(renderer, 6, 6);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 

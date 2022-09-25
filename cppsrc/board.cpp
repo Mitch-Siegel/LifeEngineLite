@@ -55,6 +55,7 @@ void Board::Tick()
 	size_t organismMaxConvictionCount = 0;
 	size_t organismLifespan = 0;
 	size_t mutabilityTotal = 0;
+	size_t rotatevschangeTotal = 0;
 	for (size_t i = 0; i < this->FoodCells.size(); i++)
 	{
 		this->FoodCells[i]->Tick();
@@ -113,7 +114,6 @@ void Board::Tick()
 						grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
 						board.replaceCell(this->FoodCells[i], new Cell_Empty());
 						grownFruit->AddCell(0, 0, new Cell_Leaf());
-						// grownFruit->AddEnergy(2);
 					}
 					grownFruit->RecalculateStats();
 					grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
@@ -152,6 +152,7 @@ void Board::Tick()
 			organismMaxConvictionCount += this->Organisms[i]->brain.maxConviction;
 			organismLifespan += this->Organisms[i]->lifespan;
 			mutabilityTotal += this->Organisms[i]->mutability;
+			rotatevschangeTotal += this->Organisms[i]->brain.rotatevschange;
 			// printf("%d %d: %lu/%lu energy, %lu cells (%lu ticks old, %d lifespan), repcd %d\n",
 			//  Organisms[i]->x, Organisms[i]->y, Organisms[i]->GetEnergy(), Organisms[i]->GetMaxEnergy(), Organisms[i]->myCells.size(), Organisms[i]->age, Organisms[i]->lifespan, Organisms[i]->reproductionCooldown);
 			Organism *replicated = this->Organisms[i]->Tick();
@@ -165,13 +166,14 @@ void Board::Tick()
 	if (this->tickCount % 100 == 0)
 	{
 
-		printf("%lu organisms, average size %.2f cells\n%.2f%% energy, %.0f lifespan\n%.1f%% mutability, %.3f max conviction\n\n",
+		printf("%lu organisms, average size %.2f cells\n%.2f%% energy, %.0f lifespan\n%.1f%% mutability\n%.3f max conviction, %.3f%% rotatevschange\n\n",
 			   this->Organisms.size(),
 			   organismCellsCount / (float)(this->Organisms.size()),
 			   organismEnergyCount / ((float)organismMaxEnergyCount) * 100,
 			   organismLifespan / (float)(this->Organisms.size()),
 			   mutabilityTotal / (float)(this->Organisms.size()),
-			   organismMaxConvictionCount / (float)(this->Organisms.size()));
+			   organismMaxConvictionCount / (float)(this->Organisms.size()),
+			   rotatevschangeTotal / (float)(this->Organisms.size()));
 	}
 }
 // returns true if out of bounds, false otherwise

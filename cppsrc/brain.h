@@ -15,7 +15,7 @@ public:
     
     enum Intent currentIntent;
     int moveDirIndex;
-    int conviction, maxConviction;
+    int conviction, maxConviction, rotatevschange;
 
     enum Intent Decide();
 
@@ -24,6 +24,8 @@ public:
     void Punish();
 
     void Mutate();
+
+    void RotateSuccess(bool clockwise);
 
     Brain Clone();
 

@@ -264,10 +264,10 @@ Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 
 void Cell_Leaf::Tick()
 {
-	if ((this->myOrganism->myCells.size() > 2) && 
-		this->myOrganism->GetEnergy() > FLOWER_COST && 
-		randPercent(this->myOrganism->mutability) && 
-		randPercent(FLOWER_PERCENT))
+	if ((this->myOrganism->myCells.size() > 2) &&
+		this->myOrganism->GetEnergy() > FLOWER_COST &&
+		randPercent(this->myOrganism->mutability) &&
+		randPercent(PLANT_GROW_PERCENT))
 	{
 		int checkDirIndex = randInt(0, 3);
 		for (int i = 0; i < 4; i++)
@@ -347,7 +347,15 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				this->myOrganism->ReplaceCell(this, new Cell_Leaf());
+				if (FRUIT_GROW_PERCENT)
+				{
+					this->myOrganism->ReplaceCell(this, new Cell_Leaf());
+				}
+				else
+				{
+					this->myOrganism->RemoveCell(this);
+					board.replaceCell(this, new Cell_Empty());
+				}
 			}
 		}
 	}
@@ -420,8 +428,8 @@ Cell_Mover::Cell_Mover(Organism *_myOrganism)
 
 void Cell_Mover::Tick()
 {
-	int moveCost = (this->myOrganism->myCells.size() - 2) / 2;
-	moveCost = (moveCost > 0) ? moveCost : 1;
+	int moveCost = ceil(sqrt(this->myOrganism->myCells.size()));
+	// moveCost = (moveCost > 0) ? moveCost : 1;
 	this->myOrganism->ExpendEnergy(moveCost);
 }
 
@@ -515,7 +523,6 @@ Cell_Herbivore *Cell_Herbivore::Clone()
 {
 	return new Cell_Herbivore(*this);
 }
-
 
 // herbivore mouth cell
 Cell_Carnivore::~Cell_Carnivore()

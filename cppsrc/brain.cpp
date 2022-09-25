@@ -7,6 +7,8 @@ Brain::Brain()
     this->moveDirIndex = -1;
     this->conviction = 0;
     this->maxConviction = 2;
+    // chance to rotate instead of changing direction
+    this->rotatevschange = 50;
 }
 
 void Brain::Reward()
@@ -29,9 +31,9 @@ void Brain::Punish()
 
 enum Intent Brain::Decide()
 {
-    if ((randInt(0, 2 * maxConviction) - maxConviction) > conviction || randPercent(10))
+    if ((randInt(0, 2 * maxConviction) - maxConviction) > conviction || randPercent(5))
     {
-        if (randPercent(50))
+        if (!randPercent(rotatevschange))
         {
             this->currentIntent = intent_changeDir;
         }
@@ -60,17 +62,12 @@ enum Intent Brain::Decide()
 
     case intent_rotateClockwise:
         this->currentIntent = intent_continue;
-        ++this->moveDirIndex %= 4;
         this->conviction = 1;
         return intent_rotateClockwise;
 
     case intent_rotateCounterClockwise:
         this->currentIntent = intent_continue;
         this->conviction = 1;
-        if(--this->moveDirIndex < 0)
-        {
-            this->moveDirIndex = 3;
-        }
         return intent_rotateCounterClockwise;
     }
 
@@ -78,12 +75,38 @@ enum Intent Brain::Decide()
     return this->currentIntent;
 }
 
+// if the call to rotate() succeeds, this is called
+// make the organism's movement direction turn correspondingly
+void Brain::RotateSuccess(bool clockwise)
+{
+    if (clockwise)
+    {
+        ++this->moveDirIndex %= 4;
+    }
+    else
+    {
+        if (--this->moveDirIndex < 0)
+        {
+            this->moveDirIndex = 3;
+        }
+    }
+}
+
 void Brain::Mutate()
 {
-    this->maxConviction += (randInt(-1, 1));
+    this->maxConviction += (randInt(-1, 1) * (1 << randPercent(25) << randPercent(25) << randPercent(25)));
     if (this->maxConviction < 1)
     {
         this->maxConviction = 1;
+    }
+    this->rotatevschange += (randInt(-1, 1) * (1 << randPercent(50) << randPercent(50) << randPercent(50)));
+    if (this->rotatevschange < 1)
+    {
+        this->rotatevschange = 1;
+    }
+    else if (this->rotatevschange > 100)
+    {
+        this->rotatevschange = 100;
     }
 }
 

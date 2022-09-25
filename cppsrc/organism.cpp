@@ -114,7 +114,7 @@ Organism *Organism::Tick()
 	}
 
 	// don't allow organisms of size 1 to reproduce
-	if (this->reproductionCooldown == 0 && (this->myCells.size() > 1 || this->myCells[0]->type == cell_leaf))
+	if (this->reproductionCooldown == 0 && this->myCells.size() > 1)
 	{
 		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.25))
 		{
@@ -262,6 +262,7 @@ void Organism::Rotate(bool clockwise)
 		b->y = oldY;
 		board.cells[b->y][b->x] = b;
 	}
+	this->brain.RotateSuccess(clockwise);
 }
 
 void Organism::ExpendEnergy(size_t n)
