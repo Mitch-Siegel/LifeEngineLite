@@ -25,6 +25,8 @@ public:
 
     void Tick();
 
+    void Stats();
+
     bool boundCheckPos(const int _x, const int _y);
 
     bool isCellOfType(const int _x, const int _y, enum CellTypes type);

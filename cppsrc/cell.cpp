@@ -12,9 +12,9 @@ int CellEnergyDensities[cell_null] = {
 	4,
 	5,
 	0,
-	-5,
-	300,
-	55,
+	2,
+	10,
+	40,
 };
 
 Cell *GenerateRandomCell()
@@ -347,15 +347,15 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				if (FRUIT_GROW_PERCENT)
-				{
-					this->myOrganism->ReplaceCell(this, new Cell_Leaf());
-				}
-				else
-				{
-					this->myOrganism->RemoveCell(this);
-					board.replaceCell(this, new Cell_Empty());
-				}
+				// if (FRUIT_GROW_PERCENT * 2)
+				// {
+				this->myOrganism->ReplaceCell(this, new Cell_Leaf());
+				// }
+				// else
+				// {
+				// this->myOrganism->RemoveCell(this);
+				// board.replaceCell(this, new Cell_Empty());
+				// }
 			}
 		}
 	}
@@ -457,6 +457,7 @@ Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
 
 void Cell_Herbivore::Tick()
 {
+	bool couldEat = false;
 	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
 	{
 		this->myOrganism->ExpendEnergy(randInt(1, 2));
@@ -471,17 +472,9 @@ void Cell_Herbivore::Tick()
 		{
 			Cell *eaten = board.cells[y_abs][x_abs];
 			Organism *eatenParent = eaten->myOrganism;
-			if (eatenParent != this->myOrganism /* &&
-				 this->myOrganism->canMove*/
-												/*((!this->myOrganism->hasLeaf && eaten->type == cell_leaf) ||
-												 (!this->myOrganism->hasFlower && eaten->type == cell_flower))*/
-			)
+			if (eatenParent != this->myOrganism)
 			{
-				/*if (eatenParent != nullptr)
-				{
-					std::vector<Cell *>::iterator foundLeaf = std::find(eatenParent->myCells.begin(), eatenParent->myCells.end(), eaten);
-					eatenParent->myCells.erase(foundLeaf);
-				}*/
+
 				switch (eaten->type)
 				{
 				case cell_leaf:
@@ -513,9 +506,14 @@ void Cell_Herbivore::Tick()
 				{
 					board.replaceCell(eaten, new Cell_Empty());
 				}
-				this->myOrganism->brain.Reward();
+				couldEat = true;
 			}
 		}
+	}
+
+	if (couldEat)
+	{
+		this->myOrganism->brain.Reward();
 	}
 }
 
@@ -547,6 +545,7 @@ void Cell_Carnivore::Tick()
 	{
 		this->myOrganism->ExpendEnergy(randInt(1, 2));
 	}
+	this->myOrganism->ExpendEnergy(ceil(sqrt(this->myOrganism->myCells.size())));
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)
 	{

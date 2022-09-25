@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <SDL2/SDL.h>
+#include <chrono>
 
 #include "lifeforms.h"
 #include "board.h"
@@ -126,26 +127,43 @@ int main(int argc, char *argv[])
 	// board.Organisms.push_back(firstOrganism);
 
 	SDL_Event e;
-	bool autoplay = true;
+	bool autoplay = false;
 	// getch();
 	// clear();
 	// refresh();
-	int autoplaySpeed = 1;
+	auto lastFrame = std::chrono::high_resolution_clock::now();
+	size_t autoplaySpeed = 1;
+	int frameToRender = 1;
 	while (running /* && board.tickCount < 100*/)
 	{
 		if (autoplay)
 		{
+
 			board.Tick();
-			SDL_Delay(autoplaySpeed);
 
 			/*if (board.tickCount % (1000 / autoplaySpeed) == 0)
 			{*/
 			// if (board.tickCount % 10 == 0)
 			// {
-			Render(window, renderer);
-			// }
-			//}
-			// SDL_Delay(1);
+			if (board.tickCount % 100 == 0)
+			{
+				board.Stats();
+			}
+			if (board.tickCount % frameToRender == 0)
+			{
+				Render(window, renderer);
+			}
+			auto thisFrame = std::chrono::high_resolution_clock::now();
+			auto diff = thisFrame - lastFrame;
+			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
+			lastFrame = thisFrame;
+			if (autoplaySpeed)
+			{
+				if (autoplaySpeed > (micros / 1000))
+				{
+					SDL_Delay(autoplaySpeed - (micros / 1000));
+				}
+			}
 		}
 
 		while (SDL_PollEvent(&e))
@@ -173,12 +191,20 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						autoplaySpeed /= 2;
-						if (autoplaySpeed < 1)
+						if (autoplaySpeed > 1)
 						{
-							autoplaySpeed = 1;
+							autoplaySpeed /= 2;
+							if (autoplaySpeed < 1)
+							{
+								autoplaySpeed = 1;
+							}
+						}
+						else
+						{
+							autoplaySpeed = 0;
 						}
 					}
+					printf("Delay %lums between frames\n", autoplaySpeed);
 					break;
 
 				case SDLK_DOWN:
@@ -189,12 +215,34 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						autoplaySpeed *= 2;
-						if (autoplaySpeed > 1000)
+						if (autoplaySpeed == 0)
 						{
-							autoplaySpeed = 1000;
+							autoplaySpeed = 1;
+						}
+						else
+						{
+							autoplaySpeed *= 2;
+							if (autoplaySpeed > 1000)
+							{
+								autoplaySpeed = 1000;
+							}
 						}
 					}
+					printf("Delay %lums between frames\n", autoplaySpeed);
+					break;
+
+				case SDLK_RIGHT:
+					frameToRender *= 2;
+					printf("Rendering every %d frame(s)\n", frameToRender);
+					break;
+
+				case SDLK_LEFT:
+					frameToRender /= 2;
+					if (frameToRender < 1)
+					{
+						frameToRender = 1;
+					}
+					printf("Rendering every %d frame(s)\n", frameToRender);
 					break;
 
 				default:

@@ -13,8 +13,7 @@ Brain::Brain()
 
 void Brain::Reward()
 {
-    this->conviction++;
-    if (this->conviction > maxConviction)
+    if (++this->conviction > maxConviction)
     {
         this->conviction = maxConviction;
     }
@@ -22,8 +21,7 @@ void Brain::Reward()
 
 void Brain::Punish()
 {
-    this->conviction--;
-    if (this->conviction < (-1 * maxConviction))
+    if (--this->conviction < (-1 * maxConviction))
     {
         this->conviction = (-1 * maxConviction);
     }
@@ -94,12 +92,12 @@ void Brain::RotateSuccess(bool clockwise)
 
 void Brain::Mutate()
 {
-    this->maxConviction += (randInt(-1, 1) * (1 << randPercent(25) << randPercent(25) << randPercent(25)));
+    this->maxConviction += (randInt(-1, 1));// * (randPercent(50) * randInt(1, 4)));
     if (this->maxConviction < 1)
     {
         this->maxConviction = 1;
     }
-    this->rotatevschange += (randInt(-1, 1) * (1 << randPercent(50) << randPercent(50) << randPercent(50)));
+    this->rotatevschange += (randInt(-1, 1));// * (randPercent(50) * randInt(1, 12)));
     if (this->rotatevschange < 1)
     {
         this->rotatevschange = 1;

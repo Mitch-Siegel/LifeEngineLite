@@ -5,6 +5,8 @@
 #include <curses.h>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
+
 
 int directions[8][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
 extern Board board;
@@ -49,13 +51,6 @@ Board::~Board()
 void Board::Tick()
 {
 	this->tickCount++;
-	size_t organismCellsCount = 0;
-	size_t organismEnergyCount = 0;
-	size_t organismMaxEnergyCount = 0;
-	size_t organismMaxConvictionCount = 0;
-	size_t organismLifespan = 0;
-	size_t mutabilityTotal = 0;
-	size_t rotatevschangeTotal = 0;
 	for (size_t i = 0; i < this->FoodCells.size(); i++)
 	{
 		this->FoodCells[i]->Tick();
@@ -146,13 +141,7 @@ void Board::Tick()
 		}
 		else
 		{
-			organismCellsCount += this->Organisms[i]->myCells.size();
-			organismEnergyCount += this->Organisms[i]->GetEnergy();
-			organismMaxEnergyCount += this->Organisms[i]->GetMaxEnergy();
-			organismMaxConvictionCount += this->Organisms[i]->brain.maxConviction;
-			organismLifespan += this->Organisms[i]->lifespan;
-			mutabilityTotal += this->Organisms[i]->mutability;
-			rotatevschangeTotal += this->Organisms[i]->brain.rotatevschange;
+
 			// printf("%d %d: %lu/%lu energy, %lu cells (%lu ticks old, %d lifespan), repcd %d\n",
 			//  Organisms[i]->x, Organisms[i]->y, Organisms[i]->GetEnergy(), Organisms[i]->GetMaxEnergy(), Organisms[i]->myCells.size(), Organisms[i]->age, Organisms[i]->lifespan, Organisms[i]->reproductionCooldown);
 			Organism *replicated = this->Organisms[i]->Tick();
@@ -163,19 +152,107 @@ void Board::Tick()
 			}
 		}
 	}
-	if (this->tickCount % 100 == 0)
-	{
-
-		printf("%lu organisms, average size %.2f cells\n%.2f%% energy, %.0f lifespan\n%.1f%% mutability\n%.3f max conviction, %.3f%% rotatevschange\n\n",
-			   this->Organisms.size(),
-			   organismCellsCount / (float)(this->Organisms.size()),
-			   organismEnergyCount / ((float)organismMaxEnergyCount) * 100,
-			   organismLifespan / (float)(this->Organisms.size()),
-			   mutabilityTotal / (float)(this->Organisms.size()),
-			   organismMaxConvictionCount / (float)(this->Organisms.size()),
-			   rotatevschangeTotal / (float)(this->Organisms.size()));
-	}
 }
+
+void Board::Stats()
+{
+	static auto lastFrame = std::chrono::high_resolution_clock::now();
+	enum Counts
+	{
+		count_cells,
+		count_energy,
+		count_maxenergy,
+		count_lifespan,
+		count_mutability,
+		count_maxconviction,
+		count_rotatevschange,
+		count_raw,
+		count_null
+	};
+
+	double plantStats[count_null] = {0.0};
+	double moverStats[count_null] = {0.0};
+	auto now = std::chrono::high_resolution_clock::now();
+	auto diff = now - lastFrame;
+	size_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
+	printf("TICK %lu (%.2f t/s)\n", this->tickCount, millis / 100.0);
+	for (Organism *o : this->Organisms)
+	{
+		if (o->cellCounts[cell_mover])
+		{
+			moverStats[count_cells] += o->myCells.size();
+			moverStats[count_energy] += o->GetEnergy();
+			moverStats[count_maxenergy] += o->GetMaxEnergy();
+			moverStats[count_lifespan] += o->lifespan;
+			moverStats[count_mutability] += o->mutability;
+			moverStats[count_maxconviction] += o->brain.maxConviction;
+			moverStats[count_rotatevschange] += o->brain.rotatevschange;
+			moverStats[count_raw]++;
+		}
+		else
+		{
+			plantStats[count_cells] += o->myCells.size();
+			plantStats[count_energy] += o->GetEnergy();
+			plantStats[count_maxenergy] += o->GetMaxEnergy();
+			plantStats[count_lifespan] += o->lifespan;
+			plantStats[count_mutability] += o->mutability;
+			plantStats[count_maxconviction] += o->brain.maxConviction;
+			plantStats[count_rotatevschange] += o->brain.rotatevschange;
+			plantStats[count_raw]++;
+		}
+	}
+
+	for (int i = 0; i < count_raw; i++)
+	{
+		plantStats[i] /= plantStats[count_raw];
+		moverStats[i] /= moverStats[count_raw];
+	}
+
+	printf("Plants avg: %2.2f cells, %2.0f%% energy, %.0f lifespan, %.1f%% mutability\n",
+		   plantStats[count_cells],
+		   plantStats[count_energy] / plantStats[count_maxenergy] * 100,
+		   plantStats[count_lifespan],
+		   plantStats[count_mutability]);
+
+	printf("Movers avg: %2.2f cells, %2.0f%% energy, %.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotatevschange\n",
+		   moverStats[count_cells],
+		   moverStats[count_energy] / moverStats[count_maxenergy] * 100,
+		   moverStats[count_lifespan],
+		   moverStats[count_mutability],
+		   moverStats[count_maxconviction],
+		   moverStats[count_rotatevschange]);
+
+	printf("\n");
+
+	/*
+	size_t organismCellsCount = 0;
+	size_t organismEnergyCount = 0;
+	size_t organismMaxEnergyCount = 0;
+	size_t organismMaxConvictionCount = 0;
+	size_t organismLifespan = 0;
+	size_t mutabilityTotal = 0;
+	size_t rotatevschangeTotal = 0;
+	size_t moverCount = 0;*/
+
+	// organismCellsCount += this->Organisms[i]->myCells.size();
+	// organismEnergyCount += this->Organisms[i]->GetEnergy();
+	// organismMaxEnergyCount += this->Organisms[i]->GetMaxEnergy();
+	// organismMaxConvictionCount += this->Organisms[i]->brain.maxConviction;
+	// organismLifespan += this->Organisms[i]->lifespan;
+	// mutabilityTotal += this->Organisms[i]->mutability;
+	// rotatevschangeTotal += this->Organisms[i]->brain.rotatevschange;
+
+	/*printf("TICK %lu:\n%lu organisms, average size %.2f cells\n%.2f%% energy, %.0f lifespan\n%.1f%% mutability\n%.3f max conviction, %.3f%% rotatevschange\n\n",
+			this->tickCount,
+			this->Organisms.size(),
+			organismCellsCount / (float)(this->Organisms.size()),
+			organismEnergyCount / ((float)organismMaxEnergyCount) * 100,
+			organismLifespan / (float)(this->Organisms.size()),
+			mutabilityTotal / (float)(this->Organisms.size()),
+			organismMaxConvictionCount / (float)(this->Organisms.size()),
+			rotatevschangeTotal / (float)(this->Organisms.size()));*/
+}
+
 // returns true if out of bounds, false otherwise
 bool Board::boundCheckPos(int x, int y)
 {

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <cmath>
 
 #include "lifeforms.h"
@@ -174,17 +175,50 @@ bool Organism::CheckValidity()
 	return invalid;
 }
 
+// FIXME: this is bugged, what if an organism has 2 adjacent cells and wants to move!
 void Organism::Move()
 {
 	int *moveDir = directions[this->brain.moveDirIndex];
 	if (this->CanOccupyPosition(this->x + moveDir[0], this->y + moveDir[1]))
 	{
+		class MovedCell
+		{
+		public:
+			MovedCell(Cell *_c, int _newX, int _newY)
+			{
+				this->c = _c;
+				this->newX = _newX;
+				this->newY = _newY;
+			}
+			Cell *c;
+			int newX, newY;
+		};
+		std::vector<MovedCell> moves;
+
+		// first pass - pick up all cells and replace with empties
 		for (size_t i = 0; i < this->myCells.size(); i++)
 		{
+			// pick up the cell we are moving
 			Cell *movedCell = this->myCells[i];
+			// put an empty in its position
+			Cell *filler = new Cell_Empty();
+			filler->x = movedCell->x;
+			filler->y = movedCell->y;
+			board.cells[movedCell->y][movedCell->x] = filler;
+
+			// calculate the new x and y position we are moving to
 			int newX = movedCell->x + moveDir[0];
 			int newY = movedCell->y + moveDir[1];
-			board.swapCellAtIndex(newX, newY, movedCell);
+			movedCell->x = newX;
+			movedCell->y = newY;
+			moves.push_back(MovedCell(movedCell, newX, newY));
+		}
+
+		// second pass - delete empties and place cells back down at delta pos
+		for(MovedCell m : moves)
+		{
+			delete board.cells[m.newY][m.newX];
+			board.cells[m.newY][m.newX] = m.c;
 		}
 		this->x += moveDir[0];
 		this->y += moveDir[1];
@@ -224,7 +258,7 @@ void Organism::Rotate(bool clockwise)
 				new_y = this->y + (x_rel * -1);
 			}
 
-			if(board.boundCheckPos(new_x, new_y))
+			if (board.boundCheckPos(new_x, new_y))
 			{
 				this->brain.Punish();
 				return;
@@ -303,8 +337,14 @@ bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 
 		int newCellX_rel = thisCell->x - this->x;
 		int newCellY_rel = thisCell->y - this->y;
-		if (!board.isCellOfType(_x_abs + newCellX_rel, _y_abs + newCellY_rel, cell_empty))
+		int new_x_abs = _x_abs + newCellX_rel;
+		int new_y_abs = _y_abs + newCellY_rel;
+		bool boundCheckResult = board.boundCheckPos(new_x_abs, new_y_abs);
+		if (boundCheckResult || // if out of bounds
+		(!boundCheckResult && board.cells[new_y_abs][new_x_abs]->type != cell_empty && board.cells[new_y_abs][new_x_abs]->myOrganism != this) // or in-bounds and this position is occupied by something else
+		)
 		{
+			// fail
 			return false;
 		}
 	}
@@ -373,6 +413,8 @@ Organism *Organism::Reproduce()
 					return replicated;
 				}
 
+				this->brain.Reward();
+
 				int newReproductioncooldown = (this->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
 				replicated->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
 				replicated->RecalculateStats();
@@ -396,7 +438,7 @@ Organism *Organism::Reproduce()
 			continue;
 		}
 	}
-
+	this->brain.Punish();
 	return nullptr;
 }
 
