@@ -6,34 +6,23 @@
 
 extern Board board;
 int CellEnergyDensities[cell_null] = {
-	0,
-	0,
-	0,
-	4,
-	5,
-	0,
-	2,
-	10,
-	40,
+	0,	// empty
+	0,	// plantmass
+	0,	// biomass
+	4,	// leaf
+	5,	// flower
+	0,	// fruit
+	25, // herbivore
+	45, // carnivore
+	25, // mover
+	10, // killer
+	50, // armor
 };
 
 Cell *GenerateRandomCell()
 {
-	/*
-	switch (randInt(0, 1))
-	{
-	case 0:
-		return new Cell_Leaf();
 
-		break;
-
-	case 1:
-		return new Cell_Leaf();
-
-		break;
-	}*/
-
-	switch (randInt(0, 3))
+	switch (randInt(0, 5))
 	{
 	case 0:
 		return new Cell_Mover();
@@ -50,114 +39,18 @@ Cell *GenerateRandomCell()
 	case 3:
 		return new Cell_Carnivore();
 		break;
+
+	case 4:
+		return new Cell_Killer();
+		break;
+
+	case 5:
+		return new Cell_Armor();
+		break;
 	}
 
 	return nullptr;
 }
-/*
-void Cell::Tick()
-{
-
-	if (this->actionCooldown > 0)
-	{
-		this->actionCooldown--;
-		return;
-	}
-
-	switch (this->type)
-	{
-	case cell_empty:
-		break;
-
-	case cell_mouth:
-	{
-		*/
-/*
-// TODO: check if food is fruit attached to an organism
-// if so, need to detach it form that organism's cell list
-char couldEat = 0;
-for (int i = 0; i < 4; i++)
-{
-	int x_abs = this->x + directions[i][0];
-	int y_abs = this->y + directions[i][1];
-	if (isCellOfType(x_abs, y_abs, cell_plantmass))
-	{
-		delete board[y_abs][x_abs];
-
-		board[y_abs][x_abs] = new Cell(x_abs, y_abs, cell_empty, nullptr);
-		couldEat = 1;
-		break;
-	}
-}
-if (couldEat)
-{
-	this->actionCooldown = 2;
-	this->myOrganism->energy += 20;
-}*/
-/*
-}
-break;
-*/
-/*
-case cell_producer:
-*/
-/*
-case cell_flower:
-
-  if (this->myOrganism->energy > 15)
-  {
-	  char couldPlace = 0;
-	  int index = (rand() >> 5) % 4;
-	  int dir = ((rand() >> 6) % 2 == 0) ? 1 : -1;
-	  for (int i = 0; i < 4; i++)
-	  {
-		  int x_abs = this->x + directions[index][0];
-		  int y_abs = this->y + directions[index][1];
-		  if (isCellOfType(x_abs, y_abs, cell_empty))
-		  {
-			  // couldPlace = this->myOrganism->AddCell(x_rel, y_rel, cell_plantmass);
-			  delete board[y_abs][x_abs];
-			  Cell *droppedFood = new Cell(x_abs, y_abs, cell_plantmass, this->myOrganism);
-			  droppedFood->actionCooldown = FRUIT_SPOILTIME;
-			  board[y_abs][x_abs] = droppedFood;
-			  foodCells.push_back(droppedFood);
-			  couldPlace = 1;
-			  break;
-		  }
-		  index += dir;
-		  index %= 4;
-		  if (index < 0)
-		  {
-			  index += 4;
-		  }
-	  }
-	  if (couldPlace)
-	  {
-		  this->actionCooldown = FLOWER_COOLDOWN;
-		  this->myOrganism->ExpendEnergy(15);
-	  }
-	  else
-	  {
-		  this->actionCooldown = FLOWER_COOLDOWN * 4;
-	  }
-  }
-  break;
-
-case cell_leaf:
-  this->myOrganism->energy++;
-  this->actionCooldown = 1;
-  break;
-
-case cell_plantmass:
-  break;
-}
-}*/
-
-/*
-Cell *Cell::Clone()
-{
-	return new Cell(*this);
-}*/
 
 Cell::~Cell()
 {
@@ -254,19 +147,29 @@ Cell_Leaf::Cell_Leaf()
 {
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
+	this->flowering = randPercent(LEAF_FLOWERING_ABILITY_PERCENT);
 }
+
+Cell_Leaf::Cell_Leaf(int floweringPercent)
+{
+	this->type = cell_leaf;
+	this->myOrganism = nullptr;
+	this->flowering = randPercent(floweringPercent);
+}
+
 
 Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 {
 	this->type = cell_leaf;
 	this->myOrganism = _myOrganism;
+	this->flowering = randPercent(LEAF_FLOWERING_ABILITY_PERCENT);
 }
 
 void Cell_Leaf::Tick()
 {
-	if ((this->myOrganism->myCells.size() > 2) &&
+	if (this->flowering &&
+		(this->myOrganism->myCells.size() > 2) &&
 		this->myOrganism->GetEnergy() > FLOWER_COST &&
-		randPercent(this->myOrganism->mutability) &&
 		randPercent(PLANT_GROW_PERCENT))
 	{
 		int checkDirIndex = randInt(0, 3);
@@ -285,7 +188,7 @@ void Cell_Leaf::Tick()
 	}
 	else
 	{
-		if (this->myOrganism->age % 2 == 0 || this->myOrganism->age % 3 == 0)
+		if (this->myOrganism->age % 4 == 0 || this->myOrganism->age % 5 == 0 || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0)
 		{
 			this->myOrganism->AddEnergy(1);
 		}
@@ -350,14 +253,14 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				// if (FRUIT_GROW_PERCENT * 2)
+				// if (randPercent(FLOWER_EXPAND_PERCENT))
 				// {
-				this->myOrganism->ReplaceCell(this, new Cell_Leaf());
+					this->myOrganism->ReplaceCell(this, new Cell_Leaf());
 				// }
 				// else
 				// {
-				// this->myOrganism->RemoveCell(this);
-				// board.replaceCell(this, new Cell_Empty());
+					// this->myOrganism->RemoveCell(this);
+					// board.replaceCell(this, new Cell_Empty());
 				// }
 			}
 		}
@@ -461,6 +364,7 @@ Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
 void Cell_Herbivore::Tick()
 {
 	bool couldEat = false;
+	bool valid = false;
 	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
 	{
 		this->myOrganism->ExpendEnergy(randInt(1, 2));
@@ -471,14 +375,18 @@ void Cell_Herbivore::Tick()
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board.isCellOfType(x_abs, y_abs, cell_leaf) || board.isCellOfType(x_abs, y_abs, cell_flower) || board.isCellOfType(x_abs, y_abs, cell_fruit) || board.isCellOfType(x_abs, y_abs, cell_plantmass))
+		if (board.boundCheckPos(x_abs, y_abs))
 		{
-			Cell *eaten = board.cells[y_abs][x_abs];
-			Organism *eatenParent = eaten->myOrganism;
+			continue;
+		}
+		Cell *potentiallyEaten = board.cells[y_abs][x_abs];
+		if (potentiallyEaten->type == cell_leaf || potentiallyEaten->type == cell_flower || potentiallyEaten->type == cell_fruit || potentiallyEaten->type == cell_plantmass)
+		{
+			Organism *eatenParent = potentiallyEaten->myOrganism;
 			if (eatenParent != this->myOrganism)
 			{
 
-				switch (eaten->type)
+				switch (potentiallyEaten->type)
 				{
 				case cell_leaf:
 					this->myOrganism->AddEnergy(LEAF_FOOD_ENERGY);
@@ -500,16 +408,20 @@ void Cell_Herbivore::Tick()
 					std::cerr << "Impossible case for herbivore cell to eat something it shouldn't!" << std::endl;
 					exit(1);
 				}
-				if (eaten->myOrganism != nullptr)
+				if (potentiallyEaten->myOrganism != nullptr)
 				{
-					eaten->myOrganism->RemoveCell(eaten);
-					board.replaceCell(eaten, new Cell_Empty());
+					potentiallyEaten->myOrganism->RemoveCell(potentiallyEaten);
+					board.replaceCell(potentiallyEaten, new Cell_Empty());
 				}
 				else
 				{
-					board.replaceCell(eaten, new Cell_Empty());
+					board.replaceCell(potentiallyEaten, new Cell_Empty());
 				}
 				couldEat = true;
+			}
+			else
+			{
+				valid = true;
 			}
 		}
 	}
@@ -518,6 +430,23 @@ void Cell_Herbivore::Tick()
 	{
 		this->myOrganism->brain.Reward();
 	}
+
+	if (!valid)
+	{
+		for (int i = 4; i < 8; i++)
+		{
+			int *thisDirection = directions[i];
+			int abs_x = this->x + thisDirection[0];
+			int abs_y = this->y + thisDirection[1];
+			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
+		}
+	}
+
+	if (!valid)
+	{
+		this->myOrganism->RemoveCell(this);
+		board.replaceCell(this, new Cell_Empty());
+	}
 }
 
 Cell_Herbivore *Cell_Herbivore::Clone()
@@ -525,7 +454,7 @@ Cell_Herbivore *Cell_Herbivore::Clone()
 	return new Cell_Herbivore(*this);
 }
 
-// herbivore mouth cell
+// carnivore mouth cell
 Cell_Carnivore::~Cell_Carnivore()
 {
 }
@@ -598,4 +527,111 @@ void Cell_Carnivore::Tick()
 Cell_Carnivore *Cell_Carnivore::Clone()
 {
 	return new Cell_Carnivore(*this);
+}
+
+// killer cell
+Cell_Killer::~Cell_Killer()
+{
+}
+
+Cell_Killer::Cell_Killer()
+{
+	this->type = cell_killer;
+	this->myOrganism = nullptr;
+}
+
+Cell_Killer::Cell_Killer(Organism *_myOrganism)
+{
+	this->type = cell_killer;
+	this->myOrganism = _myOrganism;
+}
+
+void Cell_Killer::Tick()
+{
+	int damageDone = 0;
+	bool valid = false;
+	for (int i = 0; i < 4; i++)
+	{
+		int *thisDirection = directions[i];
+		int abs_x = this->x + thisDirection[0];
+		int abs_y = this->y + thisDirection[1];
+		if (!board.boundCheckPos(abs_x, abs_y))
+		{
+			Cell *adjacent = board.cells[abs_y][abs_x];
+			if (adjacent->myOrganism != nullptr)
+			{
+				if (adjacent->myOrganism != this->myOrganism)
+				{
+					damageDone++;
+					adjacent->myOrganism->Damage(1);
+				}
+				else
+				{
+					valid = true;
+				}
+			}
+		}
+	}
+
+	if (!valid)
+	{
+		for (int i = 4; i < 8; i++)
+		{
+			int *thisDirection = directions[i];
+			int abs_x = this->x + thisDirection[0];
+			int abs_y = this->y + thisDirection[1];
+			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
+		}
+	}
+	this->myOrganism->ExpendEnergy(damageDone + 1);
+	if (!valid)
+	{
+		this->myOrganism->RemoveCell(this);
+		board.replaceCell(this, new Cell_Empty());
+	}
+}
+
+Cell_Killer *Cell_Killer::Clone()
+{
+	return new Cell_Killer(*this);
+}
+
+// armor cell
+Cell_Armor::~Cell_Armor()
+{
+}
+
+Cell_Armor::Cell_Armor()
+{
+	this->type = cell_armor;
+	this->myOrganism = nullptr;
+}
+
+Cell_Armor::Cell_Armor(Organism *_myOrganism)
+{
+	this->type = cell_armor;
+	this->myOrganism = _myOrganism;
+}
+
+void Cell_Armor::Tick()
+{
+	bool valid = false;
+	this->myOrganism->ExpendEnergy(1);
+	for (int i = 0; i < 8 && !valid; i++)
+	{
+		int *thisDirection = directions[i];
+		int abs_x = this->x + thisDirection[0];
+		int abs_y = this->y + thisDirection[1];
+		valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
+	}
+	if (!valid)
+	{
+		this->myOrganism->RemoveCell(this);
+		board.replaceCell(this, new Cell_Empty());
+	}
+}
+
+Cell_Armor *Cell_Armor::Clone()
+{
+	return new Cell_Armor(*this);
 }

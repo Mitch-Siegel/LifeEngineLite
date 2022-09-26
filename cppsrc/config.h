@@ -11,6 +11,8 @@ enum CellTypes
 	cell_herbivore_mouth,	
 	cell_carnivore_mouth,
 	cell_mover,
+	cell_killer,
+	cell_armor,
 	cell_null,
 };
 

@@ -14,6 +14,7 @@ public:
     Brain();
     
     enum Intent currentIntent;
+    bool justRewarded;
     int moveDirIndex;
     int conviction, maxConviction, rotatevschange;
 

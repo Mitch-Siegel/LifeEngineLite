@@ -35,7 +35,7 @@ void Organism::Die()
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
-		Cell *replacedWith;
+		Cell *replacedWith = nullptr;
 		switch (thisCell->type)
 		{
 		case cell_null:
@@ -48,13 +48,16 @@ void Organism::Die()
 
 		case cell_leaf:
 		case cell_flower:
-			replacedWith = new Cell_Plantmass(this->myCells.size() * PLANTMASS_SPOIL_TIME_MULTIPLIER);
+			replacedWith = new Cell_Plantmass(this->myCells.size() * this->myCells.size() * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 
 		case cell_mover:
 		case cell_herbivore_mouth:
 		case cell_carnivore_mouth:
+		case cell_killer:
+		case cell_armor:
 			replacedWith = new Cell_Biomass(this->myCells.size() * BIOMASS_SPOIL_TIME_MULTIPLIER);
+			break;
 		}
 		board.replaceCell(thisCell, replacedWith);
 	}
@@ -79,7 +82,7 @@ Organism *Organism::Tick()
 		this->ExpendEnergy(1);
 	}
 
-	if (this->currentEnergy == 0 /*|| this->currentHealth == 0*/ || this->lifespan == 0 || this->myCells.size() == 0)
+	if (this->currentEnergy == 0 || this->currentHealth == 0 || this->lifespan == 0 || this->myCells.size() == 0)
 	{
 		this->Die();
 		return nullptr;
@@ -154,10 +157,17 @@ void Organism::RecalculateStats()
 	{
 		this->maxEnergy = calculatedMaxEnergy;
 	}
-	this->maxHealth = this->myCells.size() * MAX_HEALTH_MULTIPLIER;
-	if (this->lifespan > this->myCells.size() * LIFESPAN_MULTIPLIER)
+	int nCells = this->myCells.size();
+	size_t nCellsSquared = nCells * nCells;
+	this->maxHealth = nCells * MAX_HEALTH_MULTIPLIER;
+	if(this->currentHealth > this->maxHealth)
 	{
-		this->lifespan = this->myCells.size() * LIFESPAN_MULTIPLIER;
+		this->currentHealth = this->maxHealth;
+	}
+	
+	if (this->lifespan > nCellsSquared * LIFESPAN_MULTIPLIER)
+	{
+		this->lifespan = nCellsSquared * LIFESPAN_MULTIPLIER;
 	}
 	if (this->currentEnergy > this->maxEnergy)
 	{
@@ -175,7 +185,6 @@ bool Organism::CheckValidity()
 	return invalid;
 }
 
-// FIXME: this is bugged, what if an organism has 2 adjacent cells and wants to move!
 void Organism::Move()
 {
 	int *moveDir = directions[this->brain.moveDirIndex];
@@ -299,6 +308,28 @@ void Organism::Rotate(bool clockwise)
 	this->brain.RotateSuccess(clockwise);
 }
 
+
+void Organism::Damage(size_t n)
+{
+	if (n > this->currentHealth)
+	{
+		this->currentHealth = 0;
+		return;
+	}
+
+	this->currentHealth -= n;
+	this->brain.Punish();
+}
+
+void Organism::Heal(size_t n)
+{
+	this->currentHealth += n;
+	if(this->currentHealth > this->maxHealth)
+	{
+		this->currentHealth = this->maxHealth;
+	}
+}
+
 void Organism::ExpendEnergy(size_t n)
 {
 	if (n > this->currentEnergy)
@@ -317,6 +348,11 @@ void Organism::AddEnergy(size_t n)
 	{
 		this->currentEnergy = this->maxEnergy;
 	}
+}
+
+std::size_t Organism::GetMaxHealth()
+{
+	return this->maxHealth;
 }
 
 std::size_t Organism::GetEnergy()
@@ -418,13 +454,15 @@ Organism *Organism::Reproduce()
 				int newReproductioncooldown = (this->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
 				replicated->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
 				replicated->RecalculateStats();
+				replicated->Heal(replicated->GetMaxHealth());
 				replicated->brain = this->brain.Clone();
 				if (replicated->cellCounts[cell_mover])
 				{
 					replicated->brain.Mutate();
 				}
 				replicated->currentEnergy = randInt(1, replicated->maxEnergy / 3);
-				replicated->lifespan = replicated->myCells.size() * LIFESPAN_MULTIPLIER;
+				int nCells = replicated->myCells.size();
+				replicated->lifespan = nCells * nCells * LIFESPAN_MULTIPLIER;
 				return replicated;
 			}
 
@@ -447,7 +485,7 @@ Organism *Organism::Reproduce()
 void Organism::Mutate()
 {
 	// change existing cell
-	if (randPercent(30) && this->myCells.size() > 1)
+	if (this->myCells.size() > 1 && randPercent(30))
 	{
 		int switchedIndex = randInt(0, this->myCells.size() - 1);
 
@@ -465,7 +503,7 @@ void Organism::Mutate()
 	else
 	{
 		// remove a cell
-		if (randPercent(50) && this->myCells.size() > 2)
+		if (this->myCells.size() > 2 && randPercent(50))
 		{
 			Cell *toRemove = this->myCells[randInt(0, this->myCells.size() - 1)];
 			this->myCells.erase(std::find(this->myCells.begin(), this->myCells.end(), toRemove));
@@ -490,13 +528,13 @@ void Organism::Mutate()
 				int thisDirectionIndex = randInt(0, 7);
 				for (int j = 0; j < 8; j++)
 				{
-					int *thisDirection = directions[(thisDirectionIndex + randInt(0, 7)) % 8];
+					int *thisDirection = directions[(thisDirectionIndex + j) % 8];
 					int x_abs = thisAttempt->x + thisDirection[0];
 					int y_abs = thisAttempt->y + thisDirection[1];
 					if (board.isCellOfType(x_abs, y_abs, cell_empty))
 					{
-						x_rel = this->x - x_abs;
-						y_rel = this->y - y_abs;
+						x_rel = x_abs - this->x;
+						y_rel = y_abs - this->y;
 						couldAdd = true;
 						break;
 					}

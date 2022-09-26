@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <chrono>
 
-
 int directions[8][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
 extern Board board;
 
@@ -113,6 +112,8 @@ void Board::Tick()
 					grownFruit->RecalculateStats();
 					grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
 					grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
+					grownFruit->Heal(grownFruit->GetMaxHealth());
+
 					int newReproductioncooldown = (grownFruit->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
 					grownFruit->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
 				}

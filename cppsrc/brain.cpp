@@ -17,6 +17,7 @@ void Brain::Reward()
     {
         this->conviction = maxConviction;
     }
+    this->justRewarded = true;
 }
 
 void Brain::Punish()
@@ -29,7 +30,12 @@ void Brain::Punish()
 
 enum Intent Brain::Decide()
 {
-    if ((randInt(0, 2 * maxConviction) - maxConviction) > conviction || randPercent(5))
+    if(justRewarded)
+    {
+        justRewarded = false;
+        return currentIntent;
+    }
+    if ((randInt(0, 2 * maxConviction) - maxConviction) > conviction || randPercent(1))
     {
         if (!randPercent(rotatevschange))
         {
@@ -55,17 +61,17 @@ enum Intent Brain::Decide()
     case intent_changeDir:
         this->moveDirIndex = randInt(0, 3999) % 4;
         this->currentIntent = intent_continue;
-        this->conviction = 1;
+        this->conviction = ceil(this->maxConviction / 2.0);
         return intent_continue;
 
     case intent_rotateClockwise:
         this->currentIntent = intent_continue;
-        this->conviction = 1;
+        this->conviction = ceil(this->maxConviction / 2.0);
         return intent_rotateClockwise;
 
     case intent_rotateCounterClockwise:
         this->currentIntent = intent_continue;
-        this->conviction = 1;
+        this->conviction = ceil(this->maxConviction / 2.0);
         return intent_rotateCounterClockwise;
     }
 

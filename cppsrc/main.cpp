@@ -17,8 +17,8 @@ void intHandler(int dummy)
 }
 // Cell *board[BOARD_DIM][BOARD_DIM];
 
-// Board board = Board(512, 256);
-Board board = Board(192, 192);
+Board board = Board(512, 256);
+// Board board = Board(192, 192);
 
 void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
@@ -69,6 +69,14 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
 				break;
 
+			case cell_killer:
+				SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+				break;
+			
+			case cell_armor:
+				SDL_SetRenderDrawColor(renderer, 175, 0, 255, 255);
+				break;
+
 			case cell_null:
 				break;
 			}
@@ -88,8 +96,8 @@ int main(int argc, char *argv[])
 
 	SDL_Init(SDL_INIT_VIDEO);
 	// SDL_CreateWindowAndRenderer(2560, 1280, 0, &window, &renderer);
-	SDL_CreateWindowAndRenderer(1152, 1152, 0, &window, &renderer);
-	SDL_RenderSetScale(renderer, 6, 6);
+	SDL_CreateWindowAndRenderer(2048, 1024, 0, &window, &renderer);
+	SDL_RenderSetScale(renderer, 4, 4);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
@@ -102,12 +110,12 @@ int main(int argc, char *argv[])
 
 	// refresh();
 	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
-	firstOrganism->AddCell(0, 0, new Cell_Leaf());
+	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
 	// firstOrganism->AddCell(0, 0, new Cell_Mover());
 	// firstOrganism->AddCell(0, 1, new Cell_Carnivore());
-	firstOrganism->AddCell(1, 0, new Cell_Leaf());
-	firstOrganism->AddCell(1, 1, new Cell_Leaf());
-	firstOrganism->AddCell(0, 1, new Cell_Leaf());
+	firstOrganism->AddCell(1, 0, new Cell_Leaf(LEAF_FLOWERING_ABILITY_PERCENT / 2));
+	firstOrganism->AddCell(1, 1, new Cell_Leaf(0));
+	firstOrganism->AddCell(0, 1, new Cell_Leaf(LEAF_FLOWERING_ABILITY_PERCENT / 2));
 	// Cell_Leaf plantLeaf = Cell_Leaf();
 	/*
 	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))
@@ -122,7 +130,8 @@ int main(int argc, char *argv[])
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->myCells.size();
 	// firstOrganism->mutability = 50;
-	firstOrganism->AddEnergy(2);
+	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
+	firstOrganism->Heal(100);
 	firstOrganism->reproductionCooldown = 10;
 	// board.Organisms.push_back(firstOrganism);
 

@@ -47,9 +47,15 @@ public:
 
 	void ReplaceCell(Cell *_myCell, Cell *_newCell);
 
+	std::size_t GetMaxHealth();
+
 	std::size_t GetEnergy();
 
 	std::size_t GetMaxEnergy();
+
+	void Damage(std::size_t n);
+
+	void Heal(std::size_t n);
 
 	void ExpendEnergy(std::size_t n);
 
@@ -66,19 +72,18 @@ class Organism;
 
 #define DEFAULT_MUTABILITY 15
 
-
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .75
 #define REPRODUCTION_COOLDOWN_MULTIPLIER 0.5
-#define LIFESPAN_MULTIPLIER 500
-#define ENERGY_DENSITY_MULTIPLIER 7
+#define LIFESPAN_MULTIPLIER 100
+#define ENERGY_DENSITY_MULTIPLIER 5
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 3
+#define HERB_FOOD_MULTIPLIER 5
 
 #define LEAF_FOOD_ENERGY 3 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
-#define FRUIT_FOOD_ENERGY 9 * HERB_FOOD_MULTIPLIER
+#define FRUIT_FOOD_ENERGY 15 * HERB_FOOD_MULTIPLIER
 
 #define FRUIT_SPOIL_TIME 30
 // must roll 2x in a row
@@ -86,25 +91,26 @@ class Organism;
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
 #define FRUIT_MUTATE_PERCENT 15
 
-#define PLANTMASS_SPOIL_TIME_MULTIPLIER 100
-#define BIOMASS_SPOIL_TIME_MULTIPLIER 300
+#define SPOILTIME_BASE 300
+#define PLANTMASS_SPOIL_TIME_MULTIPLIER 1 * SPOILTIME_BASE
+#define BIOMASS_SPOIL_TIME_MULTIPLIER 2 * SPOILTIME_BASE
 
-#define PLANTMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
+#define PLANTMASS_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
 #define BIOMASS_FOOD_ENERGY 18 * PLANTMASS_FOOD_ENERGY
-
 
 #define FLOWER_COST 8 * ENERGY_DENSITY_MULTIPLIER
 #define LEAF_COST 2 * ENERGY_DENSITY_MULTIPLIER
-// must roll this percent and mutability percent in a row
-#define PLANT_GROW_PERCENT 5
 
+// whether or not a leaf is able to flower, rolled at creation
+#define LEAF_FLOWERING_ABILITY_PERCENT 60
+// must roll this percent 2x to grow a flower on a leaf that can
+#define PLANT_GROW_PERCENT 25
+// percent for a flower to wilt into another leaf vs just going away
+#define FLOWER_EXPAND_PERCENT 100
 
-#define FLOWER_BLOOM_COOLDOWN 15
+#define FLOWER_BLOOM_COOLDOWN 150
 #define FLOWER_WILT_CHANCE 35
 #define FLOWER_BLOOM_COST 5 * ENERGY_DENSITY_MULTIPLIER
-
-
-#include <curses.h>
 
 class Cell
 {
@@ -171,10 +177,13 @@ public:
 
 class Cell_Leaf : public Cell
 {
+	bool flowering;
 public:
 	~Cell_Leaf() override;
 
 	Cell_Leaf();
+
+	Cell_Leaf(int floweringPercent);
 
 	explicit Cell_Leaf(Organism *_myOrganism);
 
@@ -250,7 +259,6 @@ public:
 	Cell_Herbivore *Clone() override;
 };
 
-
 class Cell_Carnivore : public Cell
 {
 
@@ -264,4 +272,34 @@ public:
 	void Tick() override;
 
 	Cell_Carnivore *Clone() override;
+};
+
+class Cell_Killer : public Cell
+{
+
+public:
+	~Cell_Killer() override;
+
+	Cell_Killer();
+
+	explicit Cell_Killer(Organism *_myOrganism);
+
+	void Tick() override;
+
+	Cell_Killer *Clone() override;
+};
+
+class Cell_Armor : public Cell
+{
+
+public:
+	~Cell_Armor() override;
+
+	Cell_Armor();
+
+	explicit Cell_Armor(Organism *_myOrganism);
+
+	void Tick() override;
+
+	Cell_Armor *Clone() override;
 };
