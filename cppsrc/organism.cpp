@@ -179,7 +179,11 @@ void Organism::RecalculateStats()
 bool Organism::CheckValidity()
 {
 	bool invalid = false;
-	invalid |= (this->cellCounts[cell_herbivore_mouth] / (float)this->myCells.size()) > 0.667;
+
+	// disallow organisms that are all mouths
+	invalid |= (this->cellCounts[cell_herbivore_mouth] == this->myCells.size());
+
+	// disallow herbivores that have leaves on them
 	invalid |= (this->cellCounts[cell_herbivore_mouth] > 0 && this->cellCounts[cell_leaf] > 0);
 	if (!invalid)
 	{
@@ -557,13 +561,39 @@ void Organism::Mutate()
 			{
 				// cellIndex = randInt(0, numCells - 1);
 			}
+
+			// preferentially mutate directly adjacent to an existing cell
 			for (int i = 0; (i < numCells) && !couldAdd; i++)
 			{
 				Cell *thisAttempt = this->myCells[(cellIndex + randInt(0, numCells - 1)) % numCells];
 				int thisDirectionIndex = randInt(0, 3);
+
+				// prefer to mutate directly next to an existing cell
 				for (int j = 0; j < 4; j++)
 				{
 					int *thisDirection = directions[(thisDirectionIndex + j) % 4];
+					int x_abs = thisAttempt->x + thisDirection[0];
+					int y_abs = thisAttempt->y + thisDirection[1];
+					if (board.isCellOfType(x_abs, y_abs, cell_empty))
+					{
+						x_rel = x_abs - this->x;
+						y_rel = y_abs - this->y;
+						couldAdd = true;
+						break;
+					}
+				}
+			}
+
+			// if not possible, then check diagonals
+			for (int i = 0; (i < numCells) && !couldAdd; i++)
+			{
+				Cell *thisAttempt = this->myCells[(cellIndex + randInt(0, numCells - 1)) % numCells];
+				int thisDirectionIndex = randInt(0, 3);
+
+				// prefer to mutate directly next to an existing cell
+				for (int j = 0; j < 4; j++)
+				{
+					int *thisDirection = directions[((thisDirectionIndex + j) % 4) + 4];
 					int x_abs = thisAttempt->x + thisDirection[0];
 					int y_abs = thisAttempt->y + thisDirection[1];
 					if (board.isCellOfType(x_abs, y_abs, cell_empty))

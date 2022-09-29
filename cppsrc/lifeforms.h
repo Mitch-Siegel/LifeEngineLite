@@ -24,7 +24,7 @@ public:
 	int reproductionCooldown;
 	std::size_t lifespan;
 	Brain brain;
-	int cellCounts[cell_null];
+	std::size_t cellCounts[cell_null];
 
 	Organism(int center_x, int center_y);
 
@@ -75,15 +75,15 @@ class Organism;
 
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .75
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.1
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.4
 // lifespan related to sqare root of energy density
 #define LIFESPAN_MULTIPLIER 250
 #define ENERGY_DENSITY_MULTIPLIER 4
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 2 * ENERGY_DENSITY_MULTIPLIER
+#define HERB_FOOD_MULTIPLIER 1.5 * ENERGY_DENSITY_MULTIPLIER
 // formula is sqrt(energy gained) * multiplier
-#define HERB_DIGEST_TIME_MULTIPLIER 1
+#define HERB_DIGEST_TIME_MULTIPLIER 0.8
 // #define HERB_DIGEST_TIME 0
 
 #define LEAF_FOOD_ENERGY 1 * HERB_FOOD_MULTIPLIER
@@ -92,9 +92,9 @@ class Organism;
 
 #define FRUIT_SPOIL_TIME 30
 // must roll 2x in a row
-#define FRUIT_GROW_PERCENT 10
+#define FRUIT_GROW_PERCENT 15
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
-#define FRUIT_MUTATE_PERCENT 10
+#define FRUIT_MUTATE_PERCENT 15
 
 #define SPOILTIME_BASE 100
 #define PLANTMASS_SPOIL_TIME_MULTIPLIER 3 * SPOILTIME_BASE
@@ -110,9 +110,8 @@ class Organism;
 #define FLOWER_COST 0.5 * ENERGY_DENSITY_MULTIPLIER
 
 // whether or not a leaf is able to flower, rolled at creation
-#define LEAF_FLOWERING_ABILITY_PERCENT 65
-// must roll this percent 2x to grow a flower on a leaf that can
-#define PLANT_GROW_PERCENT 65
+#define LEAF_FLOWERING_ABILITY_PERCENT 50
+#define PLANT_GROW_PERCENT 50
 // percent for a flower to wilt into another leaf vs just going away
 #define FLOWER_EXPAND_PERCENT 100
 
