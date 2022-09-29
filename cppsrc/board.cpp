@@ -176,11 +176,11 @@ void Board::Stats()
 	auto now = std::chrono::high_resolution_clock::now();
 	auto diff = now - lastFrame;
 	size_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
-	printf("TICK %lu (%.2f t/s)\n", this->tickCount, (60000 / (float)millis));
+	printf("TICK %lu (%.2f t/s) (%lu organisms)\n", this->tickCount, (60000 / (float)millis), this->Organisms.size());
 	lastFrame = now;
 	for (Organism *o : this->Organisms)
 	{
-		if (o->cellCounts[cell_mover])
+		if (o->cellCounts[cell_mover] && !o->cellCounts[cell_leaf])
 		{
 			moverStats[count_cells] += o->myCells.size();
 			moverStats[count_energy] += o->GetEnergy();
@@ -210,13 +210,15 @@ void Board::Stats()
 		moverStats[i] /= moverStats[count_raw];
 	}
 
-	printf("Plants avg: %2.2f cells, %2.0f%% energy, %.0f lifespan, %.1f%% mutability\n",
+	printf("%5.0f Plants - avg %2.2f cells, %2.0f%% energy, %.0f lifespan, %.1f%% mutability\n",
+		   plantStats[count_raw],
 		   plantStats[count_cells],
 		   plantStats[count_energy] / plantStats[count_maxenergy] * 100,
 		   plantStats[count_lifespan],
 		   plantStats[count_mutability]);
 
-	printf("Movers avg: %2.2f cells, %2.0f%% energy, %.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotatevschange\n",
+	printf("%5.0f Movers - avg %2.2f cells, %2.0f%% energy, %.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotatevschange\n",
+		   moverStats[count_raw],
 		   moverStats[count_cells],
 		   moverStats[count_energy] / moverStats[count_maxenergy] * 100,
 		   moverStats[count_lifespan],

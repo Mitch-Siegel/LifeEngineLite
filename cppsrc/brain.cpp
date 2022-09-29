@@ -35,7 +35,7 @@ enum Intent Brain::Decide()
         justRewarded = false;
         return currentIntent;
     }
-    if ((randInt(0, 2 * maxConviction) - maxConviction) > conviction || randPercent(1))
+    if ((randInt(0, 2 * maxConviction) - maxConviction) > conviction)
     {
         if (!randPercent(rotatevschange))
         {

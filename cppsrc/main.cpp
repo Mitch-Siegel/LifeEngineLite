@@ -58,7 +58,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				break;
 
 			case cell_carnivore_mouth:
-				SDL_SetRenderDrawColor(renderer, 255, 75, 75, 255);
+				SDL_SetRenderDrawColor(renderer, 255, 150, 150, 255);
 				break;
 
 			case cell_flower:
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	}*/
 	// Organism *realFirstOrganism = firstOrganism->Reproduce();
 	firstOrganism->RecalculateStats();
-	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->myCells.size();
+	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->GetMaxEnergy();
 	// firstOrganism->mutability = 50;
 	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
 	firstOrganism->Heal(100);
@@ -254,6 +254,17 @@ int main(int argc, char *argv[])
 					}
 					printf("Rendering every %d frame(s)\n", frameToRender);
 					break;
+
+				case SDLK_SPACE:
+					// if not autoplaying, set max autoplay speed
+					if(!autoplay)
+					{
+						autoplay = true;
+						autoplaySpeed = 0;
+						break;
+					}
+
+					// if autoplaying, fall through and stop the autoplay
 
 				default:
 					autoplay = false;

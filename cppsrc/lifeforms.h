@@ -2,6 +2,7 @@
 #include "brain.h"
 
 #include <vector>
+#include <cstdint>
 
 #pragma once
 
@@ -74,12 +75,13 @@ class Organism;
 
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .75
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.5
-#define LIFESPAN_MULTIPLIER 100
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.25
+// lifespan related to sqare root of energy density
+#define LIFESPAN_MULTIPLIER 150
 #define ENERGY_DENSITY_MULTIPLIER 5
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 6
+#define HERB_FOOD_MULTIPLIER 8
 #define HERB_DIGEST_TIME 4
 
 #define LEAF_FOOD_ENERGY 3 * HERB_FOOD_MULTIPLIER
@@ -92,12 +94,14 @@ class Organism;
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
 #define FRUIT_MUTATE_PERCENT 15
 
-#define SPOILTIME_BASE 300
-#define PLANTMASS_SPOIL_TIME_MULTIPLIER 1 * SPOILTIME_BASE
-#define BIOMASS_SPOIL_TIME_MULTIPLIER 2 * SPOILTIME_BASE
+#define SPOILTIME_BASE 100
+#define PLANTMASS_SPOIL_TIME_MULTIPLIER 3 * SPOILTIME_BASE
+// #define BIOMASS_SPOIL_TIME_MULTIPLIER 5 * SPOILTIME_BASE
+#define BIOMASS_SPOIL_TIME_MULTIPLIER 0 * SPOILTIME_BASE
 
 #define PLANTMASS_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
 #define BIOMASS_FOOD_ENERGY 18 * PLANTMASS_FOOD_ENERGY
+#define CARN_DIGEST_TIME 50
 
 #define FLOWER_COST 8 * ENERGY_DENSITY_MULTIPLIER
 #define LEAF_COST 2 * ENERGY_DENSITY_MULTIPLIER
@@ -105,13 +109,16 @@ class Organism;
 // whether or not a leaf is able to flower, rolled at creation
 #define LEAF_FLOWERING_ABILITY_PERCENT 60
 // must roll this percent 2x to grow a flower on a leaf that can
-#define PLANT_GROW_PERCENT 25
+#define PLANT_GROW_PERCENT 28
 // percent for a flower to wilt into another leaf vs just going away
 #define FLOWER_EXPAND_PERCENT 100
 
 #define FLOWER_BLOOM_COOLDOWN 150
 #define FLOWER_WILT_CHANCE 35
 #define FLOWER_BLOOM_COST 5 * ENERGY_DENSITY_MULTIPLIER
+
+
+#define KILLER_DAMAGE_COST ENERGY_DENSITY_MULTIPLIER
 
 class Cell
 {
@@ -247,7 +254,7 @@ public:
 
 class Cell_Herbivore : public Cell
 {
-std::size_t digestCooldown;
+uint8_t digestCooldown;
 public:
 	~Cell_Herbivore() override;
 
@@ -262,7 +269,7 @@ public:
 
 class Cell_Carnivore : public Cell
 {
-
+uint8_t digestCooldown;
 public:
 	~Cell_Carnivore() override;
 

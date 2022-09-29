@@ -158,16 +158,15 @@ void Organism::RecalculateStats()
 		this->maxEnergy = calculatedMaxEnergy;
 	}
 	int nCells = this->myCells.size();
-	size_t nCellsSquared = nCells * nCells;
 	this->maxHealth = nCells * MAX_HEALTH_MULTIPLIER;
 	if (this->currentHealth > this->maxHealth)
 	{
 		this->currentHealth = this->maxHealth;
 	}
 
-	if (this->lifespan > nCellsSquared * LIFESPAN_MULTIPLIER)
+	if (this->lifespan > sqrt(this->maxEnergy) * LIFESPAN_MULTIPLIER)
 	{
-		this->lifespan = nCellsSquared * LIFESPAN_MULTIPLIER;
+		this->lifespan = sqrt(this->maxEnergy) * LIFESPAN_MULTIPLIER;
 	}
 	if (this->currentEnergy > this->maxEnergy)
 	{
@@ -249,7 +248,10 @@ void Organism::Move()
 		this->y += moveDir[1];
 
 		// only expend energy if can move
-		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()))) - 1;
+		/*
+		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+2.2\right)}\right)-1
+		*/
+		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2.2)) - 1;
 		this->ExpendEnergy(moveCost);
 	}
 	else
@@ -408,7 +410,7 @@ bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 
 Organism *Organism::Reproduce()
 {
-	this->reproductionCooldown = (this->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
+	this->reproductionCooldown = sqrt(this->GetMaxEnergy()) * REPRODUCTION_COOLDOWN_MULTIPLIER;
 
 	int dirIndex = randInt(0, 7);
 	for (int i = 0; i < 8; i++)
@@ -539,13 +541,13 @@ void Organism::Mutate()
 			int cellIndex = 0;
 			if (numCells > 1)
 			{
-				cellIndex = randInt(0, numCells - 1);
+				// cellIndex = randInt(0, numCells - 1);
 			}
 			for (int i = 0; (i < numCells) && !couldAdd; i++)
 			{
 				Cell *thisAttempt = this->myCells[(cellIndex + randInt(0, numCells - 1)) % numCells];
-				int thisDirectionIndex = randInt(0, 7);
-				for (int j = 0; j < 8; j++)
+				// int thisDirectionIndex = randInt(0, 7);
+				/*for (int j = 0; j < 8; j++)
 				{
 					int *thisDirection = directions[(thisDirectionIndex + j) % 8];
 					int x_abs = thisAttempt->x + thisDirection[0];
@@ -556,6 +558,35 @@ void Organism::Mutate()
 						y_rel = y_abs - this->y;
 						couldAdd = true;
 						break;
+					}
+				}*/
+				for (int j = 0; j < 4; j++)
+				{
+					int *thisDirection = directions[randInt(0, 3)];
+					int x_abs = thisAttempt->x + thisDirection[0];
+					int y_abs = thisAttempt->y + thisDirection[1];
+					if (board.isCellOfType(x_abs, y_abs, cell_empty))
+					{
+						x_rel = x_abs - this->x;
+						y_rel = y_abs - this->y;
+						couldAdd = true;
+						break;
+					}
+				}
+				if (!couldAdd)
+				{
+					for (int j = 0; j < 4; j++)
+					{
+						int *thisDirection = directions[randInt(4, 8)];
+						int x_abs = thisAttempt->x + thisDirection[0];
+						int y_abs = thisAttempt->y + thisDirection[1];
+						if (board.isCellOfType(x_abs, y_abs, cell_empty))
+						{
+							x_rel = x_abs - this->x;
+							y_rel = y_abs - this->y;
+							couldAdd = true;
+							break;
+						}
 					}
 				}
 			}

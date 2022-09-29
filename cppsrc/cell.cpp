@@ -12,11 +12,11 @@ int CellEnergyDensities[cell_null] = {
 	4,	// leaf
 	5,	// flower
 	0,	// fruit
-	25, // herbivore
-	45, // carnivore
+	20, // herbivore
+	0, // carnivore
 	25, // mover
-	10, // killer
-	50, // armor
+	15, // killer
+	15, // armor
 };
 
 Cell *GenerateRandomCell()
@@ -157,7 +157,6 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 	this->flowering = randPercent(floweringPercent);
 }
 
-
 Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 {
 	this->type = cell_leaf;
@@ -255,12 +254,12 @@ void Cell_Flower::Tick()
 			{
 				// if (randPercent(FLOWER_EXPAND_PERCENT))
 				// {
-					this->myOrganism->ReplaceCell(this, new Cell_Leaf());
+				this->myOrganism->ReplaceCell(this, new Cell_Leaf());
 				// }
 				// else
 				// {
-					// this->myOrganism->RemoveCell(this);
-					// board.replaceCell(this, new Cell_Empty());
+				// this->myOrganism->RemoveCell(this);
+				// board.replaceCell(this, new Cell_Empty());
 				// }
 			}
 		}
@@ -363,7 +362,7 @@ Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
 
 void Cell_Herbivore::Tick()
 {
-	if(this->digestCooldown > 0)
+	if (this->digestCooldown > 0)
 	{
 		this->digestCooldown--;
 		return;
@@ -390,7 +389,6 @@ void Cell_Herbivore::Tick()
 			Organism *eatenParent = potentiallyEaten->myOrganism;
 			if (eatenParent != this->myOrganism)
 			{
-
 				switch (potentiallyEaten->type)
 				{
 				case cell_leaf:
@@ -469,65 +467,73 @@ Cell_Carnivore::Cell_Carnivore()
 {
 	this->type = cell_carnivore_mouth;
 	this->myOrganism = nullptr;
+	this->digestCooldown = CARN_DIGEST_TIME;
 }
 
 Cell_Carnivore::Cell_Carnivore(Organism *_myOrganism)
 {
 	this->type = cell_carnivore_mouth;
 	this->myOrganism = _myOrganism;
+	this->digestCooldown = CARN_DIGEST_TIME;
 }
 
 void Cell_Carnivore::Tick()
 {
+	if (this->digestCooldown > 0)
+	{
+		this->digestCooldown--;
+		return;
+	}
+	bool couldEat = false;
+	bool valid = false;
 	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
 	{
-		this->myOrganism->ExpendEnergy(randInt(1, 2));
+		this->myOrganism->ExpendEnergy(randInt(2 * ENERGY_DENSITY_MULTIPLIER, 4 * ENERGY_DENSITY_MULTIPLIER));
 	}
-	this->myOrganism->ExpendEnergy(ceil(sqrt(this->myOrganism->myCells.size())));
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board.isCellOfType(x_abs, y_abs, cell_biomass))
+		if (board.boundCheckPos(x_abs, y_abs))
 		{
-			Cell *eaten = board.cells[y_abs][x_abs];
-			Organism *eatenParent = eaten->myOrganism;
-			if (eatenParent != this->myOrganism /* &&
-				 this->myOrganism->canMove*/
-												/*((!this->myOrganism->hasLeaf && eaten->type == cell_leaf) ||
-												 (!this->myOrganism->hasFlower && eaten->type == cell_flower))*/
-			)
-			{
-				/*if (eatenParent != nullptr)
-				{
-					std::vector<Cell *>::iterator foundLeaf = std::find(eatenParent->myCells.begin(), eatenParent->myCells.end(), eaten);
-					eatenParent->myCells.erase(foundLeaf);
-				}*/
-				switch (eaten->type)
-				{
-				case cell_biomass:
-					this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
-					break;
+			continue;
+		}
+		Cell *potentiallyEaten = board.cells[y_abs][x_abs];
+		if (potentiallyEaten->type == cell_biomass)
+		{
+			this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
+			board.replaceCell(potentiallyEaten, new Cell_Empty());
+			couldEat = true;
+		}
+		this->digestCooldown = CARN_DIGEST_TIME;
+	}
 
-				default:
-					std::cerr << "Impossible case for carnivore cell to eat something it shouldn't!" << std::endl;
-					exit(1);
-				}
-				if (eaten->myOrganism != nullptr)
-				{
-					eaten->myOrganism->RemoveCell(eaten);
-					board.replaceCell(eaten, new Cell_Empty());
-				}
-				else
-				{
-					board.replaceCell(eaten, new Cell_Empty());
-				}
-				this->myOrganism->brain.Reward();
-			}
+	if (!valid)
+	{
+		for (int i = 4; i < 8; i++)
+		{
+			int *thisDirection = directions[i];
+			int abs_x = this->x + thisDirection[0];
+			int abs_y = this->y + thisDirection[1];
+			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
 		}
 	}
+
+	if (couldEat)
+	{
+		this->myOrganism->brain.Reward();
+		this->digestCooldown = HERB_DIGEST_TIME;
+	}
+
+	if (!valid)
+	{
+		this->myOrganism->RemoveCell(this);
+		board.replaceCell(this, new Cell_Empty());
+	}
+
+	
 }
 
 Cell_Carnivore *Cell_Carnivore::Clone()
@@ -589,7 +595,7 @@ void Cell_Killer::Tick()
 			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
 		}
 	}
-	this->myOrganism->ExpendEnergy(damageDone + 1);
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + 1);
 	if (!valid)
 	{
 		this->myOrganism->RemoveCell(this);
