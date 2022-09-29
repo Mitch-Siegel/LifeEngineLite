@@ -75,7 +75,7 @@ class Organism;
 
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .75
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.25
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.5
 // lifespan related to sqare root of energy density
 #define LIFESPAN_MULTIPLIER 150
 #define ENERGY_DENSITY_MULTIPLIER 5
@@ -83,7 +83,7 @@ class Organism;
 
 #define HERB_FOOD_MULTIPLIER 8
 // #define HERB_FOOD_MULTIPLIER 15
-#define HERB_DIGEST_TIME 6
+#define HERB_DIGEST_TIME 10
 // #define HERB_DIGEST_TIME 0
 
 #define LEAF_FOOD_ENERGY 3 * HERB_FOOD_MULTIPLIER
@@ -92,7 +92,7 @@ class Organism;
 
 #define FRUIT_SPOIL_TIME 30
 // must roll 2x in a row
-#define FRUIT_GROW_PERCENT 15
+#define FRUIT_GROW_PERCENT 20
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
 #define FRUIT_MUTATE_PERCENT 15
 

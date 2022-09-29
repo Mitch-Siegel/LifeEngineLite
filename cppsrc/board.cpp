@@ -85,10 +85,10 @@ void Board::Tick()
 						grownFruit->AddCell(0, 0, GenerateRandomCell());
 						Cell *secondRandomCell = GenerateRandomCell();
 						bool couldAddSecond = false;
-						int dirIndex = randInt(0, 3);
-						for (int j = 0; j < 4; j++)
+						int dirIndex = randInt(0, 7);
+						for (int j = 0; j < 8; j++)
 						{
-							int *thisDirection = directions[(j + dirIndex) % 4];
+							int *thisDirection = directions[(j + dirIndex) % 8];
 							if (grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell) == 0)
 							{
 								couldAddSecond = true;

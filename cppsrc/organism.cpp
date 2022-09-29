@@ -249,9 +249,9 @@ void Organism::Move()
 
 		// only expend energy if can move
 		/*
-		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+2.2\right)}\right)-1
+		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-1
 		*/
-		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2)) - 1;
+		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2)) - 2;
 		this->ExpendEnergy(moveCost);
 	}
 	else
@@ -546,23 +546,10 @@ void Organism::Mutate()
 			for (int i = 0; (i < numCells) && !couldAdd; i++)
 			{
 				Cell *thisAttempt = this->myCells[(cellIndex + randInt(0, numCells - 1)) % numCells];
-				// int thisDirectionIndex = randInt(0, 7);
-				/*for (int j = 0; j < 8; j++)
-				{
-					int *thisDirection = directions[(thisDirectionIndex + j) % 8];
-					int x_abs = thisAttempt->x + thisDirection[0];
-					int y_abs = thisAttempt->y + thisDirection[1];
-					if (board.isCellOfType(x_abs, y_abs, cell_empty))
-					{
-						x_rel = x_abs - this->x;
-						y_rel = y_abs - this->y;
-						couldAdd = true;
-						break;
-					}
-				}*/
+				int thisDirectionIndex = randInt(0, 3);
 				for (int j = 0; j < 4; j++)
 				{
-					int *thisDirection = directions[randInt(0, 3)];
+					int *thisDirection = directions[(thisDirectionIndex + j) % 4];
 					int x_abs = thisAttempt->x + thisDirection[0];
 					int y_abs = thisAttempt->y + thisDirection[1];
 					if (board.isCellOfType(x_abs, y_abs, cell_empty))
@@ -573,24 +560,6 @@ void Organism::Mutate()
 						break;
 					}
 				}
-				/*
-				if (!couldAdd)
-				{
-					for (int j = 0; j < 4; j++)
-					{
-						int *thisDirection = directions[randInt(4, 8)];
-						int x_abs = thisAttempt->x + thisDirection[0];
-						int y_abs = thisAttempt->y + thisDirection[1];
-						if (board.isCellOfType(x_abs, y_abs, cell_empty))
-						{
-							x_rel = x_abs - this->x;
-							y_rel = y_abs - this->y;
-							couldAdd = true;
-							break;
-						}
-					}
-				}
-				*/
 			}
 
 			if (couldAdd)

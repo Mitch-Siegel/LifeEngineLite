@@ -12,7 +12,7 @@ int CellEnergyDensities[cell_null] = {
 	4,	// leaf
 	5,	// flower
 	0,	// fruit
-	20, // herbivore
+	25, // herbivore
 	0,	// carnivore
 	25, // mover
 	15, // killer

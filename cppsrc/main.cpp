@@ -17,8 +17,8 @@ void intHandler(int dummy)
 }
 // Cell *board[BOARD_DIM][BOARD_DIM];
 
-Board board = Board(512, 256);
-// Board board = Board(192, 192);
+// Board board = Board(512, 256);
+Board board = Board(320, 320);
 
 void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
 	SDL_Renderer *renderer = nullptr;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	// SDL_CreateWindowAndRenderer(2560, 1280, 0, &window, &renderer);
-	SDL_CreateWindowAndRenderer(2048, 1024, 0, &window, &renderer);
+	SDL_CreateWindowAndRenderer(1280, 1280, 0, &window, &renderer);
+	// SDL_CreateWindowAndRenderer(2580, 1280, 0, &window, &renderer);
 	SDL_RenderSetScale(renderer, 4, 4);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
 
 				case SDLK_RIGHT:
 					frameToRender *= 2;
-					printf("Rendering every %d frame(s)\n", frameToRender);
+					printf("Rendering every %d tick(s)\n", frameToRender);
 					break;
 
 				case SDLK_LEFT:
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 					{
 						frameToRender = 1;
 					}
-					printf("Rendering every %d frame(s)\n", frameToRender);
+					printf("Rendering every %d tick(s)\n", frameToRender);
 					break;
 
 				case SDLK_SPACE:
