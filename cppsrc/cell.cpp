@@ -13,7 +13,7 @@ int CellEnergyDensities[cell_null] = {
 	5,	// flower
 	0,	// fruit
 	20, // herbivore
-	0, // carnivore
+	0,	// carnivore
 	25, // mover
 	15, // killer
 	15, // armor
@@ -351,6 +351,7 @@ Cell_Herbivore::Cell_Herbivore()
 	this->type = cell_herbivore_mouth;
 	this->myOrganism = nullptr;
 	this->digestCooldown = 1;
+	this->direction = randInt(0, 3);
 }
 
 Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
@@ -358,6 +359,7 @@ Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
 	this->type = cell_herbivore_mouth;
 	this->myOrganism = _myOrganism;
 	this->digestCooldown = 1;
+	this->direction = randInt(0, 3);
 }
 
 void Cell_Herbivore::Tick()
@@ -422,6 +424,7 @@ void Cell_Herbivore::Tick()
 				}
 				couldEat = true;
 			}
+			// set valid just so we have a chance of being able to skip the check below
 			else
 			{
 				valid = true;
@@ -437,7 +440,7 @@ void Cell_Herbivore::Tick()
 
 	if (!valid)
 	{
-		for (int i = 4; i < 8; i++)
+		for (int i = 0; i < 8; i++)
 		{
 			int *thisDirection = directions[i];
 			int abs_x = this->x + thisDirection[0];
@@ -512,7 +515,7 @@ void Cell_Carnivore::Tick()
 
 	if (!valid)
 	{
-		for (int i = 4; i < 8; i++)
+		for (int i = 0; i < 8; i++)
 		{
 			int *thisDirection = directions[i];
 			int abs_x = this->x + thisDirection[0];
@@ -532,8 +535,6 @@ void Cell_Carnivore::Tick()
 		this->myOrganism->RemoveCell(this);
 		board.replaceCell(this, new Cell_Empty());
 	}
-
-	
 }
 
 Cell_Carnivore *Cell_Carnivore::Clone()
@@ -587,7 +588,7 @@ void Cell_Killer::Tick()
 
 	if (!valid)
 	{
-		for (int i = 4; i < 8; i++)
+		for (int i = 0; i < 8; i++)
 		{
 			int *thisDirection = directions[i];
 			int abs_x = this->x + thisDirection[0];
@@ -595,7 +596,7 @@ void Cell_Killer::Tick()
 			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
 		}
 	}
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + 1);
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST));
 	if (!valid)
 	{
 		this->myOrganism->RemoveCell(this);

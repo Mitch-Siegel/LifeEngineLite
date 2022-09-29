@@ -82,7 +82,9 @@ class Organism;
 #define MAX_HEALTH_MULTIPLIER 1
 
 #define HERB_FOOD_MULTIPLIER 8
-#define HERB_DIGEST_TIME 4
+// #define HERB_FOOD_MULTIPLIER 15
+#define HERB_DIGEST_TIME 6
+// #define HERB_DIGEST_TIME 0
 
 #define LEAF_FOOD_ENERGY 3 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
@@ -90,7 +92,7 @@ class Organism;
 
 #define FRUIT_SPOIL_TIME 30
 // must roll 2x in a row
-#define FRUIT_GROW_PERCENT 10
+#define FRUIT_GROW_PERCENT 15
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
 #define FRUIT_MUTATE_PERCENT 15
 
@@ -116,7 +118,6 @@ class Organism;
 #define FLOWER_BLOOM_COOLDOWN 150
 #define FLOWER_WILT_CHANCE 35
 #define FLOWER_BLOOM_COST 5 * ENERGY_DENSITY_MULTIPLIER
-
 
 #define KILLER_DAMAGE_COST ENERGY_DENSITY_MULTIPLIER
 
@@ -186,6 +187,7 @@ public:
 class Cell_Leaf : public Cell
 {
 	bool flowering;
+
 public:
 	~Cell_Leaf() override;
 
@@ -254,8 +256,11 @@ public:
 
 class Cell_Herbivore : public Cell
 {
-uint8_t digestCooldown;
+	uint8_t digestCooldown;
+
 public:
+	int8_t direction;
+
 	~Cell_Herbivore() override;
 
 	Cell_Herbivore();
@@ -269,8 +274,11 @@ public:
 
 class Cell_Carnivore : public Cell
 {
-uint8_t digestCooldown;
+	uint8_t digestCooldown;
+
 public:
+	int8_t direction;
+
 	~Cell_Carnivore() override;
 
 	Cell_Carnivore();

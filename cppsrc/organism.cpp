@@ -251,7 +251,7 @@ void Organism::Move()
 		/*
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+2.2\right)}\right)-1
 		*/
-		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2.2)) - 1;
+		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2)) - 1;
 		this->ExpendEnergy(moveCost);
 	}
 	else
@@ -573,6 +573,7 @@ void Organism::Mutate()
 						break;
 					}
 				}
+				/*
 				if (!couldAdd)
 				{
 					for (int j = 0; j < 4; j++)
@@ -589,6 +590,7 @@ void Organism::Mutate()
 						}
 					}
 				}
+				*/
 			}
 
 			if (couldAdd)
