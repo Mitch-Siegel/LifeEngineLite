@@ -423,9 +423,23 @@ Organism *Organism::Reproduce()
 
 			if (this->CanOccupyPosition(this->x + dir_x, this->y + dir_y))
 			{
+				int dir_x_extra = 0;
+				int dir_y_extra = 0;
+				for (int k = 0; k < 8; k++)
+				{
+					dir_x_extra = randInt(-3, 3);
+					dir_y_extra = randInt(-3, 3);
+					if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
+					{
+						break;
+					}
+					dir_x_extra = 0;
+					dir_y_extra = 0;
+				}
+
 				this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER);
 
-				Organism *replicated = new Organism(this->x + dir_x, this->y + dir_y);
+				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra);
 				replicated->mutability = this->mutability;
 				for (size_t k = 0; k < this->myCells.size(); k++)
 				{
@@ -482,8 +496,8 @@ Organism *Organism::Reproduce()
 					replicated->brain.Mutate();
 				}
 				replicated->currentEnergy = randInt(1, replicated->maxEnergy / 3);
-				int nCells = replicated->myCells.size();
-				replicated->lifespan = nCells * nCells * LIFESPAN_MULTIPLIER;
+				replicated->lifespan = sqrt(replicated->maxEnergy) * LIFESPAN_MULTIPLIER;
+				;
 				return replicated;
 			}
 

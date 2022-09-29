@@ -9,12 +9,12 @@ int CellEnergyDensities[cell_null] = {
 	0,	// empty
 	0,	// plantmass
 	0,	// biomass
-	4,	// leaf
-	5,	// flower
+	1,	// leaf
+	2,	// flower
 	0,	// fruit
-	25, // herbivore
+	10, // herbivore
 	0,	// carnivore
-	25, // mover
+	20, // mover
 	15, // killer
 	15, // armor
 };
@@ -370,6 +370,7 @@ void Cell_Herbivore::Tick()
 		return;
 	}
 	bool couldEat = false;
+	int gainedEnergy = 0;
 	bool valid = false;
 	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
 	{
@@ -394,19 +395,19 @@ void Cell_Herbivore::Tick()
 				switch (potentiallyEaten->type)
 				{
 				case cell_leaf:
-					this->myOrganism->AddEnergy(LEAF_FOOD_ENERGY);
+					gainedEnergy = LEAF_FOOD_ENERGY;
 					break;
 
 				case cell_flower:
-					this->myOrganism->AddEnergy(FLOWER_FOOD_ENERGY);
+					gainedEnergy = FLOWER_FOOD_ENERGY;
 					break;
 
 				case cell_fruit:
-					this->myOrganism->AddEnergy(FRUIT_FOOD_ENERGY);
+					gainedEnergy = FRUIT_FOOD_ENERGY;
 					break;
 
 				case cell_plantmass:
-					this->myOrganism->AddEnergy(PLANTMASS_FOOD_ENERGY);
+					gainedEnergy = PLANTMASS_FOOD_ENERGY;
 					break;
 
 				default:
@@ -435,7 +436,8 @@ void Cell_Herbivore::Tick()
 	if (couldEat)
 	{
 		this->myOrganism->brain.Reward();
-		this->digestCooldown = HERB_DIGEST_TIME;
+		this->myOrganism->AddEnergy(gainedEnergy);
+		this->digestCooldown = ceil(sqrt(gainedEnergy) * HERB_DIGEST_TIME_MULTIPLIER);
 	}
 
 	if (!valid)
@@ -527,7 +529,7 @@ void Cell_Carnivore::Tick()
 	if (couldEat)
 	{
 		this->myOrganism->brain.Reward();
-		this->digestCooldown = HERB_DIGEST_TIME;
+		this->digestCooldown = CARN_DIGEST_TIME;
 	}
 
 	if (!valid)

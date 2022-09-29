@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 			{*/
 			// if (board.tickCount % 10 == 0)
 			// {
-			if (board.tickCount % 100 == 0)
+			if (board.tickCount % 50 == 0)
 			{
 				board.Stats();
 			}

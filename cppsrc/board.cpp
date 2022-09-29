@@ -210,17 +210,19 @@ void Board::Stats()
 		moverStats[i] /= moverStats[count_raw];
 	}
 
-	printf("%5.0f Plants - avg %2.2f cells, %2.0f%% energy, %.0f lifespan, %.1f%% mutability\n",
+	printf("%5.0f Plants - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f lifespan, %.1f%% mutability\n",
 		   plantStats[count_raw],
 		   plantStats[count_cells],
 		   plantStats[count_energy] / plantStats[count_maxenergy] * 100,
+		   (plantStats[count_energy] / plantStats[count_maxenergy]) * plantStats[count_energy],
 		   plantStats[count_lifespan],
 		   plantStats[count_mutability]);
 
-	printf("%5.0f Movers - avg %2.2f cells, %2.0f%% energy, %.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotatevschange\n",
+	printf("%5.0f Movers - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotatevschange\n",
 		   moverStats[count_raw],
 		   moverStats[count_cells],
 		   moverStats[count_energy] / moverStats[count_maxenergy] * 100,
+		   (moverStats[count_energy] / moverStats[count_maxenergy]) * moverStats[count_energy],
 		   moverStats[count_lifespan],
 		   moverStats[count_mutability],
 		   moverStats[count_maxconviction],
