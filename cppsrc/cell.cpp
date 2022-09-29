@@ -334,9 +334,7 @@ Cell_Mover::Cell_Mover(Organism *_myOrganism)
 
 void Cell_Mover::Tick()
 {
-	int moveCost = ceil(sqrt(this->myOrganism->myCells.size()));
-	// moveCost = (moveCost > 0) ? moveCost : 1;
-	this->myOrganism->ExpendEnergy(moveCost);
+	this->myOrganism->ExpendEnergy(1);
 }
 
 Cell_Mover *Cell_Mover::Clone()
@@ -353,16 +351,23 @@ Cell_Herbivore::Cell_Herbivore()
 {
 	this->type = cell_herbivore_mouth;
 	this->myOrganism = nullptr;
+	this->digestCooldown = 1;
 }
 
 Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
 {
 	this->type = cell_herbivore_mouth;
 	this->myOrganism = _myOrganism;
+	this->digestCooldown = 1;
 }
 
 void Cell_Herbivore::Tick()
 {
+	if(this->digestCooldown > 0)
+	{
+		this->digestCooldown--;
+		return;
+	}
 	bool couldEat = false;
 	bool valid = false;
 	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
@@ -429,6 +434,7 @@ void Cell_Herbivore::Tick()
 	if (couldEat)
 	{
 		this->myOrganism->brain.Reward();
+		this->digestCooldown = HERB_DIGEST_TIME;
 	}
 
 	if (!valid)

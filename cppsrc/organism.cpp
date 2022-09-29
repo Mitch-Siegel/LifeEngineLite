@@ -160,11 +160,11 @@ void Organism::RecalculateStats()
 	int nCells = this->myCells.size();
 	size_t nCellsSquared = nCells * nCells;
 	this->maxHealth = nCells * MAX_HEALTH_MULTIPLIER;
-	if(this->currentHealth > this->maxHealth)
+	if (this->currentHealth > this->maxHealth)
 	{
 		this->currentHealth = this->maxHealth;
 	}
-	
+
 	if (this->lifespan > nCellsSquared * LIFESPAN_MULTIPLIER)
 	{
 		this->lifespan = nCellsSquared * LIFESPAN_MULTIPLIER;
@@ -182,6 +182,22 @@ bool Organism::CheckValidity()
 	bool invalid = false;
 	invalid |= (this->cellCounts[cell_herbivore_mouth] / (float)this->myCells.size()) > 0.667;
 	invalid |= (this->cellCounts[cell_herbivore_mouth] > 0 && this->cellCounts[cell_leaf] > 0);
+	if (!invalid)
+	{
+		bool hasCenterCell = false;
+		for (Cell *c : this->myCells)
+		{
+			if (c->x == this->x && c->y == this->y)
+			{
+				hasCenterCell = true;
+				break;
+			}
+		}
+		if (!hasCenterCell)
+		{
+			invalid = true;
+		}
+	}
 	return invalid;
 }
 
@@ -224,13 +240,17 @@ void Organism::Move()
 		}
 
 		// second pass - delete empties and place cells back down at delta pos
-		for(MovedCell m : moves)
+		for (MovedCell m : moves)
 		{
 			delete board.cells[m.newY][m.newX];
 			board.cells[m.newY][m.newX] = m.c;
 		}
 		this->x += moveDir[0];
 		this->y += moveDir[1];
+
+		// only expend energy if can move
+		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()))) - 1;
+		this->ExpendEnergy(moveCost);
 	}
 	else
 	{
@@ -308,7 +328,6 @@ void Organism::Rotate(bool clockwise)
 	this->brain.RotateSuccess(clockwise);
 }
 
-
 void Organism::Damage(size_t n)
 {
 	if (n > this->currentHealth)
@@ -324,7 +343,7 @@ void Organism::Damage(size_t n)
 void Organism::Heal(size_t n)
 {
 	this->currentHealth += n;
-	if(this->currentHealth > this->maxHealth)
+	if (this->currentHealth > this->maxHealth)
 	{
 		this->currentHealth = this->maxHealth;
 	}
@@ -376,8 +395,8 @@ bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 		int new_x_abs = _x_abs + newCellX_rel;
 		int new_y_abs = _y_abs + newCellY_rel;
 		bool boundCheckResult = board.boundCheckPos(new_x_abs, new_y_abs);
-		if (boundCheckResult || // if out of bounds
-		(!boundCheckResult && board.cells[new_y_abs][new_x_abs]->type != cell_empty && board.cells[new_y_abs][new_x_abs]->myOrganism != this) // or in-bounds and this position is occupied by something else
+		if (boundCheckResult ||																													  // if out of bounds
+			(!boundCheckResult && board.cells[new_y_abs][new_x_abs]->type != cell_empty && board.cells[new_y_abs][new_x_abs]->myOrganism != this) // or in-bounds and this position is occupied by something else
 		)
 		{
 			// fail

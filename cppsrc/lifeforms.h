@@ -79,7 +79,8 @@ class Organism;
 #define ENERGY_DENSITY_MULTIPLIER 5
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 5
+#define HERB_FOOD_MULTIPLIER 6
+#define HERB_DIGEST_TIME 4
 
 #define LEAF_FOOD_ENERGY 3 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 4 * HERB_FOOD_MULTIPLIER
@@ -246,7 +247,7 @@ public:
 
 class Cell_Herbivore : public Cell
 {
-
+std::size_t digestCooldown;
 public:
 	~Cell_Herbivore() override;
 
