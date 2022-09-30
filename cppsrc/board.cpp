@@ -167,6 +167,7 @@ void Board::Stats()
 		count_mutability,
 		count_maxconviction,
 		count_rotatevschange,
+		count_turnwhenrotate,
 		count_raw,
 		count_null
 	};
@@ -189,6 +190,7 @@ void Board::Stats()
 			moverStats[count_mutability] += o->mutability;
 			moverStats[count_maxconviction] += o->brain.maxConviction;
 			moverStats[count_rotatevschange] += o->brain.rotatevschange;
+			moverStats[count_turnwhenrotate] += o->brain.turnwhenrotate;
 			moverStats[count_raw]++;
 		}
 		else
@@ -200,6 +202,7 @@ void Board::Stats()
 			plantStats[count_mutability] += o->mutability;
 			plantStats[count_maxconviction] += o->brain.maxConviction;
 			plantStats[count_rotatevschange] += o->brain.rotatevschange;
+			plantStats[count_turnwhenrotate] += o->brain.turnwhenrotate;
 			plantStats[count_raw]++;
 		}
 	}
@@ -218,7 +221,7 @@ void Board::Stats()
 		   plantStats[count_lifespan],
 		   plantStats[count_mutability]);
 
-	printf("%5.0f Movers - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotatevschange\n",
+	printf("%5.0f Movers - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotate vs change, %.1f turn when rotate\n",
 		   moverStats[count_raw],
 		   moverStats[count_cells],
 		   moverStats[count_energy] / moverStats[count_maxenergy] * 100,
@@ -226,7 +229,8 @@ void Board::Stats()
 		   moverStats[count_lifespan],
 		   moverStats[count_mutability],
 		   moverStats[count_maxconviction],
-		   moverStats[count_rotatevschange]);
+		   moverStats[count_rotatevschange],
+		   moverStats[count_turnwhenrotate]);
 
 	printf("\n");
 

@@ -431,8 +431,8 @@ Organism *Organism::Reproduce()
 				int dir_y_extra = 0;
 				for (int k = 0; k < 8; k++)
 				{
-					dir_x_extra = randInt(-3, 3);
-					dir_y_extra = randInt(-3, 3);
+					dir_x_extra = randInt(-2, 2);
+					dir_y_extra = randInt(-2, 2);
 					if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
 					{
 						break;

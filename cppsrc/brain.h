@@ -16,7 +16,7 @@ public:
     enum Intent currentIntent;
     bool justRewarded;
     int moveDirIndex;
-    int conviction, maxConviction, rotatevschange;
+    int conviction, maxConviction, rotatevschange, turnwhenrotate;
 
     enum Intent Decide();
 

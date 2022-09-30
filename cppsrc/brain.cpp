@@ -8,7 +8,8 @@ Brain::Brain()
     this->conviction = 0;
     this->maxConviction = 2;
     // chance to rotate instead of changing direction
-    this->rotatevschange = 50;
+    this->rotatevschange = 25;
+    this->turnwhenrotate = 50;
 }
 
 void Brain::Reward()
@@ -30,12 +31,14 @@ void Brain::Punish()
 
 enum Intent Brain::Decide()
 {
-    if(justRewarded)
+    if (justRewarded)
     {
         justRewarded = false;
         return currentIntent;
     }
-    if ((randInt(0, 2 * maxConviction) - maxConviction) > conviction || (randPercent(5) && randPercent(5)))
+    if ((this->currentIntent == intent_continue) &&
+            ((randInt(0, 2 * maxConviction) - maxConviction) > conviction ||
+        (randPercent(5) && randPercent(5))))
     {
         if (!randPercent(rotatevschange))
         {
@@ -83,16 +86,23 @@ enum Intent Brain::Decide()
 // make the organism's movement direction turn correspondingly
 void Brain::RotateSuccess(bool clockwise)
 {
-    if (clockwise)
+    if (randPercent(turnwhenrotate))
     {
-        ++this->moveDirIndex %= 4;
+        if (clockwise)
+        {
+            ++this->moveDirIndex %= 4;
+        }
+        else
+        {
+            if (--this->moveDirIndex < 0)
+            {
+                this->moveDirIndex = 3;
+            }
+        }
     }
     else
     {
-        if (--this->moveDirIndex < 0)
-        {
-            this->moveDirIndex = 3;
-        }
+        this->currentIntent = intent_changeDir;
     }
 }
 
@@ -104,13 +114,23 @@ void Brain::Mutate()
         this->maxConviction = 1;
     }
     this->rotatevschange += (randInt(-1, 1) * (randPercent(50) * randInt(1, 6)));
-    if (this->rotatevschange < 1)
+    if (this->rotatevschange < 0)
     {
-        this->rotatevschange = 1;
+        this->rotatevschange = 0;
     }
     else if (this->rotatevschange > 100)
     {
         this->rotatevschange = 100;
+    }
+
+    this->turnwhenrotate += (randInt(-1, 1) * (randPercent(50) * randInt(1, 6)));
+    if (this->turnwhenrotate < 0)
+    {
+        this->turnwhenrotate = 0;
+    }
+    else if (this->turnwhenrotate > 100)
+    {
+        this->turnwhenrotate = 100;
     }
 }
 
