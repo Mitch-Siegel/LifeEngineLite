@@ -48,6 +48,7 @@ void Organism::Die()
 
 		case cell_leaf:
 		case cell_flower:
+		case cell_bark:
 			replacedWith = new Cell_Plantmass(this->myCells.size() * this->myCells.size() * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 

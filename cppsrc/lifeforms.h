@@ -77,29 +77,33 @@ class Organism;
 #define REPRODUCTION_ENERGY_MULTIPLIER .75
 #define REPRODUCTION_COOLDOWN_MULTIPLIER 1.25
 // lifespan related to sqare root of energy density
-#define LIFESPAN_MULTIPLIER 400
+#define LIFESPAN_MULTIPLIER 200
 #define ENERGY_DENSITY_MULTIPLIER 4
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define HERB_FOOD_MULTIPLIER 1.5 * ENERGY_DENSITY_MULTIPLIER
+#define HERB_FOOD_MULTIPLIER 2.5 * ENERGY_DENSITY_MULTIPLIER
 // formula is sqrt(energy gained) * multiplier
-#define HERB_DIGEST_TIME_MULTIPLIER 0.82
+// #define HERB_DIGEST_TIME_MULTIPLIER 1.1
+#define HERB_DIGEST_TIME_MULTIPLIER 0.3
 // #define HERB_DIGEST_TIME 0
 
 #define LEAF_FOOD_ENERGY 1 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
-#define FRUIT_FOOD_ENERGY 10 * HERB_FOOD_MULTIPLIER
-
-#define FRUIT_SPOIL_TIME 30
-// must roll 2x in a row
-#define FRUIT_GROW_PERCENT 12
-// if the fruit grows, percent probability it will mutate vs just becoming another plant
-#define FRUIT_MUTATE_PERCENT 15
+#define FRUIT_FOOD_ENERGY 6 * HERB_FOOD_MULTIPLIER
 
 #define SPOILTIME_BASE 100
 #define PLANTMASS_SPOIL_TIME_MULTIPLIER 3 * SPOILTIME_BASE
 // #define BIOMASS_SPOIL_TIME_MULTIPLIER 5 * SPOILTIME_BASE
 #define BIOMASS_SPOIL_TIME_MULTIPLIER 3 * SPOILTIME_BASE
+
+
+#define FRUIT_SPOIL_TIME 0.5 * SPOILTIME_BASE
+// must roll 2x in a row
+#define FRUIT_GROW_PERCENT 20
+// if the fruit grows, percent probability it will mutate vs just becoming another plant
+#define FRUIT_MUTATE_PERCENT 17
+
+
 
 #define PLANTMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
 #define BIOMASS_FOOD_ENERGY 18 * PLANTMASS_FOOD_ENERGY
@@ -107,17 +111,20 @@ class Organism;
 
 
 
-#define FLOWER_COST 0.5 * ENERGY_DENSITY_MULTIPLIER
+#define FLOWER_COST 2 * ENERGY_DENSITY_MULTIPLIER
 
 // whether or not a leaf is able to flower, rolled at creation
-#define LEAF_FLOWERING_ABILITY_PERCENT 45
-#define PLANT_GROW_PERCENT 50
+#define LEAF_FLOWERING_ABILITY_PERCENT 25
+#define PLANT_GROW_PERCENT 100
 // percent for a flower to wilt into another leaf vs just going away
 #define FLOWER_EXPAND_PERCENT 100
 
+#define BARK_GROW_COOLDOWN 30
+#define BARK_GROW_COST 0.5 * ENERGY_DENSITY_MULTIPLIER
+
 #define FLOWER_BLOOM_COOLDOWN 30
 #define FLOWER_WILT_CHANCE 30
-#define FLOWER_BLOOM_COST 0.25 * ENERGY_DENSITY_MULTIPLIER
+#define FLOWER_BLOOM_COST 1 * ENERGY_DENSITY_MULTIPLIER
 
 #define KILLER_DAMAGE_COST ENERGY_DENSITY_MULTIPLIER
 
@@ -202,6 +209,22 @@ public:
 	void Tick() override;
 
 	Cell_Leaf *Clone() override;
+};
+
+class Cell_Bark : public Cell
+{
+	int leafGrowCooldown;
+
+public:
+	~Cell_Bark() override;
+
+	Cell_Bark();
+
+	explicit Cell_Bark(Organism *_myOrganism);
+
+	void Tick() override;
+
+	Cell_Bark *Clone() override;
 };
 
 class Cell_Flower : public Cell

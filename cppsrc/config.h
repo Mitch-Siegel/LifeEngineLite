@@ -6,6 +6,7 @@ enum CellTypes
 	cell_plantmass,
 	cell_biomass,
 	cell_leaf,
+	cell_bark,
 	cell_flower,
 	cell_fruit,
 	cell_herbivore_mouth,	

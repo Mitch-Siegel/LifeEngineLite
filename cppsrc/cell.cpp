@@ -10,19 +10,20 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
+	50, // bark
 	2,	// flower
 	0,	// fruit
 	15, // herbivore
-	45,	// carnivore
+	45, // carnivore
 	20, // mover
-	7, // killer
-	5, // armor
+	7,	// killer
+	5,	// armor
 };
 
 Cell *GenerateRandomCell()
 {
 
-	switch (randInt(0, 5))
+	switch (randInt(0, 6))
 	{
 	case 0:
 		return new Cell_Mover();
@@ -33,18 +34,22 @@ Cell *GenerateRandomCell()
 		break;
 
 	case 2:
-		return new Cell_Herbivore();
+		return new Cell_Bark();
 		break;
 
 	case 3:
-		return new Cell_Carnivore();
+		return new Cell_Herbivore();
 		break;
 
 	case 4:
-		return new Cell_Killer();
+		return new Cell_Carnivore();
 		break;
 
 	case 5:
+		return new Cell_Killer();
+		break;
+
+	case 6:
 		return new Cell_Armor();
 		break;
 	}
@@ -168,9 +173,21 @@ void Cell_Leaf::Tick()
 {
 	if (this->flowering &&
 		(this->myOrganism->myCells.size() > 2) &&
-		this->myOrganism->GetEnergy() > FLOWER_COST &&
+		this->myOrganism->GetEnergy() > (FLOWER_COST + 4) &&
 		randPercent(PLANT_GROW_PERCENT))
 	{
+		// don't grow a flower if this leaf is already adjacent to a flower
+		for (int i = 0; i < 4; i++)
+		{
+			int *thisDirection = directions[i];
+			int x_abs = this->x + thisDirection[0];
+			int y_abs = this->y + thisDirection[1];
+			if (board.isCellOfType(x_abs, y_abs, cell_flower) && board.cells[y_abs][x_abs]->myOrganism == this->myOrganism)
+			{
+				return;
+			}
+		}
+
 		int checkDirIndex = randInt(0, 3);
 		for (int i = 0; i < 4; i++)
 		{
@@ -185,18 +202,68 @@ void Cell_Leaf::Tick()
 			}
 		}
 	}
-	else
+	if (this->myOrganism->age % 4 == 0 || this->myOrganism->age % 5 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
 	{
-		if (this->myOrganism->age % 4 == 0 || this->myOrganism->age % 5 == 0/* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
-		{
-			this->myOrganism->AddEnergy(1);
-		}
+		this->myOrganism->AddEnergy(1);
 	}
 }
 
 Cell_Leaf *Cell_Leaf::Clone()
 {
 	return new Cell_Leaf(*this);
+}
+
+// bark cell
+Cell_Bark::~Cell_Bark()
+{
+}
+
+Cell_Bark::Cell_Bark()
+{
+	this->type = cell_bark;
+	this->myOrganism = nullptr;
+	this->leafGrowCooldown = BARK_GROW_COOLDOWN;
+}
+
+Cell_Bark::Cell_Bark(Organism *_myOrganism)
+{
+	this->type = cell_bark;
+	this->myOrganism = _myOrganism;
+	this->leafGrowCooldown = BARK_GROW_COOLDOWN;
+}
+
+void Cell_Bark::Tick()
+{
+	if (this->leafGrowCooldown > 0)
+	{
+		this->leafGrowCooldown--;
+		return;
+	}
+	else
+	{
+		if (this->myOrganism->GetEnergy() > BARK_GROW_COST)
+		{
+			int checkDirIndex = randInt(0, 7);
+			for (int i = 0; i < 8; i++)
+			{
+				int *thisDirection = directions[(checkDirIndex + i) % 8];
+				int x_abs = this->x + thisDirection[0];
+				int y_abs = this->y + thisDirection[1];
+				if (board.isCellOfType(x_abs, y_abs, cell_empty))
+				{
+					this->myOrganism->AddCell(x_abs - this->x, y_abs - this->y, new Cell_Leaf());
+					this->myOrganism->ExpendEnergy(BARK_GROW_COST);
+					this->leafGrowCooldown = BARK_GROW_COOLDOWN;
+					return;
+				}
+			}
+		}
+	}
+}
+
+Cell_Bark *Cell_Bark::Clone()
+{
+	return new Cell_Bark(*this);
 }
 
 // flower cell
@@ -437,7 +504,8 @@ void Cell_Herbivore::Tick()
 	{
 		this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
-		this->digestCooldown = ceil(sqrt(gainedEnergy) * HERB_DIGEST_TIME_MULTIPLIER);
+		// this->digestCooldown = ceil(sqrt(gainedEnergy) * HERB_DIGEST_TIME_MULTIPLIER);
+		this->digestCooldown = ceil(gainedEnergy * HERB_DIGEST_TIME_MULTIPLIER);
 	}
 
 	if (!valid)
