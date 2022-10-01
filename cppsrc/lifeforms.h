@@ -83,7 +83,7 @@ class Organism;
 
 #define HERB_FOOD_MULTIPLIER 1.5 * ENERGY_DENSITY_MULTIPLIER
 // formula is sqrt(energy gained) * multiplier
-#define HERB_DIGEST_TIME_MULTIPLIER 0.75
+#define HERB_DIGEST_TIME_MULTIPLIER 0.82
 // #define HERB_DIGEST_TIME 0
 
 #define LEAF_FOOD_ENERGY 1 * HERB_FOOD_MULTIPLIER
