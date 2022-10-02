@@ -116,6 +116,10 @@ class Organism;
 
 // whether or not a leaf is able to flower, rolled at creation
 #define LEAF_FLOWERING_ABILITY_PERCENT 35
+// #define NUMBER_OF_FLOWERS 4
+
+// each leaf generated will be able to generate between 1 and n flowers
+#define LEAF_MAX_FLOWERS 3
 #define PLANT_GROW_PERCENT 100
 // percent for a flower to wilt into another leaf vs just going away
 #define FLOWER_EXPAND_PERCENT 100
@@ -126,6 +130,7 @@ class Organism;
 #define FLOWER_BLOOM_COOLDOWN 30
 #define FLOWER_WILT_CHANCE 30
 #define FLOWER_BLOOM_COST 1 * ENERGY_DENSITY_MULTIPLIER
+
 
 #define KILLER_DAMAGE_COST ENERGY_DENSITY_MULTIPLIER
 
@@ -194,7 +199,9 @@ public:
 
 class Cell_Leaf : public Cell
 {
-	bool flowering;
+	int flowersRemaining;
+	// bool flowering;
+
 
 public:
 	~Cell_Leaf() override;
