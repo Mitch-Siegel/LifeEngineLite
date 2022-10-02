@@ -332,6 +332,8 @@ void Organism::Rotate(bool clockwise)
 		b->y = oldY;
 		board.cells[b->y][b->x] = b;
 	}
+	int rotateCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2)) - 2;
+	this->ExpendEnergy(rotateCost);
 	this->brain.RotateSuccess(clockwise);
 }
 

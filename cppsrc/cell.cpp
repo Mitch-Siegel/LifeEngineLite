@@ -10,7 +10,7 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	50, // bark
+	20, // bark
 	2,	// flower
 	0,	// fruit
 	15, // herbivore
@@ -202,7 +202,7 @@ void Cell_Leaf::Tick()
 			}
 		}
 	}
-	if (this->myOrganism->age % 4 == 0 || this->myOrganism->age % 5 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
+	if (this->myOrganism->age % 5 == 0 || this->myOrganism->age % 6 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
 	{
 		this->myOrganism->AddEnergy(1);
 	}
@@ -505,7 +505,7 @@ void Cell_Herbivore::Tick()
 		this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
 		// this->digestCooldown = ceil(sqrt(gainedEnergy) * HERB_DIGEST_TIME_MULTIPLIER);
-		this->digestCooldown = ceil(gainedEnergy * HERB_DIGEST_TIME_MULTIPLIER);
+		this->digestCooldown = ceil((gainedEnergy * gainedEnergy) * HERB_DIGEST_TIME_MULTIPLIER);
 	}
 
 	if (!valid)
