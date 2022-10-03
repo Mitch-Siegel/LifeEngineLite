@@ -120,8 +120,8 @@ int main(int argc, char *argv[])
 	// firstOrganism->AddCell(0, 0, new Cell_Mover());
 	// firstOrganism->AddCell(0, 1, new Cell_Carnivore());
 	firstOrganism->AddCell(1, 0, new Cell_Leaf(((floweringIndex == 1) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
+	firstOrganism->AddCell(0, 1, new Cell_Leaf(((floweringIndex == 1) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
 	firstOrganism->AddCell(1, 1, new Cell_Leaf(((floweringIndex == 2) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
-	firstOrganism->AddCell(0, 1, new Cell_Leaf(((floweringIndex == 3) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
 	// Cell_Leaf plantLeaf = Cell_Leaf();
 	/*
 	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))

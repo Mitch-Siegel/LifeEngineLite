@@ -432,16 +432,19 @@ Organism *Organism::Reproduce()
 			{
 				int dir_x_extra = 0;
 				int dir_y_extra = 0;
-				for (int k = 0; k < 8; k++)
+				if (randPercent(this->mutability * 2))
 				{
-					dir_x_extra = randInt(-2, 2);
-					dir_y_extra = randInt(-2, 2);
-					if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
+					for (int k = 0; k < 8; k++)
 					{
-						break;
+						dir_x_extra = randInt(-2, 2);
+						dir_y_extra = randInt(-2, 2);
+						if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
+						{
+							break;
+						}
+						dir_x_extra = 0;
+						dir_y_extra = 0;
 					}
-					dir_x_extra = 0;
-					dir_y_extra = 0;
 				}
 
 				this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER);

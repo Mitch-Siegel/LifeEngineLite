@@ -152,7 +152,7 @@ Cell_Leaf::Cell_Leaf()
 {
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
-		this->flowersRemaining = randInt(0, randPercent(LEAF_FLOWERING_ABILITY_PERCENT) * (randInt(1, LEAF_MAX_FLOWERS)));
+	this->flowersRemaining = randInt(0, randPercent(LEAF_FLOWERING_ABILITY_PERCENT) * (randInt(1, LEAF_MAX_FLOWERS)));
 }
 
 Cell_Leaf::Cell_Leaf(int floweringPercent)
@@ -208,6 +208,11 @@ void Cell_Leaf::Tick()
 	if (this->myOrganism->age % 5 == 0 || this->myOrganism->age % 6 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
 	{
 		this->myOrganism->AddEnergy(1);
+		// each bark in a plant adds a 2% chance for every leaf to generate an extra energy every tick
+		if (randPercent(2 * this->myOrganism->cellCounts[cell_bark]))
+		{
+			this->myOrganism->AddEnergy(1);
+		}
 	}
 }
 
@@ -246,10 +251,10 @@ void Cell_Bark::Tick()
 	{
 		if (this->myOrganism->GetEnergy() > BARK_GROW_COST)
 		{
-			int checkDirIndex = randInt(0, 7);
-			for (int i = 0; i < 8; i++)
+			int checkDirIndex = randInt(0, 3);
+			for (int i = 0; i < 4; i++)
 			{
-				int *thisDirection = directions[(checkDirIndex + i) % 8];
+				int *thisDirection = directions[(checkDirIndex + i) % 4];
 				int x_abs = this->x + thisDirection[0];
 				int y_abs = this->y + thisDirection[1];
 				if (board.isCellOfType(x_abs, y_abs, cell_empty))
@@ -500,7 +505,6 @@ void Cell_Herbivore::Tick()
 	{
 		this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
-		// this->digestCooldown = ceil(sqrt(gainedEnergy) * HERB_DIGEST_TIME_MULTIPLIER);
 		this->digestCooldown = ceil((gainedEnergy * gainedEnergy) * HERB_DIGEST_TIME_MULTIPLIER);
 	}
 
@@ -536,14 +540,14 @@ Cell_Carnivore::Cell_Carnivore()
 {
 	this->type = cell_carnivore_mouth;
 	this->myOrganism = nullptr;
-	this->digestCooldown = CARN_DIGEST_TIME;
+	this->digestCooldown = 0;
 }
 
 Cell_Carnivore::Cell_Carnivore(Organism *_myOrganism)
 {
 	this->type = cell_carnivore_mouth;
 	this->myOrganism = _myOrganism;
-	this->digestCooldown = CARN_DIGEST_TIME;
+	this->digestCooldown = 0;
 }
 
 void Cell_Carnivore::Tick()
@@ -554,6 +558,7 @@ void Cell_Carnivore::Tick()
 		return;
 	}
 	bool couldEat = false;
+	int gainedEnergy = 0;
 	bool valid = false;
 	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
 	{
@@ -572,11 +577,11 @@ void Cell_Carnivore::Tick()
 		Cell *potentiallyEaten = board.cells[y_abs][x_abs];
 		if (potentiallyEaten->type == cell_biomass)
 		{
-			this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
+			gainedEnergy = BIOMASS_FOOD_ENERGY;
+			// this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
 			board.replaceCell(potentiallyEaten, new Cell_Empty());
 			couldEat = true;
 		}
-		this->digestCooldown = CARN_DIGEST_TIME;
 	}
 
 	if (!valid)
@@ -593,7 +598,8 @@ void Cell_Carnivore::Tick()
 	if (couldEat)
 	{
 		this->myOrganism->brain.Reward();
-		this->digestCooldown = CARN_DIGEST_TIME;
+		this->myOrganism->AddEnergy(gainedEnergy);
+		this->digestCooldown = ceil((gainedEnergy * gainedEnergy) * CARN_DIGEST_TIME_MULTIPLIER);
 	}
 
 	if (!valid)
