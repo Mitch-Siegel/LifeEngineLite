@@ -238,6 +238,9 @@ void Organism::Move()
 			// calculate the new x and y position we are moving to
 			int newX = movedCell->x + moveDir[0];
 			int newY = movedCell->y + moveDir[1];
+			board.DeltaCells[movedCell->y][movedCell->x] = true;
+			board.DeltaCells[newY][newX] = true;
+
 			movedCell->x = newX;
 			movedCell->y = newY;
 			moves.push_back(MovedCell(movedCell, newX, newY));
@@ -327,11 +330,15 @@ void Organism::Rotate(bool clockwise)
 		a->x = b->x;
 		a->y = b->y;
 		board.cells[a->y][a->x] = a;
+		board.DeltaCells[a->y][a->x] = true;
+
 
 		b->x = oldX;
 		b->y = oldY;
 		board.cells[b->y][b->x] = b;
+		board.DeltaCells[b->y][b->x] = true;
 	}
+
 	int rotateCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2)) - 2;
 	this->ExpendEnergy(rotateCost);
 	this->brain.RotateSuccess(clockwise);

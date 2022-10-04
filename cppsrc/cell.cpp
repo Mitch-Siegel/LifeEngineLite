@@ -158,6 +158,7 @@ Cell_Leaf::Cell_Leaf()
 Cell_Leaf::Cell_Leaf(int floweringPercent)
 {
 	this->type = cell_leaf;
+	this->myFlower = nullptr;
 	this->myOrganism = nullptr;
 	this->flowersRemaining = randInt(0, randPercent(floweringPercent) * LEAF_MAX_FLOWERS);
 }
@@ -165,6 +166,7 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 {
 	this->type = cell_leaf;
+	this->myFlower = nullptr;
 	this->myOrganism = _myOrganism;
 	this->flowersRemaining = randInt(0, randPercent(LEAF_FLOWERING_ABILITY_PERCENT) * LEAF_MAX_FLOWERS);
 }
@@ -172,12 +174,12 @@ Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
 void Cell_Leaf::Tick()
 {
 	if ((this->flowersRemaining > 0) &&
-		(this->myOrganism->myCells.size() > 2) &&
-		this->myOrganism->GetEnergy() > (FLOWER_COST + 4) &&
+		this->myFlower == nullptr &&
+		this->myOrganism->GetEnergy() > (FLOWER_COST + 3) &&
 		randPercent(PLANT_GROW_PERCENT))
 	{
 		// don't grow a flower if this leaf is already adjacent to a flower
-		for (int i = 0; i < 4; i++)
+		/*for (int i = 0; i < 4; i++)
 		{
 			int *thisDirection = directions[i];
 			int x_abs = this->x + thisDirection[0];
@@ -186,7 +188,7 @@ void Cell_Leaf::Tick()
 			{
 				return;
 			}
-		}
+		}*/
 
 		int checkDirIndex = randInt(0, 3);
 		for (int i = 0; i < 4; i++)
@@ -197,22 +199,25 @@ void Cell_Leaf::Tick()
 			if (board.isCellOfType(x_abs, y_abs, cell_empty))
 			{
 				this->myOrganism->ExpendEnergy(FLOWER_COST);
-				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
-				// only flower once!
+				Cell_Flower *newFlower = new Cell_Flower();
+				this->myFlower = newFlower;
+				newFlower->myLeaf = this;
+				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, newFlower);
 				this->flowersRemaining--;
-				// this->flowering = false;
 				return;
 			}
 		}
 	}
+
 	if (this->myOrganism->age % 5 == 0 || this->myOrganism->age % 6 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
 	{
-		this->myOrganism->AddEnergy(1);
+		int energyGained = 1;
 		// each bark in a plant adds a 2% chance for every leaf to generate an extra energy every tick
 		if (randPercent(2 * this->myOrganism->cellCounts[cell_bark]))
 		{
-			this->myOrganism->AddEnergy(1);
+			energyGained++;
 		}
+		this->myOrganism->AddEnergy(energyGained);
 	}
 }
 
@@ -282,16 +287,28 @@ Cell_Flower::~Cell_Flower()
 Cell_Flower::Cell_Flower()
 {
 	this->type = cell_flower;
+	this->myLeaf = nullptr;
 	this->myOrganism = nullptr;
 	this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
 }
 
+Cell_Flower::Cell_Flower(Cell_Leaf *_myLeaf)
+{
+	this->type = cell_flower;
+	this->myLeaf = _myLeaf;
+	this->myOrganism = nullptr;
+	this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
+}
+
+/*
 Cell_Flower::Cell_Flower(Organism *_myOrganism)
 {
 	this->type = cell_flower;
+	this->myLeaf = nullptr;
 	this->myOrganism = _myOrganism;
 	this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
 }
+*/
 
 void Cell_Flower::Tick()
 {
@@ -327,6 +344,10 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
+				if (this->myLeaf != nullptr)
+				{
+					this->myLeaf->myFlower = nullptr;
+				}
 				// new leaf cell should be able to flower too
 				this->myOrganism->ReplaceCell(this, new Cell_Leaf(100));
 			}

@@ -27,64 +27,68 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 	{
 		for (int x = 0; x < board.dim_x; x++)
 		{
-			// if (board.DeltaCells[(y * board.dim_y) + x])
-			// {
-			Cell *thisCell = board.cells[y][x];
-			// attron(COLOR_PAIR((int)thisCell->type));
-			switch (thisCell->type)
+			if (board.DeltaCells[y][x])
 			{
-			case cell_empty:
-				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-				break;
+				board.DeltaCells[y][x] = false;
+				// if (board.DeltaCells[(y * board.dim_y) + x])
+				// {
+				Cell *thisCell = board.cells[y][x];
+				// attron(COLOR_PAIR((int)thisCell->type));
+				switch (thisCell->type)
+				{
+				case cell_empty:
+					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+					break;
 
-			case cell_plantmass:
-				SDL_SetRenderDrawColor(renderer, 15, 40, 15, 255);
-				break;
+				case cell_plantmass:
+					SDL_SetRenderDrawColor(renderer, 15, 40, 15, 255);
+					break;
 
-			case cell_biomass:
-				SDL_SetRenderDrawColor(renderer, 150, 10, 10, 255);
-				break;
+				case cell_biomass:
+					SDL_SetRenderDrawColor(renderer, 150, 10, 10, 255);
+					break;
 
-			case cell_leaf:
-				SDL_SetRenderDrawColor(renderer, 30, 120, 30, 255);
-				break;
+				case cell_leaf:
+					SDL_SetRenderDrawColor(renderer, 30, 120, 30, 255);
+					break;
 
-			case cell_bark:
-				SDL_SetRenderDrawColor(renderer, 75, 25, 25, 255);
-				break;
+				case cell_bark:
+					SDL_SetRenderDrawColor(renderer, 75, 25, 25, 255);
+					break;
 
-			case cell_mover:
-				SDL_SetRenderDrawColor(renderer, 50, 120, 255, 255);
-				break;
+				case cell_mover:
+					SDL_SetRenderDrawColor(renderer, 50, 120, 255, 255);
+					break;
 
-			case cell_herbivore_mouth:
-				SDL_SetRenderDrawColor(renderer, 255, 150, 0, 255);
-				break;
+				case cell_herbivore_mouth:
+					SDL_SetRenderDrawColor(renderer, 255, 150, 0, 255);
+					break;
 
-			case cell_carnivore_mouth:
-				SDL_SetRenderDrawColor(renderer, 255, 100, 150, 255);
-				break;
+				case cell_carnivore_mouth:
+					SDL_SetRenderDrawColor(renderer, 255, 100, 150, 255);
+					break;
 
-			case cell_flower:
-				SDL_SetRenderDrawColor(renderer, 50, 250, 150, 255);
-				break;
+				case cell_flower:
+					SDL_SetRenderDrawColor(renderer, 50, 250, 150, 255);
+					break;
 
-			case cell_fruit:
-				SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
-				break;
+				case cell_fruit:
+					SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+					break;
 
-			case cell_killer:
-				SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-				break;
-			
-			case cell_armor:
-				SDL_SetRenderDrawColor(renderer, 175, 0, 255, 255);
-				break;
+				case cell_killer:
+					SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+					break;
 
-			case cell_null:
-				break;
+				case cell_armor:
+					SDL_SetRenderDrawColor(renderer, 175, 0, 255, 255);
+					break;
+
+				case cell_null:
+					break;
+				}
+				SDL_RenderDrawPoint(renderer, x, y);
 			}
-			SDL_RenderDrawPoint(renderer, x, y);
 			// board.DeltaCells[(y * board.dim_y) + x] = false;
 			// }
 			// attron(COLOR_PAIR(10));
@@ -264,7 +268,7 @@ int main(int argc, char *argv[])
 
 				case SDLK_SPACE:
 					// if not autoplaying, set max autoplay speed
-					if(!autoplay)
+					if (!autoplay)
 					{
 						autoplay = true;
 						autoplaySpeed = 0;

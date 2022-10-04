@@ -193,11 +193,14 @@ public:
 	Cell_Biomass *Clone() override;
 };
 
+class Cell_Flower;
+
 class Cell_Leaf : public Cell
 {
+	friend class Cell_Flower;
+	friend class Board;
 	int flowersRemaining;
-	// bool flowering;
-
+	Cell_Flower *myFlower;
 
 public:
 	~Cell_Leaf() override;
@@ -233,14 +236,19 @@ public:
 
 class Cell_Flower : public Cell
 {
+	friend class Cell_Leaf;
+	friend class Board;
 	int bloomCooldown;
+	Cell_Leaf *myLeaf;
 
 public:
 	~Cell_Flower() override;
 
 	Cell_Flower();
 
-	explicit Cell_Flower(Organism *_myOrganism);
+	Cell_Flower(Cell_Leaf *_myLeaf);
+
+	// explicit Cell_Flower(Organism *_myOrganism);
 
 	void Tick() override;
 

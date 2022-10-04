@@ -13,7 +13,7 @@ public:
     std::size_t tickCount;
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
-    std::vector<bool> DeltaCells;
+    std::vector<std::vector<bool>> DeltaCells;
 
     std::vector<Cell *> FoodCells;
 

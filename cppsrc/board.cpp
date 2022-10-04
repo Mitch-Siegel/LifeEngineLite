@@ -20,16 +20,11 @@ Board::Board(const int _dim_x, const int _dim_y)
 	for (int y = 0; y < _dim_y; y++)
 	{
 		this->cells.push_back(std::vector<Cell *>());
+		this->DeltaCells.push_back(std::vector<bool>());
 		for (int x = 0; x < _dim_x; x++)
 		{
 			this->cells[y].push_back(new Cell_Empty());
-			this->DeltaCells.push_back(false);
-		}
-	}
-	for (int y = 0; y < _dim_y; y++)
-	{
-		for (int x = 0; x < _dim_x; x++)
-		{
+			this->DeltaCells[y].push_back(false);
 			this->cells[y][x]->x = x;
 			this->cells[y][x]->y = y;
 		}
@@ -303,6 +298,26 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
 		break;
 
+	case cell_leaf:
+	{
+		Cell_Leaf *thisLeaf = (Cell_Leaf *)this->cells[_y][_x];
+		if (thisLeaf->myFlower != nullptr)
+		{
+			thisLeaf->myFlower = nullptr;
+		}
+	}
+	break;
+
+	case cell_flower:
+	{
+		Cell_Flower *thisFlower = (Cell_Flower *)this->cells[_y][_x];
+		if (thisFlower->myLeaf != nullptr)
+		{
+			thisFlower->myLeaf = nullptr;
+		}
+	}
+	break;
+
 	default:
 		break;
 	}
@@ -322,7 +337,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		break;
 	}
 	this->cells[_y][_x] = _cell;
-	this->DeltaCells[(_y * this->dim_y) + _x] = true;
+	this->DeltaCells[_y][_x] = true;
 }
 
 void Board::replaceCell(Cell *_replaced, Cell *_newCell)
@@ -348,8 +363,8 @@ void Board::swapCellAtIndex(int _x, int _y, Cell *a)
 	a->x = _x;
 	a->y = _y;
 
-	this->DeltaCells[(_y * this->dim_y) + _x] = true;
-	this->DeltaCells[(a_oldx * this->dim_y) + a_oldx] = true;
+	this->DeltaCells[_y][_x] = true;
+	this->DeltaCells[a_oldy][a_oldx] = true;
 }
 
 Organism *Board::createOrganism(const int _x, const int _y)
