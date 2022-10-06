@@ -10,7 +10,7 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	20, // bark
+	12, // bark
 	2,	// flower
 	0,	// fruit
 	15, // herbivore
@@ -526,7 +526,7 @@ void Cell_Herbivore::Tick()
 	{
 		this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
-		this->digestCooldown = ceil((gainedEnergy * gainedEnergy) * HERB_DIGEST_TIME_MULTIPLIER);
+		this->digestCooldown = ceil(pow(gainedEnergy, 2) / HERB_DIGEST_TIME_DIVIDER);
 	}
 
 	if (!valid)
