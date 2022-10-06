@@ -153,6 +153,7 @@ void Board::Tick()
 void Board::Stats()
 {
 	static auto lastFrame = std::chrono::high_resolution_clock::now();
+
 	enum Counts
 	{
 		count_cells,
@@ -169,10 +170,14 @@ void Board::Stats()
 
 	double plantStats[count_null] = {0.0};
 	double moverStats[count_null] = {0.0};
+	double plantCellCounts[cell_null] = {0.0};
+	double moverCellCounts[cell_null] = {0.0};
+	double moverCellSentiments[cell_null] = {0.0};
+	size_t touchSensorHaverCount = 0;
 	auto now = std::chrono::high_resolution_clock::now();
 	auto diff = now - lastFrame;
 	size_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
-	printf("TICK %lu (%.2f t/s) (%lu organisms)\n", this->tickCount, (60000 / (float)millis), this->Organisms.size());
+	printf("\nTICK %lu (%.2f t/s) (%lu organisms)\n", this->tickCount, (60000 / (float)millis), this->Organisms.size());
 	lastFrame = now;
 	for (Organism *o : this->Organisms)
 	{
@@ -187,6 +192,18 @@ void Board::Stats()
 			moverStats[count_rotatevschange] += o->brain.rotatevschange;
 			moverStats[count_turnwhenrotate] += o->brain.turnwhenrotate;
 			moverStats[count_raw]++;
+			for (int i = 0; i < cell_null; i++)
+			{
+				moverCellCounts[i] += o->cellCounts[i];
+			}
+			if (o->cellCounts[cell_touch] > 0)
+			{
+				touchSensorHaverCount++;
+				for (int i = 0; i < cell_null; i++)
+				{
+					moverCellSentiments[i] += o->brain.cellSentiments[i];
+				}
+			}
 		}
 		else
 		{
@@ -199,6 +216,10 @@ void Board::Stats()
 			plantStats[count_rotatevschange] += o->brain.rotatevschange;
 			plantStats[count_turnwhenrotate] += o->brain.turnwhenrotate;
 			plantStats[count_raw]++;
+			for (int i = 0; i < cell_null; i++)
+			{
+				plantCellCounts[i] += o->cellCounts[i];
+			}
 		}
 	}
 
@@ -206,6 +227,19 @@ void Board::Stats()
 	{
 		plantStats[i] /= plantStats[count_raw];
 		moverStats[i] /= moverStats[count_raw];
+	}
+
+	for (int i = 0; i < cell_null; i++)
+	{
+		plantCellCounts[i] /= plantStats[count_raw];
+		moverCellCounts[i] /= moverStats[count_raw];
+	}
+	if (touchSensorHaverCount > 0)
+	{
+		for (int i = 0; i < cell_null; i++)
+		{
+			moverCellSentiments[i] /= touchSensorHaverCount;
+		}
 	}
 
 	printf("%5.0f Plants - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f lifespan, %.1f%% mutability\n",
@@ -226,36 +260,17 @@ void Board::Stats()
 		   moverStats[count_maxconviction],
 		   moverStats[count_rotatevschange],
 		   moverStats[count_turnwhenrotate]);
-
-	printf("\n");
-
-	/*
-	size_t organismCellsCount = 0;
-	size_t organismEnergyCount = 0;
-	size_t organismMaxEnergyCount = 0;
-	size_t organismMaxConvictionCount = 0;
-	size_t organismLifespan = 0;
-	size_t mutabilityTotal = 0;
-	size_t rotatevschangeTotal = 0;
-	size_t moverCount = 0;*/
-
-	// organismCellsCount += this->Organisms[i]->myCells.size();
-	// organismEnergyCount += this->Organisms[i]->GetEnergy();
-	// organismMaxEnergyCount += this->Organisms[i]->GetMaxEnergy();
-	// organismMaxConvictionCount += this->Organisms[i]->brain.maxConviction;
-	// organismLifespan += this->Organisms[i]->lifespan;
-	// mutabilityTotal += this->Organisms[i]->mutability;
-	// rotatevschangeTotal += this->Organisms[i]->brain.rotatevschange;
-
-	/*printf("TICK %lu:\n%lu organisms, average size %.2f cells\n%.2f%% energy, %.0f lifespan\n%.1f%% mutability\n%.3f max conviction, %.3f%% rotatevschange\n\n",
-			this->tickCount,
-			this->Organisms.size(),
-			organismCellsCount / (float)(this->Organisms.size()),
-			organismEnergyCount / ((float)organismMaxEnergyCount) * 100,
-			organismLifespan / (float)(this->Organisms.size()),
-			mutabilityTotal / (float)(this->Organisms.size()),
-			organismMaxConvictionCount / (float)(this->Organisms.size()),
-			rotatevschangeTotal / (float)(this->Organisms.size()));*/
+	printf("%lu (%.2f%%) movers have touch sensors\n", touchSensorHaverCount, 100 * (float)touchSensorHaverCount / moverStats[count_raw]);
+	char cellShortNames[cell_null][5] = {"EMPT", "PMAS", "BMAS", "LEAF", "BARK", "FLWR", "FRUT", "HERB", "CARN", "MOVR", "KILR", "ARMR", "TUCH"};
+	printf("CELL:APLNTC|AMOVRC|ASSENT\n");
+	for (int i = cell_empty + 1; i < cell_null; i++)
+	{
+		printf("%4s: %2.2f | %2.2f | %02.2f\n", 
+		cellShortNames[i], 
+		plantCellCounts[i], 
+		moverCellCounts[i], 
+		moverCellSentiments[i]);
+	}
 }
 
 // returns true if out of bounds, false otherwise

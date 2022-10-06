@@ -57,6 +57,7 @@ void Organism::Die()
 		case cell_carnivore_mouth:
 		case cell_killer:
 		case cell_armor:
+		case cell_touch:
 			replacedWith = new Cell_Biomass(this->myCells.size() * BIOMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 		}
@@ -186,6 +187,10 @@ bool Organism::CheckValidity()
 
 	// disallow herbivores that have leaves on them
 	invalid |= (this->cellCounts[cell_herbivore_mouth] > 0 && this->cellCounts[cell_leaf] > 0);
+	
+	// must have a mover to have a touch sensor
+	invalid |= (this->cellCounts[cell_touch] > 0 && this->cellCounts[cell_mover] == 0);
+
 	if (!invalid)
 	{
 		bool hasCenterCell = false;
@@ -299,7 +304,7 @@ void Organism::Rotate(bool clockwise)
 
 			if (board.boundCheckPos(new_x, new_y))
 			{
-				this->brain.Punish();
+				// this->brain.Punish();
 				return;
 			}
 
@@ -307,7 +312,7 @@ void Organism::Rotate(bool clockwise)
 			// can't rotate!
 			if (swappedWith->type != cell_empty && swappedWith->myOrganism != this)
 			{
-				this->brain.Punish();
+				// this->brain.Punish();
 				return;
 			}
 
@@ -439,7 +444,7 @@ Organism *Organism::Reproduce()
 			{
 				int dir_x_extra = 0;
 				int dir_y_extra = 0;
-				if (randPercent(this->mutability * 2))
+				if (randPercent(this->mutability * 3))
 				{
 					for (int k = 0; k < 8; k++)
 					{
@@ -501,7 +506,7 @@ Organism *Organism::Reproduce()
 					return replicated;
 				}
 
-				this->brain.Reward();
+				// this->brain.Reward();
 
 				int newReproductioncooldown = (this->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
 				replicated->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
@@ -528,7 +533,7 @@ Organism *Organism::Reproduce()
 			continue;
 		}
 	}
-	this->brain.Punish();
+	// this->brain.Punish();
 	return nullptr;
 }
 

@@ -17,7 +17,9 @@ public:
     bool justRewarded;
     int moveDirIndex;
     int conviction, maxConviction, rotatevschange, turnwhenrotate;
-
+    
+    int cellSentiments[cell_null];
+    
     enum Intent Decide();
 
     void Reward();

@@ -8,6 +8,7 @@
 
 #include "lifeforms.h"
 #include "board.h"
+#include "rng.h"
 
 static volatile int running = 1;
 
@@ -15,13 +16,17 @@ void intHandler(int dummy)
 {
 	running = 0;
 }
-// Cell *board[BOARD_DIM][BOARD_DIM];
 
 Board board = Board(384, 192);
-// Board board = Board(320, 320);
 
 void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
+	// we'll use this texture as our own backbuffer
+	static SDL_Texture *boardBuf = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888,
+											SDL_TEXTUREACCESS_TARGET, board.dim_x, board.dim_y); 
+	
+	// draw to board buffer instead of backbuffer
+	SDL_SetRenderTarget(renderer, boardBuf); 
 
 	for (int y = 0; y < board.dim_y; y++)
 	{
@@ -30,10 +35,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 			if (board.DeltaCells[y][x])
 			{
 				board.DeltaCells[y][x] = false;
-				// if (board.DeltaCells[(y * board.dim_y) + x])
-				// {
 				Cell *thisCell = board.cells[y][x];
-				// attron(COLOR_PAIR((int)thisCell->type));
 				switch (thisCell->type)
 				{
 				case cell_empty:
@@ -73,7 +75,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 					break;
 
 				case cell_fruit:
-					SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+					SDL_SetRenderDrawColor(renderer, 200, 200, 0, 255);
 					break;
 
 				case cell_killer:
@@ -84,19 +86,23 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 					SDL_SetRenderDrawColor(renderer, 175, 0, 255, 255);
 					break;
 
+				case cell_touch:
+					SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+					break;
+
 				case cell_null:
 					break;
 				}
 				SDL_RenderDrawPoint(renderer, x, y);
 			}
-			// board.DeltaCells[(y * board.dim_y) + x] = false;
-			// }
-			// attron(COLOR_PAIR(10));
 		}
 	}
-	SDL_RenderPresent(renderer);
+	// reset render target, copy board buf, and spit it out to the screen
+	SDL_SetRenderTarget(renderer, NULL); 
+	SDL_RenderCopy(renderer, boardBuf, NULL, NULL);
+	SDL_RenderPresent(renderer); 
 }
-#include "rng.h"
+
 int main(int argc, char *argv[])
 {
 	SDL_Window *window = nullptr;
@@ -124,8 +130,8 @@ int main(int argc, char *argv[])
 	// firstOrganism->AddCell(0, 0, new Cell_Mover());
 	// firstOrganism->AddCell(0, 1, new Cell_Carnivore());
 	firstOrganism->AddCell(1, 0, new Cell_Leaf(((floweringIndex == 1) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
-	firstOrganism->AddCell(0, 1, new Cell_Leaf(((floweringIndex == 1) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
-	firstOrganism->AddCell(1, 1, new Cell_Leaf(((floweringIndex == 2) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
+	firstOrganism->AddCell(0, 1, new Cell_Leaf(((floweringIndex == 2) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
+	firstOrganism->AddCell(1, 1, new Cell_Leaf(((floweringIndex == 3) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
 	// Cell_Leaf plantLeaf = Cell_Leaf();
 	/*
 	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))

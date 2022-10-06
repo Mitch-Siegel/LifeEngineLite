@@ -10,7 +10,7 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	12, // bark
+	6, // bark
 	2,	// flower
 	0,	// fruit
 	15, // herbivore
@@ -18,12 +18,13 @@ int CellEnergyDensities[cell_null] = {
 	20, // mover
 	7,	// killer
 	5,	// armor
+	50, 	// touch sensor
 };
 
 Cell *GenerateRandomCell()
 {
 
-	switch (randInt(0, 6))
+	switch (randInt(0, 7))
 	{
 	case 0:
 		return new Cell_Mover();
@@ -51,6 +52,10 @@ Cell *GenerateRandomCell()
 
 	case 6:
 		return new Cell_Armor();
+		break;
+
+	case 7:
+		return new Cell_Touch();
 		break;
 	}
 
@@ -152,7 +157,7 @@ Cell_Leaf::Cell_Leaf()
 {
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
-	this->flowersRemaining = randInt(0, randPercent(LEAF_FLOWERING_ABILITY_PERCENT) * (randInt(1, LEAF_MAX_FLOWERS)));
+	this->flowering = randPercent(LEAF_FLOWERING_ABILITY_PERCENT);
 }
 
 Cell_Leaf::Cell_Leaf(int floweringPercent)
@@ -160,22 +165,14 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 	this->type = cell_leaf;
 	this->myFlower = nullptr;
 	this->myOrganism = nullptr;
-	this->flowersRemaining = randInt(0, randPercent(floweringPercent) * LEAF_MAX_FLOWERS);
-}
-
-Cell_Leaf::Cell_Leaf(Organism *_myOrganism)
-{
-	this->type = cell_leaf;
-	this->myFlower = nullptr;
-	this->myOrganism = _myOrganism;
-	this->flowersRemaining = randInt(0, randPercent(LEAF_FLOWERING_ABILITY_PERCENT) * LEAF_MAX_FLOWERS);
+	this->flowering = randPercent(floweringPercent);
 }
 
 void Cell_Leaf::Tick()
 {
-	if ((this->flowersRemaining > 0) &&
+	if ((this->flowering) &&
 		this->myFlower == nullptr &&
-		this->myOrganism->GetEnergy() > (FLOWER_COST + 3) &&
+		this->myOrganism->GetEnergy() > (FLOWER_COST + 1) &&
 		randPercent(PLANT_GROW_PERCENT))
 	{
 		// don't grow a flower if this leaf is already adjacent to a flower
@@ -203,7 +200,6 @@ void Cell_Leaf::Tick()
 				this->myFlower = newFlower;
 				newFlower->myLeaf = this;
 				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, newFlower);
-				this->flowersRemaining--;
 				return;
 			}
 		}
@@ -217,6 +213,11 @@ void Cell_Leaf::Tick()
 		{
 			energyGained++;
 		}
+		energyGained += randPercent(2 * (this->myOrganism->myCells.size() - 4));
+		// if(this->myOrganism->myCells.size() < 5 && randPercent(15))
+		// {
+			// energyGained--;
+		// }
 		this->myOrganism->AddEnergy(energyGained);
 	}
 }
@@ -235,13 +236,6 @@ Cell_Bark::Cell_Bark()
 {
 	this->type = cell_bark;
 	this->myOrganism = nullptr;
-	this->leafGrowCooldown = BARK_GROW_COOLDOWN;
-}
-
-Cell_Bark::Cell_Bark(Organism *_myOrganism)
-{
-	this->type = cell_bark;
-	this->myOrganism = _myOrganism;
 	this->leafGrowCooldown = BARK_GROW_COOLDOWN;
 }
 
@@ -299,16 +293,6 @@ Cell_Flower::Cell_Flower(Cell_Leaf *_myLeaf)
 	this->myOrganism = nullptr;
 	this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
 }
-
-/*
-Cell_Flower::Cell_Flower(Organism *_myOrganism)
-{
-	this->type = cell_flower;
-	this->myLeaf = nullptr;
-	this->myOrganism = _myOrganism;
-	this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
-}
-*/
 
 void Cell_Flower::Tick()
 {
@@ -381,14 +365,6 @@ Cell_Fruit::Cell_Fruit(int _parentMutability)
 	this->parentMutability = _parentMutability;
 }
 
-Cell_Fruit::Cell_Fruit(Organism *_myOrganism)
-{
-	this->type = cell_fruit;
-	this->myOrganism = _myOrganism;
-	this->ticksUntilSpoil = FRUIT_SPOIL_TIME;
-	this->parentMutability = 50;
-}
-
 void Cell_Fruit::Tick()
 {
 	this->ticksUntilSpoil--;
@@ -414,12 +390,6 @@ Cell_Mover::Cell_Mover()
 	this->myOrganism = nullptr;
 }
 
-Cell_Mover::Cell_Mover(Organism *_myOrganism)
-{
-	this->type = cell_mover;
-	this->myOrganism = _myOrganism;
-}
-
 void Cell_Mover::Tick()
 {
 	this->myOrganism->ExpendEnergy(1);
@@ -439,14 +409,6 @@ Cell_Herbivore::Cell_Herbivore()
 {
 	this->type = cell_herbivore_mouth;
 	this->myOrganism = nullptr;
-	this->digestCooldown = 1;
-	this->direction = randInt(0, 3);
-}
-
-Cell_Herbivore::Cell_Herbivore(Organism *_myOrganism)
-{
-	this->type = cell_herbivore_mouth;
-	this->myOrganism = _myOrganism;
 	this->digestCooldown = 1;
 	this->direction = randInt(0, 3);
 }
@@ -524,7 +486,7 @@ void Cell_Herbivore::Tick()
 
 	if (couldEat)
 	{
-		this->myOrganism->brain.Reward();
+		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
 		this->digestCooldown = ceil(pow(gainedEnergy, 2) / HERB_DIGEST_TIME_DIVIDER);
 	}
@@ -561,13 +523,6 @@ Cell_Carnivore::Cell_Carnivore()
 {
 	this->type = cell_carnivore_mouth;
 	this->myOrganism = nullptr;
-	this->digestCooldown = 0;
-}
-
-Cell_Carnivore::Cell_Carnivore(Organism *_myOrganism)
-{
-	this->type = cell_carnivore_mouth;
-	this->myOrganism = _myOrganism;
 	this->digestCooldown = 0;
 }
 
@@ -618,7 +573,7 @@ void Cell_Carnivore::Tick()
 
 	if (couldEat)
 	{
-		this->myOrganism->brain.Reward();
+		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
 		this->digestCooldown = ceil((gainedEnergy * gainedEnergy) * CARN_DIGEST_TIME_MULTIPLIER);
 	}
@@ -644,12 +599,6 @@ Cell_Killer::Cell_Killer()
 {
 	this->type = cell_killer;
 	this->myOrganism = nullptr;
-}
-
-Cell_Killer::Cell_Killer(Organism *_myOrganism)
-{
-	this->type = cell_killer;
-	this->myOrganism = _myOrganism;
 }
 
 void Cell_Killer::Tick()
@@ -713,12 +662,6 @@ Cell_Armor::Cell_Armor()
 	this->myOrganism = nullptr;
 }
 
-Cell_Armor::Cell_Armor(Organism *_myOrganism)
-{
-	this->type = cell_armor;
-	this->myOrganism = _myOrganism;
-}
-
 void Cell_Armor::Tick()
 {
 	bool valid = false;
@@ -740,4 +683,56 @@ void Cell_Armor::Tick()
 Cell_Armor *Cell_Armor::Clone()
 {
 	return new Cell_Armor(*this);
+}
+
+// touch sensor cell
+Cell_Touch::~Cell_Touch()
+{
+}
+
+Cell_Touch::Cell_Touch()
+{
+	this->type = cell_touch;
+	this->myOrganism = nullptr;
+	this->senseCooldown = 0;
+}
+
+void Cell_Touch::Tick()
+{
+	if (this->senseCooldown > 0)
+	{
+		this->senseCooldown--;
+		return;
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		int *thisDirection = directions[i];
+		int x_abs = this->x + thisDirection[0];
+		int y_abs = this->y + thisDirection[1];
+		if (!board.boundCheckPos(x_abs, y_abs))
+		{
+			Cell *checked = board.cells[y_abs][x_abs];
+			if (checked->myOrganism == this->myOrganism || checked->type == cell_empty)
+			{
+				continue;
+			}
+
+			int thisSentiment = this->myOrganism->brain.cellSentiments[checked->type];
+			if (thisSentiment > 0)
+			{
+				this->myOrganism->brain.Reward();
+			}
+			else if (thisSentiment < 0)
+			{
+				this->myOrganism->brain.Punish();
+			}
+		}
+	}
+	this->senseCooldown = TOUCH_SENSE_COOLDOWN;
+}
+
+Cell_Touch *Cell_Touch::Clone()
+{
+	return new Cell_Touch(*this);
 }

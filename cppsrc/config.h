@@ -14,6 +14,7 @@ enum CellTypes
 	cell_mover,
 	cell_killer,
 	cell_armor,
+	cell_touch,
 	cell_null,
 };
 

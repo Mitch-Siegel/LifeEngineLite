@@ -87,11 +87,12 @@ class Organism;
 // #define HERB_DIGEST_TIME_MULTIPLIER .0063 * (1.0 / HERB_FOOD_MULTIPLIER)
 #define CARN_DIGEST_TIME_MULTIPLIER .0063 * (1.0 / CARN_FOOD_MULTIPLIER)
 
-#define HERB_DIGEST_TIME_DIVIDER 120.0
+// #define HERB_DIGEST_TIME_DIVIDER 100.0
+#define HERB_DIGEST_TIME_DIVIDER 200.0
 
 #define LEAF_FOOD_ENERGY 1 * HERB_FOOD_MULTIPLIER
 #define FLOWER_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
-#define FRUIT_FOOD_ENERGY 6 * HERB_FOOD_MULTIPLIER
+#define FRUIT_FOOD_ENERGY 5 * HERB_FOOD_MULTIPLIER
 
 #define SPOILTIME_BASE 100
 #define PLANTMASS_SPOIL_TIME_MULTIPLIER 2 * SPOILTIME_BASE
@@ -101,9 +102,10 @@ class Organism;
 
 #define FRUIT_SPOIL_TIME 0.5 * SPOILTIME_BASE
 
-#define FRUIT_GROW_PERCENT 15
+#define FRUIT_GROW_PERCENT 20
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
 #define FRUIT_MUTATE_PERCENT 17
+// #define FRUIT_MUTATE_PERCENT 25
 
 
 
@@ -111,10 +113,10 @@ class Organism;
 #define BIOMASS_FOOD_ENERGY 0 * PLANTMASS_FOOD_ENERGY
 
 
-#define FLOWER_COST 5 * ENERGY_DENSITY_MULTIPLIER
+#define FLOWER_COST 1.5 * ENERGY_DENSITY_MULTIPLIER
 
 // whether or not a leaf is able to flower, rolled at creation
-#define LEAF_FLOWERING_ABILITY_PERCENT 50
+#define LEAF_FLOWERING_ABILITY_PERCENT 40
 
 // each leaf generated will be able to generate between 1 and n flowers
 #define LEAF_MAX_FLOWERS 3
@@ -125,12 +127,14 @@ class Organism;
 #define BARK_GROW_COOLDOWN 30
 #define BARK_GROW_COST 1.5 * ENERGY_DENSITY_MULTIPLIER
 
-#define FLOWER_BLOOM_COOLDOWN 30
+#define FLOWER_BLOOM_COOLDOWN 55
 #define FLOWER_WILT_CHANCE 30
 #define FLOWER_BLOOM_COST 1.25 * ENERGY_DENSITY_MULTIPLIER
 
 
 #define KILLER_DAMAGE_COST ENERGY_DENSITY_MULTIPLIER
+
+#define TOUCH_SENSE_COOLDOWN 1
 
 class Cell
 {
@@ -201,7 +205,7 @@ class Cell_Leaf : public Cell
 {
 	friend class Cell_Flower;
 	friend class Board;
-	int flowersRemaining;
+	bool flowering;
 	Cell_Flower *myFlower;
 
 public:
@@ -355,4 +359,17 @@ public:
 	void Tick() override;
 
 	Cell_Armor *Clone() override;
+};
+
+class Cell_Touch : public Cell
+{
+uint8_t senseCooldown;
+public:
+	~Cell_Touch() override;
+
+	Cell_Touch();
+
+	void Tick() override;
+
+	Cell_Touch *Clone() override;
 };
