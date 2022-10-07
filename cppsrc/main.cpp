@@ -23,10 +23,10 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
 	// we'll use this texture as our own backbuffer
 	static SDL_Texture *boardBuf = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888,
-											SDL_TEXTUREACCESS_TARGET, board.dim_x, board.dim_y); 
-	
+													 SDL_TEXTUREACCESS_TARGET, board.dim_x, board.dim_y);
+
 	// draw to board buffer instead of backbuffer
-	SDL_SetRenderTarget(renderer, boardBuf); 
+	SDL_SetRenderTarget(renderer, boardBuf);
 
 	for (int y = 0; y < board.dim_y; y++)
 	{
@@ -98,9 +98,9 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 		}
 	}
 	// reset render target, copy board buf, and spit it out to the screen
-	SDL_SetRenderTarget(renderer, NULL); 
+	SDL_SetRenderTarget(renderer, NULL);
 	SDL_RenderCopy(renderer, boardBuf, NULL, NULL);
-	SDL_RenderPresent(renderer); 
+	SDL_RenderPresent(renderer);
 }
 
 int main(int argc, char *argv[])
@@ -158,6 +158,7 @@ int main(int argc, char *argv[])
 	// refresh();
 	auto lastFrame = std::chrono::high_resolution_clock::now();
 	size_t autoplaySpeed = 1;
+	int leftover = 0;
 	int frameToRender = 1;
 	while (running /* && board.tickCount < 100*/)
 	{
@@ -184,9 +185,16 @@ int main(int argc, char *argv[])
 			lastFrame = thisFrame;
 			if (autoplaySpeed)
 			{
+				if (leftover > 1000000)
+				{
+					int leftovermillis = leftover / 1000000;
+					SDL_Delay(leftovermillis);
+					leftover = leftover - (leftovermillis * 1000000);
+				}
 				if (autoplaySpeed > (micros / 1000))
 				{
 					SDL_Delay(autoplaySpeed - (micros / 1000));
+					leftover += micros - (micros / 1000);
 				}
 			}
 		}

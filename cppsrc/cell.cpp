@@ -18,7 +18,7 @@ int CellEnergyDensities[cell_null] = {
 	20, // mover
 	7,	// killer
 	5,	// armor
-	50, 	// touch sensor
+	5, 	// touch sensor
 };
 
 Cell *GenerateRandomCell()
@@ -205,7 +205,7 @@ void Cell_Leaf::Tick()
 		}
 	}
 
-	if (this->myOrganism->age % 5 == 0 || this->myOrganism->age % 6 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
+	if (this->myOrganism->age % 7 == 0 || this->myOrganism->age % 8 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
 	{
 		int energyGained = 1;
 		// each bark in a plant adds a 2% chance for every leaf to generate an extra energy every tick
@@ -213,7 +213,7 @@ void Cell_Leaf::Tick()
 		{
 			energyGained++;
 		}
-		energyGained += randPercent(2 * (this->myOrganism->myCells.size() - 4));
+		// energyGained += randPercent(2 * (this->myOrganism->myCells.size() - 4));
 		// if(this->myOrganism->myCells.size() < 5 && randPercent(15))
 		// {
 			// energyGained--;
@@ -487,8 +487,10 @@ void Cell_Herbivore::Tick()
 	if (couldEat)
 	{
 		// this->myOrganism->brain.Reward();
-		this->myOrganism->AddEnergy(gainedEnergy);
-		this->digestCooldown = ceil(pow(gainedEnergy, 2) / HERB_DIGEST_TIME_DIVIDER);
+		this->myOrganism->AddEnergy(gainedEnergy * HERB_FOOD_MULTIPLIER);
+		this->digestCooldown = gainedEnergy - 1;
+
+		// this->digestCooldown = ceil(pow(gainedEnergy, 2) / HERB_DIGEST_TIME_DIVIDER);
 	}
 
 	if (!valid)
@@ -699,6 +701,7 @@ Cell_Touch::Cell_Touch()
 
 void Cell_Touch::Tick()
 {
+	// this->myOrganism->AddEnergy(1);
 	if (this->senseCooldown > 0)
 	{
 		this->senseCooldown--;
@@ -713,7 +716,7 @@ void Cell_Touch::Tick()
 		if (!board.boundCheckPos(x_abs, y_abs))
 		{
 			Cell *checked = board.cells[y_abs][x_abs];
-			if (checked->myOrganism == this->myOrganism || checked->type == cell_empty)
+			if (checked->myOrganism == this->myOrganism)
 			{
 				continue;
 			}

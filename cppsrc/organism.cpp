@@ -43,7 +43,7 @@ void Organism::Die()
 		case cell_biomass:
 		case cell_plantmass:
 		case cell_fruit:
-			std::cerr << "Wrong cell type contained within organism!" << std::endl;
+			std::cerr << "Wrong cell type " <<  thisCell->type << " contained within organism!" << std::endl;
 			exit(1);
 
 		case cell_leaf:
@@ -264,11 +264,12 @@ void Organism::Move()
 		/*
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-1
 		*/
-		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2)) - 2;
+		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 1.5)) - 2;
 		this->ExpendEnergy(moveCost);
 	}
 	else
 	{
+		// this->brain.ForceRechoose();
 		this->brain.Punish();
 	}
 }
@@ -318,7 +319,7 @@ void Organism::Rotate(bool clockwise)
 
 			swappedMap[c] = true;
 			// redundant check but doesn't hurt
-			if (!swappedMap[swappedWith])
+			if (!swappedMap.count(swappedWith))
 			{
 				swappedMap[swappedWith] = true;
 				swaps.push_back(std::pair<Cell *, Cell *>(c, swappedWith));
@@ -519,7 +520,6 @@ Organism *Organism::Reproduce()
 				}
 				replicated->currentEnergy = randInt(1, replicated->maxEnergy / 3);
 				replicated->lifespan = sqrt(replicated->maxEnergy) * LIFESPAN_MULTIPLIER;
-				;
 				return replicated;
 			}
 

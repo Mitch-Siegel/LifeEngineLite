@@ -6,7 +6,7 @@ Brain::Brain()
     this->currentIntent = intent_changeDir;
     this->moveDirIndex = -1;
     this->conviction = 0;
-    this->maxConviction = 5;
+    this->maxConviction = 2;
     // chance to rotate instead of changing direction
     this->rotatevschange = 25;
     this->turnwhenrotate = 50;
@@ -37,6 +37,11 @@ void Brain::Punish()
     }
 }
 
+void Brain::ForceRechoose()
+{
+    this->conviction = -1 * this->maxConviction;
+}
+
 enum Intent Brain::Decide()
 {
     if (justRewarded)
@@ -45,8 +50,9 @@ enum Intent Brain::Decide()
         return currentIntent;
     }
     if ((this->currentIntent == intent_continue) &&
-        ((randInt(0, 2 * maxConviction) - maxConviction) > conviction ||
-         (randPercent(5) && randPercent(5))))
+        ((randInt(0, 2 * maxConviction) - maxConviction) > conviction /* ||
+          (randPercent(3) && randPercent(3))*/
+         ))
     {
         if (!randPercent(rotatevschange))
         {
@@ -70,7 +76,7 @@ enum Intent Brain::Decide()
         return intent_continue;
 
     case intent_changeDir:
-        this->moveDirIndex = randInt(0, 3999) % 4;
+        this->moveDirIndex = randInt(0, 3);
         this->currentIntent = intent_continue;
         this->conviction = ceil(this->maxConviction / 2.0);
         return intent_continue;
@@ -141,15 +147,15 @@ void Brain::Mutate()
         this->turnwhenrotate = 100;
     }
 
-    if (randPercent(50))
+    if (randPercent(5))
     {
-        this->cellSentiments[randInt(cell_empty + 1, cell_null - 1)] += (randPercent(50) ? 1 : -1);
+        this->cellSentiments[randInt(cell_empty + 1, cell_null - 1)] = (randPercent(50) ? 1 : -1);
         // for (int i = cell_empty; i < cell_null; i++)
         // {
-            // if (randPercent(10))
-            // {
-                // this->cellSentiments[i] += randInt(-1, 1);
-            // }
+        // if (randPercent(10))
+        // {
+        // this->cellSentiments[i] += randInt(-1, 1);
+        // }
         // }
     }
 }

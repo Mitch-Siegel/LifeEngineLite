@@ -26,6 +26,8 @@ public:
 
     void Punish();
 
+    void ForceRechoose();
+
     void Mutate();
 
     void RotateSuccess(bool clockwise);

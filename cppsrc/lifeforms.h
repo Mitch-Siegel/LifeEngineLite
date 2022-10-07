@@ -75,7 +75,7 @@ class Organism;
 
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .75
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 1.25
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 3.5
 // lifespan related to sqare root of energy density
 #define LIFESPAN_MULTIPLIER 200
 #define ENERGY_DENSITY_MULTIPLIER 4
@@ -90,9 +90,9 @@ class Organism;
 // #define HERB_DIGEST_TIME_DIVIDER 100.0
 #define HERB_DIGEST_TIME_DIVIDER 200.0
 
-#define LEAF_FOOD_ENERGY 1 * HERB_FOOD_MULTIPLIER
-#define FLOWER_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
-#define FRUIT_FOOD_ENERGY 5 * HERB_FOOD_MULTIPLIER
+#define LEAF_FOOD_ENERGY 1
+#define FLOWER_FOOD_ENERGY 2
+#define FRUIT_FOOD_ENERGY 5
 
 #define SPOILTIME_BASE 100
 #define PLANTMASS_SPOIL_TIME_MULTIPLIER 2 * SPOILTIME_BASE
@@ -104,12 +104,11 @@ class Organism;
 
 #define FRUIT_GROW_PERCENT 20
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
-#define FRUIT_MUTATE_PERCENT 17
-// #define FRUIT_MUTATE_PERCENT 25
+#define FRUIT_MUTATE_PERCENT 25
 
 
 
-#define PLANTMASS_FOOD_ENERGY 2 * HERB_FOOD_MULTIPLIER
+#define PLANTMASS_FOOD_ENERGY 2
 #define BIOMASS_FOOD_ENERGY 0 * PLANTMASS_FOOD_ENERGY
 
 
@@ -118,8 +117,6 @@ class Organism;
 // whether or not a leaf is able to flower, rolled at creation
 #define LEAF_FLOWERING_ABILITY_PERCENT 40
 
-// each leaf generated will be able to generate between 1 and n flowers
-#define LEAF_MAX_FLOWERS 3
 #define PLANT_GROW_PERCENT 100
 // percent for a flower to wilt into another leaf vs just going away
 #define FLOWER_EXPAND_PERCENT 100
@@ -134,7 +131,7 @@ class Organism;
 
 #define KILLER_DAMAGE_COST ENERGY_DENSITY_MULTIPLIER
 
-#define TOUCH_SENSE_COOLDOWN 1
+#define TOUCH_SENSE_COOLDOWN 5
 
 class Cell
 {

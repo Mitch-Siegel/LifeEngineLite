@@ -69,9 +69,9 @@ void Board::Tick()
 		case cell_fruit:
 			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
-				if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
+				if (randPercent(FRUIT_GROW_PERCENT))
 				{
-					// if we roll grow percent 2x, create a new random organism
+					// if we roll grow percent, create a new random organism
 					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
 					if (randPercent(FRUIT_MUTATE_PERCENT))
 					{
@@ -177,7 +177,7 @@ void Board::Stats()
 	auto now = std::chrono::high_resolution_clock::now();
 	auto diff = now - lastFrame;
 	size_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
-	printf("\nTICK %lu (%.2f t/s) (%lu organisms)\n", this->tickCount, (60000 / (float)millis), this->Organisms.size());
+	printf("\nTICK %lu (%.2f t/s) (%lu organisms)\n", this->tickCount, (28000.0 / (float)millis), this->Organisms.size());
 	lastFrame = now;
 	for (Organism *o : this->Organisms)
 	{
@@ -263,7 +263,7 @@ void Board::Stats()
 	printf("%lu (%.2f%%) movers have touch sensors\n", touchSensorHaverCount, 100 * (float)touchSensorHaverCount / moverStats[count_raw]);
 	char cellShortNames[cell_null][5] = {"EMPT", "PMAS", "BMAS", "LEAF", "BARK", "FLWR", "FRUT", "HERB", "CARN", "MOVR", "KILR", "ARMR", "TUCH"};
 	printf("CELL:APLNTC|AMOVRC|ASSENT\n");
-	for (int i = cell_empty + 1; i < cell_null; i++)
+	for (int i = cell_empty; i < cell_null; i++)
 	{
 		printf("%4s: %2.2f | %2.2f | %02.2f\n", 
 		cellShortNames[i], 
