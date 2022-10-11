@@ -43,7 +43,7 @@ void Organism::Die()
 		case cell_biomass:
 		case cell_plantmass:
 		case cell_fruit:
-			std::cerr << "Wrong cell type " <<  thisCell->type << " contained within organism!" << std::endl;
+			std::cerr << "Wrong cell type " << thisCell->type << " contained within organism!" << std::endl;
 			exit(1);
 
 		case cell_leaf:
@@ -122,7 +122,7 @@ Organism *Organism::Tick()
 	// don't allow organisms of size 1 to reproduce
 	if (this->reproductionCooldown == 0 && this->myCells.size() > 1)
 	{
-		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.25))
+		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.2))
 		{
 			return this->Reproduce();
 		}
@@ -166,9 +166,9 @@ void Organism::RecalculateStats()
 		this->currentHealth = this->maxHealth;
 	}
 
-	if (this->lifespan > sqrt(this->maxEnergy) * LIFESPAN_MULTIPLIER)
+	if (this->lifespan > sqrt(this->maxEnergy) * sqrt(this->myCells.size()) * LIFESPAN_MULTIPLIER)
 	{
-		this->lifespan = sqrt(this->maxEnergy) * LIFESPAN_MULTIPLIER;
+		this->lifespan = sqrt(this->maxEnergy) * sqrt(this->myCells.size()) * LIFESPAN_MULTIPLIER;
 	}
 	if (this->currentEnergy > this->maxEnergy)
 	{
@@ -187,7 +187,7 @@ bool Organism::CheckValidity()
 
 	// disallow herbivores that have leaves on them
 	invalid |= (this->cellCounts[cell_herbivore_mouth] > 0 && this->cellCounts[cell_leaf] > 0);
-	
+
 	// must have a mover to have a touch sensor
 	invalid |= (this->cellCounts[cell_touch] > 0 && this->cellCounts[cell_mover] == 0);
 
@@ -262,7 +262,7 @@ void Organism::Move()
 
 		// only expend energy if can move
 		/*
-		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-1
+		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-2
 		*/
 		int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 1.5)) - 2;
 		this->ExpendEnergy(moveCost);
@@ -270,7 +270,10 @@ void Organism::Move()
 	else
 	{
 		// this->brain.ForceRechoose();
-		this->brain.Punish();
+		if (this->cellCounts[cell_touch])
+		{
+			this->brain.Punish();
+		}
 	}
 }
 
@@ -337,7 +340,6 @@ void Organism::Rotate(bool clockwise)
 		a->y = b->y;
 		board.cells[a->y][a->x] = a;
 		board.DeltaCells[a->y][a->x] = true;
-
 
 		b->x = oldX;
 		b->y = oldY;
@@ -487,6 +489,11 @@ Organism *Organism::Reproduce()
 				{
 					replicated->Mutate();
 				}
+				if (randPercent(this->mutability) && replicated->cellCounts[cell_mover])
+				{
+					replicated->Rotate(randPercent(50));
+				}
+
 				replicated->mutability += randInt(-1, 1);
 				if (replicated->mutability < 0)
 				{
@@ -519,7 +526,7 @@ Organism *Organism::Reproduce()
 					replicated->brain.Mutate();
 				}
 				replicated->currentEnergy = randInt(1, replicated->maxEnergy / 3);
-				replicated->lifespan = sqrt(replicated->maxEnergy) * LIFESPAN_MULTIPLIER;
+				replicated->lifespan = sqrt(replicated->maxEnergy) * sqrt(replicated->myCells.size()) * LIFESPAN_MULTIPLIER;
 				return replicated;
 			}
 
@@ -569,17 +576,52 @@ void Organism::Mutate()
 		// add a cell
 		else
 		{
-			int x_rel = 0;
-			int y_rel = 0;
+			int x_rel;
+			int y_rel;
 			bool couldAdd = false;
 
-			int numCells = this->myCells.size();
-			int cellIndex = 0;
-			if (numCells > 1)
+			// int numCells = this->myCells.size();
+			// int cellIndex = 0;
+			// if (numCells > 1)
+			// {
+			// cellIndex = randInt(0, numCells - 1);
+			// }
+
+			int dirIndex = randInt(0, 7);
+			for (int i = 0; i < 8; i++)
 			{
-				// cellIndex = randInt(0, numCells - 1);
+				int *thisDirection = directions[(dirIndex + i) % 8];
+				y_rel = 0;
+				x_rel = 0;
+				bool looking = true;
+				while (looking)
+				{
+					if (board.boundCheckPos(this->x + x_rel, this->y + y_rel))
+					{
+						looking = false;
+						break;
+					}
+
+					if (board.isCellOfType(this->x + x_rel, this->y + y_rel, cell_empty))
+					{
+						looking = false;
+						couldAdd = true;
+					}
+					else
+					{
+						if (randPercent(50))
+						{
+							y_rel += thisDirection[1];
+						}
+						else
+						{
+							x_rel += thisDirection[0];
+						}
+					}
+				}
 			}
 
+			/*
 			// preferentially mutate directly adjacent to an existing cell
 			for (int i = 0; (i < numCells) && !couldAdd; i++)
 			{
@@ -623,7 +665,7 @@ void Organism::Mutate()
 					}
 				}
 			}
-
+			*/
 			if (couldAdd)
 			{
 				this->AddCell(x_rel, y_rel, GenerateRandomCell());

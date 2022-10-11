@@ -10,15 +10,15 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	6, // bark
+	4,	// bark
 	2,	// flower
 	0,	// fruit
-	15, // herbivore
-	45, // carnivore
-	20, // mover
-	7,	// killer
-	5,	// armor
-	5, 	// touch sensor
+	35, // herbivore
+	75, // carnivore
+	50, // mover
+	12,	// killer
+	10,	// armor
+	0, // touch sensor
 };
 
 Cell *GenerateRandomCell()
@@ -205,18 +205,18 @@ void Cell_Leaf::Tick()
 		}
 	}
 
-	if (this->myOrganism->age % 7 == 0 || this->myOrganism->age % 8 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
+	if (this->myOrganism->age % 3 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
 	{
 		int energyGained = 1;
 		// each bark in a plant adds a 2% chance for every leaf to generate an extra energy every tick
-		if (randPercent(2 * this->myOrganism->cellCounts[cell_bark]))
+		if (randPercent(2 * (this->myOrganism->cellCounts[cell_bark] + 1)))
 		{
 			energyGained++;
 		}
 		// energyGained += randPercent(2 * (this->myOrganism->myCells.size() - 4));
 		// if(this->myOrganism->myCells.size() < 5 && randPercent(15))
 		// {
-			// energyGained--;
+		// energyGained--;
 		// }
 		this->myOrganism->AddEnergy(energyGained);
 	}
@@ -237,16 +237,33 @@ Cell_Bark::Cell_Bark()
 	this->type = cell_bark;
 	this->myOrganism = nullptr;
 	this->leafGrowCooldown = BARK_GROW_COOLDOWN;
+	this->integrity = BARK_MAX_INTEGRITY;
 }
 
 void Cell_Bark::Tick()
 {
+
+	if (this->integrity < BARK_MAX_INTEGRITY)
+	{
+		if (this->integrity < 1)
+		{
+			this->myOrganism->RemoveCell(this);
+			board.replaceCell(this, new Cell_Empty());
+			return;
+		}
+		else if (this->myOrganism->GetEnergy() > (BARK_REGENERATE_INTEGRITY_COST + 1))
+		{
+			this->integrity++;
+			this->myOrganism->ExpendEnergy(BARK_REGENERATE_INTEGRITY_COST);
+		}
+	}
 	if (this->leafGrowCooldown > 0)
 	{
 		this->leafGrowCooldown--;
 		return;
 	}
-	else
+	// if greater than half integrity, can grow a leaf
+	else if(this->integrity > (BARK_MAX_INTEGRITY / 2))
 	{
 		if (this->myOrganism->GetEnergy() > BARK_GROW_COST)
 		{
@@ -270,7 +287,10 @@ void Cell_Bark::Tick()
 
 Cell_Bark *Cell_Bark::Clone()
 {
-	return new Cell_Bark(*this);
+	Cell_Bark *cloned = new Cell_Bark(*this);
+	cloned->leafGrowCooldown = BARK_GROW_COOLDOWN;
+	cloned->integrity = BARK_MAX_INTEGRITY;
+	return cloned;
 }
 
 // flower cell
@@ -409,8 +429,7 @@ Cell_Herbivore::Cell_Herbivore()
 {
 	this->type = cell_herbivore_mouth;
 	this->myOrganism = nullptr;
-	this->digestCooldown = 1;
-	this->direction = randInt(0, 3);
+	this->digestCooldown = 0;
 }
 
 void Cell_Herbivore::Tick()
@@ -423,12 +442,12 @@ void Cell_Herbivore::Tick()
 	bool couldEat = false;
 	int gainedEnergy = 0;
 	bool valid = false;
-	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
-	{
-		this->myOrganism->ExpendEnergy(randInt(1, 2));
-	}
+	// if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
+	// {
+		// this->myOrganism->ExpendEnergy(randInt(1, 2));
+	// }
 	int checkDirIndex = randInt(0, 3);
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 4 && !couldEat; i++)
 	{
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
@@ -482,15 +501,26 @@ void Cell_Herbivore::Tick()
 				valid = true;
 			}
 		}
+
+		if (potentiallyEaten->type == cell_bark)
+		{
+			Organism *eatenParent = potentiallyEaten->myOrganism;
+			if (eatenParent != this->myOrganism)
+			{
+				Cell_Bark *chompedBark = (Cell_Bark *)potentiallyEaten;
+				chompedBark->integrity--;
+				this->digestCooldown = 1;
+			}
+		}
 	}
 
+	// if eating something other than a leaf, take time to digest it
 	if (couldEat)
 	{
 		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy * HERB_FOOD_MULTIPLIER);
 		this->digestCooldown = gainedEnergy - 1;
 
-		// this->digestCooldown = ceil(pow(gainedEnergy, 2) / HERB_DIGEST_TIME_DIVIDER);
 	}
 
 	if (!valid)
@@ -577,7 +607,7 @@ void Cell_Carnivore::Tick()
 	{
 		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
-		this->digestCooldown = ceil((gainedEnergy * gainedEnergy) * CARN_DIGEST_TIME_MULTIPLIER);
+		this->digestCooldown = gainedEnergy;
 	}
 
 	if (!valid)

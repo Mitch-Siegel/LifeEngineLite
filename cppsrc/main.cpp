@@ -17,7 +17,7 @@ void intHandler(int dummy)
 	running = 0;
 }
 
-Board board = Board(384, 192);
+Board board = Board(256, 128);
 
 void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
@@ -105,13 +105,14 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 
 int main(int argc, char *argv[])
 {
+	srand(0);
 	SDL_Window *window = nullptr;
 	SDL_Renderer *renderer = nullptr;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(2688, 1344, 0, &window, &renderer);
+	SDL_CreateWindowAndRenderer(2816, 1408, 0, &window, &renderer);
 	// SDL_CreateWindowAndRenderer(2580, 1280, 0, &window, &renderer);
-	SDL_RenderSetScale(renderer, 7, 7);
+	SDL_RenderSetScale(renderer, 11, 11);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
@@ -125,13 +126,13 @@ int main(int argc, char *argv[])
 	// refresh();
 	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
 	// firstOrganism->AddCell(0, 0, new Cell_Bark());
-	int floweringIndex = randInt(0, 3);
-	firstOrganism->AddCell(0, 0, new Cell_Leaf((floweringIndex == 0) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT));
+	// int floweringIndex = randInt(0, 3);
+	firstOrganism->AddCell(0, 0, new Cell_Leaf(15));
 	// firstOrganism->AddCell(0, 0, new Cell_Mover());
 	// firstOrganism->AddCell(0, 1, new Cell_Carnivore());
-	firstOrganism->AddCell(1, 0, new Cell_Leaf(((floweringIndex == 1) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
-	firstOrganism->AddCell(0, 1, new Cell_Leaf(((floweringIndex == 2) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
-	firstOrganism->AddCell(1, 1, new Cell_Leaf(((floweringIndex == 3) ? 100 : LEAF_FLOWERING_ABILITY_PERCENT)));
+	firstOrganism->AddCell(1, 0, new Cell_Leaf(15));
+	firstOrganism->AddCell(0, 1, new Cell_Leaf(15));
+	firstOrganism->AddCell(1, 1, new Cell_Leaf(15));
 	// Cell_Leaf plantLeaf = Cell_Leaf();
 	/*
 	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))
