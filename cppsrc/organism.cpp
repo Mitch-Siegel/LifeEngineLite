@@ -160,7 +160,7 @@ void Organism::RecalculateStats()
 		this->maxEnergy = calculatedMaxEnergy;
 	}
 	int nCells = this->myCells.size();
-	this->maxHealth = nCells * MAX_HEALTH_MULTIPLIER;
+	this->maxHealth = nCells * MAX_HEALTH_MULTIPLIER + (this->cellCounts[cell_armor] * ARMOR_HEALTH_BONUS);
 	if (this->currentHealth > this->maxHealth)
 	{
 		this->currentHealth = this->maxHealth;
@@ -213,7 +213,7 @@ bool Organism::CheckValidity()
 void Organism::Move()
 {
 	int *moveDir = directions[this->brain.moveDirIndex];
-	if (this->CanOccupyPosition(this->x + moveDir[0], this->y + moveDir[1]))
+	if (this->CanMoveToPosition(this->x + moveDir[0], this->y + moveDir[1]))
 	{
 		class MovedCell
 		{
@@ -408,7 +408,29 @@ std::size_t Organism::GetMaxEnergy()
 	return this->maxEnergy;
 }
 
+// returns true if possible, false if not
 bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
+{
+	for (size_t i = 0; i < this->myCells.size(); i++)
+	{
+		Cell *thisCell = this->myCells[i];
+
+		int newCellX_rel = thisCell->x - this->x;
+		int newCellY_rel = thisCell->y - this->y;
+		int new_x_abs = _x_abs + newCellX_rel;
+		int new_y_abs = _y_abs + newCellY_rel;
+		bool boundCheckResult = board.boundCheckPos(new_x_abs, new_y_abs);
+		// if location out of bounds or not empty
+		if (boundCheckResult || board.cells[new_y_abs][new_x_abs]->type != cell_empty)
+		{
+			// fail
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 {
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
@@ -578,7 +600,7 @@ void Organism::Mutate()
 		{
 			int x_rel;
 			int y_rel;
-			bool couldAdd = false;
+			bool canAdd = false;
 
 			// int numCells = this->myCells.size();
 			// int cellIndex = 0;
@@ -588,7 +610,7 @@ void Organism::Mutate()
 			// }
 
 			int dirIndex = randInt(0, 7);
-			for (int i = 0; i < 8; i++)
+			for (int i = 0; i < 8 && !canAdd; i++)
 			{
 				int *thisDirection = directions[(dirIndex + i) % 8];
 				y_rel = 0;
@@ -605,7 +627,8 @@ void Organism::Mutate()
 					if (board.isCellOfType(this->x + x_rel, this->y + y_rel, cell_empty))
 					{
 						looking = false;
-						couldAdd = true;
+						canAdd = true;
+						break;
 					}
 					else
 					{
@@ -666,7 +689,7 @@ void Organism::Mutate()
 				}
 			}
 			*/
-			if (couldAdd)
+			if (canAdd)
 			{
 				this->AddCell(x_rel, y_rel, GenerateRandomCell());
 			}
@@ -675,14 +698,14 @@ void Organism::Mutate()
 	this->RecalculateStats();
 }
 
-// return 1 if cell is occupied, else 0
-int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
+void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 {
 	int x_abs = this->x + x_rel;
 	int y_abs = this->y + y_rel;
 	if (!board.isCellOfType(x_abs, y_abs, cell_empty))
 	{
-		return true;
+		printf("Can't add cell at %d, %d (organism at %d, %d)\n", x_abs, y_abs, this->x, this->y);
+		exit(1);
 	}
 
 	_cell->x = x_abs;
@@ -691,8 +714,6 @@ int Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	board.replaceCellAt(x_abs, y_abs, _cell);
 	this->myCells.push_back(_cell);
 	this->RecalculateStats();
-
-	return false;
 }
 
 void Organism::RemoveCell(Cell *_myCell)

@@ -16,9 +16,9 @@ int CellEnergyDensities[cell_null] = {
 	35, // herbivore
 	75, // carnivore
 	50, // mover
-	12,	// killer
-	10,	// armor
-	0, // touch sensor
+	20, // killer
+	25, // armor
+	0,	// touch sensor
 };
 
 Cell *GenerateRandomCell()
@@ -205,11 +205,12 @@ void Cell_Leaf::Tick()
 		}
 	}
 
-	if (this->myOrganism->age % 3 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
+	if (this->myOrganism->age % 4 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
 	{
 		int energyGained = 1;
-		// each bark in a plant adds a 2% chance for every leaf to generate an extra energy every tick
-		if (randPercent(2 * (this->myOrganism->cellCounts[cell_bark] + 1)))
+		// small chance for each leaf to generate an extra energy
+		// chance is boosted by plants with bark on board
+		if (randPercent(this->myOrganism->cellCounts[cell_bark] + 5) && randPercent(50))
 		{
 			energyGained++;
 		}
@@ -236,12 +237,17 @@ Cell_Bark::Cell_Bark()
 {
 	this->type = cell_bark;
 	this->myOrganism = nullptr;
-	this->leafGrowCooldown = BARK_GROW_COOLDOWN;
+	this->actionCooldown = BARK_GROW_COOLDOWN;
 	this->integrity = BARK_MAX_INTEGRITY;
 }
 
 void Cell_Bark::Tick()
 {
+	if (this->actionCooldown > 0)
+	{
+		this->actionCooldown--;
+		return;
+	}
 
 	if (this->integrity < BARK_MAX_INTEGRITY)
 	{
@@ -255,15 +261,12 @@ void Cell_Bark::Tick()
 		{
 			this->integrity++;
 			this->myOrganism->ExpendEnergy(BARK_REGENERATE_INTEGRITY_COST);
+			this->actionCooldown = BARK_GROW_COOLDOWN;
 		}
 	}
-	if (this->leafGrowCooldown > 0)
-	{
-		this->leafGrowCooldown--;
-		return;
-	}
+
 	// if greater than half integrity, can grow a leaf
-	else if(this->integrity > (BARK_MAX_INTEGRITY / 2))
+	if (this->integrity > (BARK_MAX_INTEGRITY / 2))
 	{
 		if (this->myOrganism->GetEnergy() > BARK_GROW_COST)
 		{
@@ -275,9 +278,9 @@ void Cell_Bark::Tick()
 				int y_abs = this->y + thisDirection[1];
 				if (board.isCellOfType(x_abs, y_abs, cell_empty))
 				{
-					this->myOrganism->AddCell(x_abs - this->x, y_abs - this->y, new Cell_Leaf());
+					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf());
 					this->myOrganism->ExpendEnergy(BARK_GROW_COST);
-					this->leafGrowCooldown = BARK_GROW_COOLDOWN;
+					this->actionCooldown = BARK_GROW_COOLDOWN;
 					return;
 				}
 			}
@@ -288,7 +291,7 @@ void Cell_Bark::Tick()
 Cell_Bark *Cell_Bark::Clone()
 {
 	Cell_Bark *cloned = new Cell_Bark(*this);
-	cloned->leafGrowCooldown = BARK_GROW_COOLDOWN;
+	cloned->actionCooldown = BARK_GROW_COOLDOWN;
 	cloned->integrity = BARK_MAX_INTEGRITY;
 	return cloned;
 }
@@ -444,7 +447,7 @@ void Cell_Herbivore::Tick()
 	bool valid = false;
 	// if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
 	// {
-		// this->myOrganism->ExpendEnergy(randInt(1, 2));
+	// this->myOrganism->ExpendEnergy(randInt(1, 2));
 	// }
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4 && !couldEat; i++)
@@ -520,7 +523,6 @@ void Cell_Herbivore::Tick()
 		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy * HERB_FOOD_MULTIPLIER);
 		this->digestCooldown = gainedEnergy - 1;
-
 	}
 
 	if (!valid)
@@ -635,7 +637,7 @@ Cell_Killer::Cell_Killer()
 
 void Cell_Killer::Tick()
 {
-	int damageDone = 0;
+	this->myOrganism->ExpendEnergy(1);
 	bool valid = false;
 	for (int i = 0; i < 4; i++)
 	{
@@ -649,8 +651,12 @@ void Cell_Killer::Tick()
 			{
 				if (adjacent->myOrganism != this->myOrganism)
 				{
-					damageDone++;
-					adjacent->myOrganism->Damage(1);
+					// still expend the energy to try and hit armor
+					// but if directly contacting armor, do no damage
+					if (adjacent->type != cell_armor)
+					{
+						adjacent->myOrganism->Damage(1);
+					}
 				}
 				else
 				{
@@ -670,7 +676,6 @@ void Cell_Killer::Tick()
 			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
 		}
 	}
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST));
 	if (!valid)
 	{
 		this->myOrganism->RemoveCell(this);
@@ -754,11 +759,18 @@ void Cell_Touch::Tick()
 			int thisSentiment = this->myOrganism->brain.cellSentiments[checked->type];
 			if (thisSentiment > 0)
 			{
-				this->myOrganism->brain.Reward();
+				for (int j = 0; j < thisSentiment; j++)
+				{
+					this->myOrganism->brain.Reward();
+				}
 			}
 			else if (thisSentiment < 0)
 			{
-				this->myOrganism->brain.Punish();
+				int sentimentAbs = -1 * thisSentiment;
+				for (int j = 0; j < sentimentAbs; j++)
+				{
+					this->myOrganism->brain.Punish();
+				}
 			}
 		}
 	}

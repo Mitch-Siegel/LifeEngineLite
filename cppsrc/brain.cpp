@@ -122,12 +122,12 @@ void Brain::RotateSuccess(bool clockwise)
 
 void Brain::Mutate()
 {
-    this->maxConviction += (randInt(-1, 1) * (randPercent(50) * randInt(1, 2)));
+    this->maxConviction += (randInt(-1, 1) * 1);
     if (this->maxConviction < 1)
     {
         this->maxConviction = 1;
     }
-    this->rotatevschange += (randInt(-1, 1) * (randPercent(50) * randInt(1, 6)));
+    this->rotatevschange += (randInt(-1, 1) * (1 + (randPercent(50) * randInt(0, 2))));
     if (this->rotatevschange < 0)
     {
         this->rotatevschange = 0;
@@ -137,7 +137,7 @@ void Brain::Mutate()
         this->rotatevschange = 100;
     }
 
-    this->turnwhenrotate += (randInt(-1, 1) * (randPercent(50) * randInt(1, 6)));
+    this->turnwhenrotate += (randInt(-1, 1) * (1 + (randPercent(50) * randInt(0, 2))));
     if (this->turnwhenrotate < 0)
     {
         this->turnwhenrotate = 0;
@@ -147,9 +147,9 @@ void Brain::Mutate()
         this->turnwhenrotate = 100;
     }
 
-    if (randPercent(5))
+    if (randPercent(10))
     {
-        this->cellSentiments[randInt(cell_empty + 1, cell_null - 1)] = (randPercent(50) ? 1 : -1);
+        this->cellSentiments[randInt(cell_empty + 1, cell_null - 1)] += (randPercent(50) ? 1 : -1);
         // for (int i = cell_empty; i < cell_null; i++)
         // {
         // if (randPercent(10))

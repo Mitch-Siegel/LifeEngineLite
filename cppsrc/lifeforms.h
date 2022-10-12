@@ -42,7 +42,7 @@ public:
 
 	void Rotate(bool clockwise);
 
-	int AddCell(int x_rel, int y_rel, Cell *_cell);
+	void AddCell(int x_rel, int y_rel, Cell *_cell);
 
 	void RemoveCell(Cell *_myCell);
 
@@ -63,6 +63,8 @@ public:
 	void AddEnergy(std::size_t n);
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
+	
+	bool CanMoveToPosition(int _x_abs, int _y_abs);
 
 	Organism *Reproduce();
 
@@ -83,8 +85,8 @@ class Organism;
 #define ENERGY_DENSITY_MULTIPLIER 4
 #define MAX_HEALTH_MULTIPLIER 1
 
-// #define HERB_FOOD_MULTIPLIER 2.5 * ENERGY_DENSITY_MULTIPLIER
-#define HERB_FOOD_MULTIPLIER 2.25 * ENERGY_DENSITY_MULTIPLIER
+// #define HERB_FOOD_MULTIPLIER 2.25 * ENERGY_DENSITY_MULTIPLIER
+#define HERB_FOOD_MULTIPLIER 2.5 * ENERGY_DENSITY_MULTIPLIER
 #define CARN_FOOD_MULTIPLIER 10 * ENERGY_DENSITY_MULTIPLIER
 
 #define LEAF_FOOD_ENERGY 1
@@ -94,8 +96,7 @@ class Organism;
 #define SPOILTIME_BASE 100
 #define PLANTMASS_SPOIL_TIME_MULTIPLIER 2 * SPOILTIME_BASE
 // #define BIOMASS_SPOIL_TIME_MULTIPLIER 5 * SPOILTIME_BASE
-#define BIOMASS_SPOIL_TIME_MULTIPLIER 4 * SPOILTIME_BASE
-
+#define BIOMASS_SPOIL_TIME_MULTIPLIER 0 * SPOILTIME_BASE
 
 #define FRUIT_SPOIL_TIME 0.5 * SPOILTIME_BASE
 
@@ -103,11 +104,8 @@ class Organism;
 // if the fruit grows, percent probability it will mutate vs just becoming another plant
 #define FRUIT_MUTATE_PERCENT 25
 
-
-
 #define PLANTMASS_FOOD_ENERGY 2
 #define BIOMASS_FOOD_ENERGY 0 * PLANTMASS_FOOD_ENERGY
-
 
 #define FLOWER_COST 1.25 * ENERGY_DENSITY_MULTIPLIER
 
@@ -120,7 +118,7 @@ class Organism;
 
 #define BARK_GROW_COOLDOWN 30
 #define BARK_GROW_COST 1.5 * ENERGY_DENSITY_MULTIPLIER
-#define BARK_MAX_INTEGRITY 10
+#define BARK_MAX_INTEGRITY 6
 #define BARK_REGENERATE_INTEGRITY_COST 1 * ENERGY_DENSITY_MULTIPLIER
 
 #define FLOWER_BLOOM_COOLDOWN 55
@@ -128,9 +126,9 @@ class Organism;
 #define FLOWER_BLOOM_COST 1 * ENERGY_DENSITY_MULTIPLIER
 
 
-#define KILLER_DAMAGE_COST ENERGY_DENSITY_MULTIPLIER
-
 #define TOUCH_SENSE_COOLDOWN 5
+
+#define ARMOR_HEALTH_BONUS 4 * MAX_HEALTH_MULTIPLIER
 
 class Cell
 {
@@ -223,7 +221,7 @@ public:
 class Cell_Bark : public Cell
 {
 	friend class Cell_Herbivore;
-	int leafGrowCooldown;
+	int actionCooldown;
 	int integrity;
 
 public:
@@ -298,7 +296,6 @@ class Cell_Herbivore : public Cell
 	uint8_t digestCooldown;
 
 public:
-
 	~Cell_Herbivore() override;
 
 	Cell_Herbivore();
@@ -360,7 +357,8 @@ public:
 
 class Cell_Touch : public Cell
 {
-uint8_t senseCooldown;
+	uint8_t senseCooldown;
+
 public:
 	~Cell_Touch() override;
 

@@ -84,8 +84,9 @@ void Board::Tick()
 						for (int j = 0; j < 8; j++)
 						{
 							int *thisDirection = directions[(j + dirIndex) % 8];
-							if (grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell) == 0)
+							if (board.isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
 							{
+								grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell);
 								couldAddSecond = true;
 								break;
 							}
@@ -95,7 +96,6 @@ void Board::Tick()
 							delete secondRandomCell;
 						}
 
-						// grownFruit->AddEnergy(grownFruit->GetMaxEnergy());
 					}
 					// if only rolled 1x, just create a new single-celled plant
 					else
