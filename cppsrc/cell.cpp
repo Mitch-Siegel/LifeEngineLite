@@ -10,15 +10,15 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	4,	// bark
+	8,	// bark
 	2,	// flower
 	0,	// fruit
-	35, // herbivore
+	50, // herbivore
 	75, // carnivore
 	50, // mover
 	20, // killer
 	25, // armor
-	0,	// touch sensor
+	25,	// touch sensor
 };
 
 Cell *GenerateRandomCell()
@@ -205,12 +205,12 @@ void Cell_Leaf::Tick()
 		}
 	}
 
-	if (this->myOrganism->age % 4 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
+	if (this->myOrganism->age % 3 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
 	{
 		int energyGained = 1;
 		// small chance for each leaf to generate an extra energy
 		// chance is boosted by plants with bark on board
-		if (randPercent(this->myOrganism->cellCounts[cell_bark] + 5) && randPercent(50))
+		if (randPercent(this->myOrganism->cellCounts[cell_bark] + 5) && randPercent(30))
 		{
 			energyGained++;
 		}
