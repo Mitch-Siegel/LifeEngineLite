@@ -174,6 +174,7 @@ void Board::Stats()
 	double moverCellCounts[cell_null] = {0.0};
 	double moverCellSentiments[cell_null] = {0.0};
 	size_t touchSensorHaverCount = 0;
+	double touchSensorInterval = 0;
 	auto now = std::chrono::high_resolution_clock::now();
 	auto diff = now - lastFrame;
 	size_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
@@ -202,6 +203,14 @@ void Board::Stats()
 				for (int i = 0; i < cell_null; i++)
 				{
 					moverCellSentiments[i] += o->brain.cellSentiments[i];
+				}
+				for(Cell* c : o->myCells)
+				{
+					if(c->type == cell_touch)
+					{
+						Cell_Touch *t = (Cell_Touch *)c;
+						touchSensorInterval += t->senseCooldown;
+					}
 				}
 			}
 		}
@@ -240,6 +249,7 @@ void Board::Stats()
 		{
 			moverCellSentiments[i] /= touchSensorHaverCount;
 		}
+		touchSensorInterval /= touchSensorHaverCount;
 	}
 
 	printf("%5.0f Plants - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f lifespan, %.1f%% mutability\n",
@@ -260,7 +270,7 @@ void Board::Stats()
 		   moverStats[count_maxconviction],
 		   moverStats[count_rotatevschange],
 		   moverStats[count_turnwhenrotate]);
-	printf("%lu (%.2f%%) movers have touch sensors\n", touchSensorHaverCount, 100 * (float)touchSensorHaverCount / moverStats[count_raw]);
+	printf("%lu (%.2f%%) movers have touch sensors (avg sense interval %2.2f)\n", touchSensorHaverCount, 100 * (float)touchSensorHaverCount / moverStats[count_raw], touchSensorInterval);
 	char cellShortNames[cell_null][5] = {"EMPT", "PMAS", "BMAS", "LEAF", "BARK", "FLWR", "FRUT", "HERB", "CARN", "MOVR", "KILR", "ARMR", "TUCH"};
 	printf("CELL:APLNTC|AMOVRC|ASSENT\n");
 	for (int i = cell_empty; i < cell_null; i++)

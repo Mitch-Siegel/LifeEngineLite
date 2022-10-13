@@ -127,13 +127,13 @@ int main(int argc, char *argv[])
 	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
 	// Organism *firstOrganism = board.createOrganism(0, 0);
 	// firstOrganism->AddCell(0, 0, new Cell_Bark());
-	// int floweringIndex = randInt(0, 3);
-	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
+	int floweringIndex = 4;
+	firstOrganism->AddCell(0, 0, new Cell_Leaf(floweringIndex == 0 ? 100 : 0));
 	// firstOrganism->AddCell(0, 0, new Cell_Mover());
 	// firstOrganism->AddCell(0, 1, new Cell_Carnivore());
-	firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
-	firstOrganism->AddCell(0, 1, new Cell_Leaf(0));
-	firstOrganism->AddCell(1, 1, new Cell_Leaf(0));
+	firstOrganism->AddCell(1, 0, new Cell_Leaf(floweringIndex == 1 ? 100 : 0));
+	firstOrganism->AddCell(0, 1, new Cell_Leaf(floweringIndex == 2 ? 100 : 0));
+	firstOrganism->AddCell(1, 1, new Cell_Leaf(floweringIndex == 3 ? 100 : 0));
 	// Cell_Leaf plantLeaf = Cell_Leaf();
 	/*
 	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))

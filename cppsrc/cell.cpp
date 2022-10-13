@@ -469,18 +469,22 @@ void Cell_Herbivore::Tick()
 				{
 				case cell_leaf:
 					gainedEnergy = LEAF_FOOD_ENERGY;
+					this->digestCooldown = 0;
 					break;
 
 				case cell_flower:
 					gainedEnergy = FLOWER_FOOD_ENERGY;
+					this->digestCooldown = 1;
 					break;
 
 				case cell_fruit:
 					gainedEnergy = FRUIT_FOOD_ENERGY;
+					this->digestCooldown = 2;
 					break;
 
 				case cell_plantmass:
 					gainedEnergy = PLANTMASS_FOOD_ENERGY;
+					this->digestCooldown = 1;
 					break;
 
 				default:
@@ -510,7 +514,7 @@ void Cell_Herbivore::Tick()
 			{
 				Cell_Bark *chompedBark = (Cell_Bark *)potentiallyEaten;
 				chompedBark->integrity--;
-				// this->digestCooldown = 1;
+				this->digestCooldown = 1;
 			}
 		}
 	}
@@ -730,6 +734,7 @@ Cell_Touch::Cell_Touch()
 	this->type = cell_touch;
 	this->myOrganism = nullptr;
 	this->senseCooldown = 0;
+	this->senseInterval = randInt(0, 10);
 }
 
 void Cell_Touch::Tick()
@@ -772,10 +777,19 @@ void Cell_Touch::Tick()
 			}
 		}
 	}
-	this->senseCooldown = TOUCH_SENSE_COOLDOWN;
+	this->senseCooldown = this->senseInterval;
 }
 
 Cell_Touch *Cell_Touch::Clone()
 {
-	return new Cell_Touch(*this);
+	Cell_Touch *cloned = new Cell_Touch(*this);
+	if(randPercent(this->myOrganism->mutability))
+	{
+		cloned->senseInterval += randPercent(50) ? 1 : -1;
+		if(cloned->senseInterval < 0)
+		{
+			cloned->senseInterval = 0;
+		}
+	}
+	return cloned;
 }
