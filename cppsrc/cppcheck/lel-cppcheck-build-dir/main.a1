@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<analyzerinfo hash="3227138069660989658">
+        <error id="noExplicitConstructor" severity="style" msg="Class &apos;Cell_Leaf&apos; has a constructor with 1 argument that is not explicit." verbose="Class &apos;Cell_Leaf&apos; has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided." cwe="398" file0="../main.cpp">
+            <location file="../lifeforms.h" line="210" column="2"/>
+            <symbol>Cell_Leaf</symbol>
+        </error>
+        <error id="noExplicitConstructor" severity="style" msg="Class &apos;Cell_Flower&apos; has a constructor with 1 argument that is not explicit." verbose="Class &apos;Cell_Flower&apos; has a constructor with 1 argument that is not explicit. Such constructors should in general be explicit for type safety reasons. Using the explicit keyword in the constructor means some mistakes when using the class can be avoided." cwe="398" file0="../main.cpp">
+            <location file="../lifeforms.h" line="251" column="2"/>
+            <symbol>Cell_Flower</symbol>
+        </error>
+        <error id="invalidPrintfArgType_uint" severity="portability" msg="%lu in format string (no. 1) requires &apos;unsigned long&apos; but the argument type is &apos;size_t {aka unsigned long}&apos;." verbose="%lu in format string (no. 1) requires &apos;unsigned long&apos; but the argument type is &apos;size_t {aka unsigned long}&apos;." cwe="686" file0="../main.cpp">
+            <location file="../main.cpp" line="244" column="6"/>
+        </error>
+        <error id="invalidPrintfArgType_uint" severity="portability" msg="%lu in format string (no. 1) requires &apos;unsigned long&apos; but the argument type is &apos;size_t {aka unsigned long}&apos;." verbose="%lu in format string (no. 1) requires &apos;unsigned long&apos; but the argument type is &apos;size_t {aka unsigned long}&apos;." cwe="686" file0="../main.cpp">
+            <location file="../main.cpp" line="268" column="6"/>
+        </error>
+  <FileInfo check="ctu">
+<function-call call-id="../lifeforms.h:210:2" call-funcname="Cell_Leaf" call-argnr="1" file="../main.cpp" line="131" col="44" call-argexpr="0" call-argvaluetype="0" call-argvalue="0"/><function-call call-id="../lifeforms.h:210:2" call-funcname="Cell_Leaf" call-argnr="1" file="../main.cpp" line="134" col="44" call-argexpr="0" call-argvaluetype="0" call-argvalue="0"/><function-call call-id="../lifeforms.h:210:2" call-funcname="Cell_Leaf" call-argnr="1" file="../main.cpp" line="135" col="44" call-argexpr="0" call-argvaluetype="0" call-argvalue="0"/><function-call call-id="../lifeforms.h:210:2" call-funcname="Cell_Leaf" call-argnr="1" file="../main.cpp" line="136" col="44" call-argexpr="0" call-argvaluetype="0" call-argvalue="0"/>  </FileInfo>
+  <FileInfo check="CheckUnusedFunctions">
+    <functiondecl functionName="intHandler" lineNumber="15"/>
+    <functiondecl functionName="Render" lineNumber="22"/>
+    <functiondecl functionName="main" lineNumber="106"/>
+    <functioncall functionName="AddCell"/>
+    <functioncall functionName="AddEnergy"/>
+    <functioncall functionName="Board"/>
+    <functioncall functionName="Cell"/>
+    <functioncall functionName="Cell_Armor"/>
+    <functioncall functionName="Cell_Bark"/>
+    <functioncall functionName="Cell_Biomass"/>
+    <functioncall functionName="Cell_Carnivore"/>
+    <functioncall functionName="Cell_Empty"/>
+    <functioncall functionName="Cell_Flower"/>
+    <functioncall functionName="Cell_Fruit"/>
+    <functioncall functionName="Cell_Herbivore"/>
+    <functioncall functionName="Cell_Killer"/>
+    <functioncall functionName="Cell_Leaf"/>
+    <functioncall functionName="Cell_Mover"/>
+    <functioncall functionName="Cell_Plantmass"/>
+    <functioncall functionName="Cell_Touch"/>
+    <functioncall functionName="GetMaxEnergy"/>
+    <functioncall functionName="Heal"/>
+    <functioncall functionName="NULL"/>
+    <functioncall functionName="Organism"/>
+    <functioncall functionName="RecalculateStats"/>
+    <functioncall functionName="Render"/>
+    <functioncall functionName="SDL_CreateTexture"/>
+    <functioncall functionName="SDL_CreateWindowAndRenderer"/>
+    <functioncall functionName="SDL_Delay"/>
+    <functioncall functionName="SDL_DestroyRenderer"/>
+    <functioncall functionName="SDL_DestroyWindow"/>
+    <functioncall functionName="SDL_INIT_VIDEO"/>
+    <functioncall functionName="SDL_Init"/>
+    <functioncall functionName="SDL_PIXELFORMAT_RGB888"/>
+    <functioncall functionName="SDL_PollEvent"/>
+    <functioncall functionName="SDL_RenderClear"/>
+    <functioncall functionName="SDL_RenderCopy"/>
+    <functioncall functionName="SDL_RenderDrawPoint"/>
+    <functioncall functionName="SDL_RenderPresent"/>
+    <functioncall functionName="SDL_RenderSetScale"/>
+    <functioncall functionName="SDL_SetRenderDrawColor"/>
+    <functioncall functionName="SDL_SetRenderTarget"/>
+    <functioncall functionName="SDL_TEXTUREACCESS_TARGET"/>
+    <functioncall functionName="Stats"/>
+    <functioncall functionName="Tick"/>
+    <functioncall functionName="autoplay"/>
+    <functioncall functionName="autoplaySpeed"/>
+    <functioncall functionName="boardBuf"/>
+    <functioncall functionName="bool"/>
+    <functioncall functionName="break"/>
+    <functioncall functionName="cell_armor"/>
+    <functioncall functionName="cell_bark"/>
+    <functioncall functionName="cell_biomass"/>
+    <functioncall functionName="cell_carnivore_mouth"/>
+    <functioncall functionName="cell_empty"/>
+    <functioncall functionName="cell_flower"/>
+    <functioncall functionName="cell_fruit"/>
+    <functioncall functionName="cell_herbivore_mouth"/>
+    <functioncall functionName="cell_killer"/>
+    <functioncall functionName="cell_leaf"/>
+    <functioncall functionName="cell_mover"/>
+    <functioncall functionName="cell_null"/>
+    <functioncall functionName="cell_plantmass"/>
+    <functioncall functionName="cell_touch"/>
+    <functioncall functionName="count"/>
+    <functioncall functionName="createOrganism"/>
+    <functioncall functionName="default"/>
+    <functioncall functionName="diff"/>
+    <functioncall functionName="dim_x"/>
+    <functioncall functionName="dim_y"/>
+    <functioncall functionName="duration_cast"/>
+    <functioncall functionName="e"/>
+    <functioncall functionName="false"/>
+    <functioncall functionName="for"/>
+    <functioncall functionName="frameToRender"/>
+    <functioncall functionName="if"/>
+    <functioncall functionName="intHandler"/>
+    <functioncall functionName="intent_changeDir"/>
+    <functioncall functionName="intent_continue"/>
+    <functioncall functionName="intent_rotateClockwise"/>
+    <functioncall functionName="intent_rotateCounterClockwise"/>
+    <functioncall functionName="lastFrame"/>
+    <functioncall functionName="leftover"/>
+    <functioncall functionName="leftovermillis"/>
+    <functioncall functionName="microseconds"/>
+    <functioncall functionName="now"/>
+    <functioncall functionName="nullptr"/>
+    <functioncall functionName="override"/>
+    <functioncall functionName="printf"/>
+    <functioncall functionName="renderer"/>
+    <functioncall functionName="running"/>
+    <functioncall functionName="signal"/>
+    <functioncall functionName="srand"/>
+    <functioncall functionName="switch"/>
+    <functioncall functionName="sym"/>
+    <functioncall functionName="thisFrame"/>
+    <functioncall functionName="true"/>
+    <functioncall functionName="type"/>
+    <functioncall functionName="vector"/>
+    <functioncall functionName="while"/>
+    <functioncall functionName="window"/>
+    <functioncall functionName="x"/>
+    <functioncall functionName="y"/>
+  </FileInfo>
+</analyzerinfo>

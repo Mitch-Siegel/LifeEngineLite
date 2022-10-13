@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<analyzerinfo hash="9058253090451224237">
+  <FileInfo check="CheckUnusedFunctions">
+    <functiondecl functionName="randFloat" lineNumber="8"/>
+    <functiondecl functionName="randInt" lineNumber="18"/>
+    <functiondecl functionName="randPercent" lineNumber="29"/>
+    <functioncall functionName="exit"/>
+    <functioncall functionName="float"/>
+    <functioncall functionName="gen"/>
+    <functioncall functionName="int"/>
+    <functioncall functionName="max"/>
+    <functioncall functionName="min"/>
+    <functioncall functionName="mt19937"/>
+    <functioncall functionName="rng"/>
+    <functioncall functionName="time"/>
+    <functioncall functionName="u"/>
+  </FileInfo>
+</analyzerinfo>

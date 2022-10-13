@@ -1,0 +1,3 @@
+intHandler global:[running]
+Render global:[board] call:[SDL_CreateTexture,SDL_RenderCopy,SDL_RenderDrawPoint,SDL_RenderPresent,SDL_SetRenderDrawColor,SDL_SetRenderTarget] noreturn:[SDL_RenderDrawPoint,SDL_RenderPresent]
+main global:[board,running] call:[AddCell,AddEnergy,Cell_Leaf,GetMaxEnergy,Heal,RecalculateStats,Render,SDL_CreateWindowAndRenderer,SDL_Delay,SDL_DestroyRenderer,SDL_DestroyWindow,SDL_Init,SDL_PollEvent,SDL_RenderClear,SDL_RenderDrawPoint,SDL_RenderPresent,SDL_RenderSetScale,SDL_SetRenderDrawColor,Stats,Tick,count,createOrganism,now,printf,signal,srand] noreturn:[Render,SDL_DestroyRenderer,Stats]

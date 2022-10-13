@@ -1,0 +1,59 @@
+GenerateRandomCell call:[Cell_Armor,Cell_Bark,Cell_Carnivore,Cell_Herbivore,Cell_Killer,Cell_Leaf,Cell_Mover,Cell_Touch,randInt]
+Cell
+Cell_Empty
+Cell_Empty
+Tick
+Clone call:[Cell_Empty] noreturn:[Cell_Empty]
+Cell_Plantmass
+Cell_Plantmass
+Cell_Plantmass
+Tick
+Clone call:[Cell_Plantmass] noreturn:[Cell_Plantmass]
+Cell_Biomass
+Cell_Biomass
+Cell_Biomass
+Tick
+Clone call:[Cell_Biomass] noreturn:[Cell_Biomass]
+Cell_Leaf
+Cell_Leaf call:[randPercent] noreturn:[randPercent]
+Cell_Leaf call:[randPercent] noreturn:[randPercent]
+Tick global:[board,directions] call:[AddCell,AddEnergy,Cell_Flower,ExpendEnergy,GetEnergy,isCellOfType,randInt,randPercent] noreturn:[AddEnergy]
+Clone call:[Cell_Leaf] noreturn:[Cell_Leaf]
+Cell_Bark
+Cell_Bark
+Tick global:[board,directions] call:[AddCell,Cell_Empty,Cell_Leaf,ExpendEnergy,GetEnergy,RemoveCell,isCellOfType,randInt,replaceCell]
+Clone call:[Cell_Bark]
+Cell_Flower
+Cell_Flower
+Cell_Flower
+Tick global:[board,directions] call:[Cell_Fruit,Cell_Leaf,ExpendEnergy,GetEnergy,ReplaceCell,isCellOfType,randInt,randPercent,replaceCellAt] noreturn:[ExpendEnergy,ReplaceCell]
+Clone call:[Cell_Flower] noreturn:[Cell_Flower]
+Cell_Fruit
+Cell_Fruit
+Cell_Fruit
+Tick
+Clone call:[Cell_Fruit] noreturn:[Cell_Fruit]
+Cell_Mover
+Cell_Mover
+Tick call:[ExpendEnergy] noreturn:[ExpendEnergy]
+Clone call:[Cell_Mover] noreturn:[Cell_Mover]
+Cell_Herbivore
+Cell_Herbivore
+Tick global:[board,directions] call:[AddEnergy,Cell_Empty,RemoveCell,boundCheckPos,exit,randInt,replaceCell] noreturn:[exit,replaceCell]
+Clone call:[Cell_Herbivore] noreturn:[Cell_Herbivore]
+Cell_Carnivore
+Cell_Carnivore
+Tick global:[board,directions] call:[AddEnergy,Cell_Empty,ExpendEnergy,RemoveCell,boundCheckPos,randInt,replaceCell,size] noreturn:[ExpendEnergy,replaceCell]
+Clone call:[Cell_Carnivore] noreturn:[Cell_Carnivore]
+Cell_Killer
+Cell_Killer
+Tick global:[board,directions] call:[Cell_Empty,Damage,ExpendEnergy,RemoveCell,boundCheckPos,replaceCell] noreturn:[Damage,replaceCell]
+Clone call:[Cell_Killer] noreturn:[Cell_Killer]
+Cell_Armor
+Cell_Armor
+Tick global:[board,directions] call:[Cell_Empty,ExpendEnergy,RemoveCell,boundCheckPos,replaceCell] noreturn:[replaceCell]
+Clone call:[Cell_Armor] noreturn:[Cell_Armor]
+Cell_Touch
+Cell_Touch
+Tick global:[board,directions] call:[Punish,Reward,boundCheckPos] noreturn:[Punish,Reward]
+Clone call:[Cell_Touch] noreturn:[Cell_Touch]

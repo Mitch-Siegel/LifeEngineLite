@@ -18,7 +18,7 @@ int CellEnergyDensities[cell_null] = {
 	50, // mover
 	20, // killer
 	25, // armor
-	25,	// touch sensor
+	0,	// touch sensor
 };
 
 Cell *GenerateRandomCell()
@@ -506,13 +506,11 @@ void Cell_Herbivore::Tick()
 		}
 
 		if (potentiallyEaten->type == cell_bark)
-		{
-			Organism *eatenParent = potentiallyEaten->myOrganism;
-			if (eatenParent != this->myOrganism)
+		{ 
 			{
 				Cell_Bark *chompedBark = (Cell_Bark *)potentiallyEaten;
 				chompedBark->integrity--;
-				this->digestCooldown = 1;
+				// this->digestCooldown = 1;
 			}
 		}
 	}
@@ -522,7 +520,7 @@ void Cell_Herbivore::Tick()
 	{
 		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy * HERB_FOOD_MULTIPLIER);
-		this->digestCooldown = gainedEnergy - 1;
+		// this->digestCooldown = gainedEnergy - 1;
 	}
 
 	if (!valid)
