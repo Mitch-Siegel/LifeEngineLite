@@ -1,6 +1,0 @@
-board.a1::../board.cpp
-brain.a1::../brain.cpp
-cell.a1::../cell.cpp
-main.a1::../main.cpp
-organism.a1::../organism.cpp
-rng.a1::../rng.cpp

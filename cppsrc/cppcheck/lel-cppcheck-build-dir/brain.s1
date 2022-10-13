@@ -1,8 +1,0 @@
-Brain call:[randInt,randPercent]
-Reward
-Punish
-ForceRechoose
-Decide call:[ceil,randInt,randPercent]
-RotateSuccess call:[randPercent]
-Mutate call:[randInt,randPercent]
-Clone call:[Brain] noreturn:[Brain]

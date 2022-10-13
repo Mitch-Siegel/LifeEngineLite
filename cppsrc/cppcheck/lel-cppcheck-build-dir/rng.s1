@@ -1,3 +1,0 @@
-randFloat call:[exit,gen,u] noreturn:[gen]
-randInt call:[gen,u] noreturn:[gen]
-randPercent call:[gen,u]
