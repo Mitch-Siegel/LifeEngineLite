@@ -10,14 +10,14 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	8,	// bark
+	6,	// bark
 	2,	// flower
 	0,	// fruit
 	50, // herbivore
 	75, // carnivore
 	50, // mover
-	20, // killer
-	25, // armor
+	28, // killer
+	35, // armor
 	0,	// touch sensor
 };
 
@@ -163,7 +163,6 @@ Cell_Leaf::Cell_Leaf()
 Cell_Leaf::Cell_Leaf(int floweringPercent)
 {
 	this->type = cell_leaf;
-	this->myFlower = nullptr;
 	this->myOrganism = nullptr;
 	this->flowering = randPercent(floweringPercent);
 }
@@ -171,7 +170,6 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 void Cell_Leaf::Tick()
 {
 	if ((this->flowering) &&
-		this->myFlower == nullptr &&
 		this->myOrganism->GetEnergy() > (FLOWER_COST + 1) &&
 		randPercent(PLANT_GROW_PERCENT))
 	{
@@ -197,8 +195,6 @@ void Cell_Leaf::Tick()
 			{
 				this->myOrganism->ExpendEnergy(FLOWER_COST);
 				Cell_Flower *newFlower = new Cell_Flower();
-				this->myFlower = newFlower;
-				newFlower->myLeaf = this;
 				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, newFlower);
 				return;
 			}
@@ -304,15 +300,6 @@ Cell_Flower::~Cell_Flower()
 Cell_Flower::Cell_Flower()
 {
 	this->type = cell_flower;
-	this->myLeaf = nullptr;
-	this->myOrganism = nullptr;
-	this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
-}
-
-Cell_Flower::Cell_Flower(Cell_Leaf *_myLeaf)
-{
-	this->type = cell_flower;
-	this->myLeaf = _myLeaf;
 	this->myOrganism = nullptr;
 	this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
 }
@@ -351,12 +338,8 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				if (this->myLeaf != nullptr)
-				{
-					this->myLeaf->myFlower = nullptr;
-				}
-				// new leaf cell should be able to flower too
-				this->myOrganism->ReplaceCell(this, new Cell_Leaf(100));
+				// new leaf cell should have some chance of flowering
+				this->myOrganism->ReplaceCell(this, new Cell_Leaf(LEAF_FLOWERING_ABILITY_PERCENT/2));
 			}
 		}
 	}
@@ -364,6 +347,8 @@ void Cell_Flower::Tick()
 
 Cell_Flower *Cell_Flower::Clone()
 {
+	printf("Illegal clone of cell_flower!\n");
+	exit(1);
 	return new Cell_Flower(*this);
 }
 
@@ -460,7 +445,11 @@ void Cell_Herbivore::Tick()
 			continue;
 		}
 		Cell *potentiallyEaten = board.cells[y_abs][x_abs];
-		if (potentiallyEaten->type == cell_leaf || potentiallyEaten->type == cell_flower || potentiallyEaten->type == cell_fruit || potentiallyEaten->type == cell_plantmass)
+		if (potentiallyEaten->type == cell_leaf ||
+			potentiallyEaten->type == cell_flower ||
+			potentiallyEaten->type == cell_fruit ||
+			potentiallyEaten->type == cell_plantmass ||
+			potentiallyEaten->type == cell_bark)
 		{
 			Organism *eatenParent = potentiallyEaten->myOrganism;
 			if (eatenParent != this->myOrganism)
@@ -487,6 +476,12 @@ void Cell_Herbivore::Tick()
 					this->digestCooldown = 1;
 					break;
 
+				case cell_bark:
+					gainedEnergy = 0;
+					((Cell_Bark *)potentiallyEaten)->integrity--;
+					this->digestCooldown = 1;
+					break;
+
 				default:
 					std::cerr << "Impossible case for herbivore cell to eat something it shouldn't!" << std::endl;
 					exit(1);
@@ -506,15 +501,6 @@ void Cell_Herbivore::Tick()
 			else
 			{
 				valid = true;
-			}
-		}
-
-		if (potentiallyEaten->type == cell_bark)
-		{ 
-			{
-				Cell_Bark *chompedBark = (Cell_Bark *)potentiallyEaten;
-				chompedBark->integrity--;
-				this->digestCooldown = 1;
 			}
 		}
 	}
@@ -745,7 +731,6 @@ void Cell_Touch::Tick()
 		this->senseCooldown--;
 		return;
 	}
-
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[i];
@@ -783,10 +768,10 @@ void Cell_Touch::Tick()
 Cell_Touch *Cell_Touch::Clone()
 {
 	Cell_Touch *cloned = new Cell_Touch(*this);
-	if(randPercent(this->myOrganism->mutability))
+	if (randPercent(this->myOrganism->mutability))
 	{
 		cloned->senseInterval += randPercent(50) ? 1 : -1;
-		if(cloned->senseInterval < 0)
+		if (cloned->senseInterval < 0)
 		{
 			cloned->senseInterval = 0;
 		}

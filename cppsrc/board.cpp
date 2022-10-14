@@ -323,26 +323,6 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
 		break;
 
-	case cell_leaf:
-	{
-		Cell_Leaf *thisLeaf = (Cell_Leaf *)this->cells[_y][_x];
-		if (thisLeaf->myFlower != nullptr)
-		{
-			thisLeaf->myFlower = nullptr;
-		}
-	}
-	break;
-
-	case cell_flower:
-	{
-		Cell_Flower *thisFlower = (Cell_Flower *)this->cells[_y][_x];
-		if (thisFlower->myLeaf != nullptr)
-		{
-			thisFlower->myLeaf = nullptr;
-		}
-	}
-	break;
-
 	default:
 		break;
 	}

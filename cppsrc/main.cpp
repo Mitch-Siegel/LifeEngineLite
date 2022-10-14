@@ -17,7 +17,8 @@ void intHandler(int dummy)
 	running = 0;
 }
 
-Board board = Board(256, 128);
+// Board board = Board(256, 128);
+Board board = Board(512, 256);
 
 void Render(SDL_Window *window, SDL_Renderer *renderer)
 {
@@ -110,9 +111,10 @@ int main(int argc, char *argv[])
 	SDL_Renderer *renderer = nullptr;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(2816, 1408, 0, &window, &renderer);
-	// SDL_CreateWindowAndRenderer(2580, 1280, 0, &window, &renderer);
-	SDL_RenderSetScale(renderer, 11, 11);
+	// SDL_CreateWindowAndRenderer(2816, 1408, 0, &window, &renderer);
+	SDL_CreateWindowAndRenderer(2560, 1280, 0, &window, &renderer);
+	// SDL_RenderSetScale(renderer, 11, 11);
+	SDL_RenderSetScale(renderer, 5, 5);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 

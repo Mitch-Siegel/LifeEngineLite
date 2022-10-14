@@ -10,6 +10,7 @@ Brain::Brain()
     // chance to rotate instead of changing direction
     this->rotatevschange = 25;
     this->turnwhenrotate = 50;
+    this->justRewarded = false;
 
     for (int i = 0; i < cell_null; i++)
     {

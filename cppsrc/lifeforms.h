@@ -110,7 +110,7 @@ class Organism;
 #define FLOWER_COST 2 * ENERGY_DENSITY_MULTIPLIER
 
 // whether or not a leaf is able to flower, rolled at creation
-#define LEAF_FLOWERING_ABILITY_PERCENT 40
+#define LEAF_FLOWERING_ABILITY_PERCENT 20
 
 #define PLANT_GROW_PERCENT 100
 // percent for a flower to wilt into another leaf vs just going away
@@ -200,7 +200,6 @@ class Cell_Leaf : public Cell
 	friend class Cell_Flower;
 	friend class Board;
 	bool flowering;
-	Cell_Flower *myFlower;
 
 public:
 	~Cell_Leaf() override;
@@ -241,14 +240,11 @@ class Cell_Flower : public Cell
 	friend class Cell_Leaf;
 	friend class Board;
 	int bloomCooldown;
-	Cell_Leaf *myLeaf;
 
 public:
 	~Cell_Flower() override;
 
 	Cell_Flower();
-
-	Cell_Flower(Cell_Leaf *_myLeaf);
 
 	// explicit Cell_Flower(Organism *_myOrganism);
 
