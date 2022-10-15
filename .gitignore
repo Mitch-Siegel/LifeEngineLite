@@ -36,3 +36,6 @@
 
 vgcore.*
 callgrind.out.*
+
+cppcheck/*
+*cppcheck*/*

@@ -44,11 +44,11 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 					break;
 
 				case cell_plantmass:
-					SDL_SetRenderDrawColor(renderer, 15, 40, 15, 255);
+					SDL_SetRenderDrawColor(renderer, 10, 50, 10, 255);
 					break;
 
 				case cell_biomass:
-					SDL_SetRenderDrawColor(renderer, 150, 10, 10, 255);
+					SDL_SetRenderDrawColor(renderer, 150, 60, 60, 255);
 					break;
 
 				case cell_leaf:

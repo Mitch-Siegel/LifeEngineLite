@@ -7,7 +7,7 @@
 extern Board board;
 int CellEnergyDensities[cell_null] = {
 	0,	// empty
-	0,	// plantmass
+	0,	// pcell_bark
 	0,	// biomass
 	1,	// leaf
 	6,	// bark
@@ -206,7 +206,7 @@ void Cell_Leaf::Tick()
 		int energyGained = 1;
 		// small chance for each leaf to generate an extra energy
 		// chance is boosted by plants with bark on board
-		if (randPercent(this->myOrganism->cellCounts[cell_bark] + 5) && randPercent(30))
+		if (randPercent((2 * this->myOrganism->cellCounts[cell_bark]) + 5) && randPercent(30))
 		{
 			energyGained++;
 		}
@@ -339,7 +339,7 @@ void Cell_Flower::Tick()
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
 				// new leaf cell should have some chance of flowering
-				this->myOrganism->ReplaceCell(this, new Cell_Leaf(LEAF_FLOWERING_ABILITY_PERCENT/2));
+				this->myOrganism->ReplaceCell(this, new Cell_Leaf(LEAF_FLOWERING_ABILITY_PERCENT / 2));
 			}
 		}
 	}
@@ -400,7 +400,7 @@ Cell_Mover::Cell_Mover()
 
 void Cell_Mover::Tick()
 {
-	this->myOrganism->ExpendEnergy(1);
+	this->myOrganism->ExpendEnergy(1 + randPercent(this->myOrganism->myCells.size() * 2));
 }
 
 Cell_Mover *Cell_Mover::Clone()
@@ -597,7 +597,7 @@ void Cell_Carnivore::Tick()
 	{
 		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
-		this->digestCooldown = gainedEnergy;
+		this->digestCooldown = sqrt(gainedEnergy);
 	}
 
 	if (!valid)
@@ -625,8 +625,8 @@ Cell_Killer::Cell_Killer()
 
 void Cell_Killer::Tick()
 {
-	this->myOrganism->ExpendEnergy(1);
 	bool valid = false;
+	int damageDone = 0;
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[i];
@@ -643,6 +643,7 @@ void Cell_Killer::Tick()
 					// but if directly contacting armor, do no damage
 					if (adjacent->type != cell_armor)
 					{
+						damageDone++;
 						adjacent->myOrganism->Damage(1);
 					}
 				}
@@ -653,6 +654,7 @@ void Cell_Killer::Tick()
 			}
 		}
 	}
+	this->myOrganism->ExpendEnergy(damageDone * KILLER_DAMAGE_COST);
 
 	if (!valid)
 	{
@@ -720,7 +722,7 @@ Cell_Touch::Cell_Touch()
 	this->type = cell_touch;
 	this->myOrganism = nullptr;
 	this->senseCooldown = 0;
-	this->senseInterval = randInt(0, 10);
+	this->senseInterval = randInt(0, 25);
 }
 
 void Cell_Touch::Tick()
@@ -731,6 +733,9 @@ void Cell_Touch::Tick()
 		this->senseCooldown--;
 		return;
 	}
+	int totalSense = 0;
+	// for (Cell *myCell : this->myOrganism->myCells)
+	// {
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[i];
@@ -745,21 +750,26 @@ void Cell_Touch::Tick()
 			}
 
 			int thisSentiment = this->myOrganism->brain.cellSentiments[checked->type];
-			if (thisSentiment > 0)
-			{
-				for (int j = 0; j < thisSentiment; j++)
-				{
-					this->myOrganism->brain.Reward();
-				}
-			}
-			else if (thisSentiment < 0)
-			{
-				int sentimentAbs = -1 * thisSentiment;
-				for (int j = 0; j < sentimentAbs; j++)
-				{
-					this->myOrganism->brain.Punish();
-				}
-			}
+			totalSense += thisSentiment;
+		}
+	}
+	// }
+
+	if (totalSense > 0)
+	{
+
+		for (int j = 0; j < totalSense; j++)
+		{
+			this->myOrganism->brain.Reward();
+		}
+	}
+	else if (totalSense < 0)
+	{
+
+		int senseAbs = -1 * totalSense;
+		for (int j = 0; j < senseAbs; j++)
+		{
+			this->myOrganism->brain.Punish();
 		}
 	}
 	this->senseCooldown = this->senseInterval;
