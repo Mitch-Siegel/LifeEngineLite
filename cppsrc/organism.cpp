@@ -49,7 +49,7 @@ void Organism::Die()
 		case cell_leaf:
 		case cell_flower:
 		case cell_bark:
-			replacedWith = new Cell_Plantmass(this->myCells.size() * this->myCells.size() * PLANTMASS_SPOIL_TIME_MULTIPLIER);
+			replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 
 		case cell_mover:
@@ -58,7 +58,7 @@ void Organism::Die()
 		case cell_killer:
 		case cell_armor:
 		case cell_touch:
-			replacedWith = new Cell_Biomass(this->myCells.size() * BIOMASS_SPOIL_TIME_MULTIPLIER);
+			replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * BIOMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 		}
 		board.replaceCell(thisCell, replacedWith);
@@ -105,15 +105,24 @@ Organism *Organism::Tick()
 			{
 			case intent_changeDir:
 			case intent_continue:
-				this->Move();
+				for (size_t i = 0; i < this->cellCounts[cell_mover]; i++)
+				{
+					this->Move();
+				}
 				break;
 
 			case intent_rotateClockwise:
-				this->Rotate(true);
+				for (size_t i = 0; i < this->cellCounts[cell_mover]; i++)
+				{
+					this->Rotate(true);
+				}
 				break;
 
 			case intent_rotateCounterClockwise:
-				this->Rotate(false);
+				for (size_t i = 0; i < this->cellCounts[cell_mover]; i++)
+				{
+					this->Rotate(false);
+				}
 				break;
 			}
 		}
@@ -166,9 +175,9 @@ void Organism::RecalculateStats()
 		this->currentHealth = this->maxHealth;
 	}
 
-	if (this->lifespan > sqrt(this->maxEnergy) * sqrt(this->myCells.size()) * LIFESPAN_MULTIPLIER)
+	if (this->lifespan > sqrt(this->maxEnergy) * ceil(sqrt(this->myCells.size())) * LIFESPAN_MULTIPLIER)
 	{
-		this->lifespan = sqrt(this->maxEnergy) * sqrt(this->myCells.size()) * LIFESPAN_MULTIPLIER;
+		this->lifespan = sqrt(this->maxEnergy) * ceil(sqrt(this->myCells.size())) * LIFESPAN_MULTIPLIER;
 	}
 	if (this->currentEnergy > this->maxEnergy)
 	{
@@ -183,7 +192,7 @@ bool Organism::CheckValidity()
 	bool invalid = false;
 
 	// disallow organisms that are all mouths
-	invalid |= (this->cellCounts[cell_herbivore_mouth] == this->myCells.size());
+	// invalid |= (this->cellCounts[cell_herbivore_mouth] == this->myCells.size());
 
 	// disallow herbivores that have leaves on them
 	invalid |= (this->cellCounts[cell_herbivore_mouth] > 0 && this->cellCounts[cell_leaf] > 0);
@@ -191,15 +200,53 @@ bool Organism::CheckValidity()
 	// must have a mover to have a touch sensor
 	invalid |= (this->cellCounts[cell_touch] > 0 && this->cellCounts[cell_mover] == 0);
 
+	bool hasCenterCell = false;
+
+	// plants must have a killer cell next to bark
+	if (!invalid && this->cellCounts[cell_mover] == 0 && this->cellCounts[cell_killer])
+	{
+		for (Cell *c : this->myCells)
+			{
+				if (c->x == this->x && c->y == this->y)
+				{
+					hasCenterCell = true;
+				}
+				if(c->type == cell_killer)
+				{
+					bool killerValid = false;
+					// killers on plants must have a bark directly adjacent (no diagonals)
+					for(int i = 0; i < 4; i++)
+					{
+						int *thisDirection = directions[i];
+						int x_abs = c->x + thisDirection[0];
+						int y_abs = c->y + thisDirection[1];
+						if(!board.boundCheckPos(x_abs, y_abs))
+						{
+							Cell *neighborCell = board.cells[y_abs][x_abs];
+							killerValid |= ((neighborCell->myOrganism == this) && 
+											(neighborCell->type == cell_bark));
+						}
+					}
+					if(!killerValid)
+					{
+						invalid = true;
+						break;
+					}
+				}
+			}
+	}
+
 	if (!invalid)
 	{
-		bool hasCenterCell = false;
-		for (Cell *c : this->myCells)
+		if (!hasCenterCell)
 		{
-			if (c->x == this->x && c->y == this->y)
+			for (Cell *c : this->myCells)
 			{
-				hasCenterCell = true;
-				break;
+				if (c->x == this->x && c->y == this->y)
+				{
+					hasCenterCell = true;
+					break;
+				}
 			}
 		}
 		if (!hasCenterCell)
@@ -510,13 +557,21 @@ Organism *Organism::Reproduce()
 				if (randPercent(this->mutability))
 				{
 					replicated->Mutate();
+					replicated->mutability += randInt(-1, 1);
+					if(replicated->mutability < 1)
+					{
+						replicated->mutability = 1;
+					}
+					else if(replicated->mutability > 100)
+					{
+						replicated->mutability = 100;
+					}
 				}
 				if (randPercent(this->mutability) && replicated->cellCounts[cell_mover])
 				{
 					replicated->Rotate(randPercent(50));
 				}
 
-				replicated->mutability += randInt(-1, 1);
 				if (replicated->mutability < 0)
 				{
 					replicated->mutability = 0;

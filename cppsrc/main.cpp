@@ -44,7 +44,7 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 					break;
 
 				case cell_plantmass:
-					SDL_SetRenderDrawColor(renderer, 10, 50, 10, 255);
+					SDL_SetRenderDrawColor(renderer, 10, 40, 10, 255);
 					break;
 
 				case cell_biomass:
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
 	// Organism *firstOrganism = board.createOrganism(0, 0);
 	// firstOrganism->AddCell(0, 0, new Cell_Bark());
-	int floweringIndex = 4;
+	int floweringIndex = 5;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(floweringIndex == 0 ? 100 : 0));
 	// firstOrganism->AddCell(0, 0, new Cell_Mover());
 	// firstOrganism->AddCell(0, 1, new Cell_Carnivore());
@@ -149,9 +149,10 @@ int main(int argc, char *argv[])
 	// Organism *realFirstOrganism = firstOrganism->Reproduce();
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->GetMaxEnergy();
-	// firstOrganism->mutability = 50;
+	firstOrganism->mutability = 15;
 	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
 	firstOrganism->Heal(100);
+	firstOrganism->lifespan = 5000;
 	firstOrganism->reproductionCooldown = 10;
 	// board.Organisms.push_back(firstOrganism);
 
@@ -202,8 +203,11 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-
-		while (SDL_PollEvent(&e))
+		
+		int pollattempts = 0;
+		while(pollattempts++ < 5)
+		{
+		if (SDL_PollEvent(&e))
 		{
 			if (e.type == SDL_QUIT)
 			{
@@ -302,7 +306,16 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
+		
+		}
 
+		if(pollattempts == 5)
+		{
+			if (!autoplay)
+			{
+				SDL_Delay(25);
+			}
+		}
 		// SDL_Delay(1000);
 		// refresh();
 		// attron(COLOR_PAIR(10));

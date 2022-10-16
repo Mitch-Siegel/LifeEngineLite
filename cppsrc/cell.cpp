@@ -13,12 +13,12 @@ int CellEnergyDensities[cell_null] = {
 	6,	// bark
 	2,	// flower
 	0,	// fruit
-	50, // herbivore
-	75, // carnivore
-	50, // mover
+	75, // herbivore
+	300, // carnivore
+	100, // mover
 	28, // killer
 	35, // armor
-	0,	// touch sensor
+	40,	// touch sensor
 };
 
 Cell *GenerateRandomCell()
@@ -400,7 +400,7 @@ Cell_Mover::Cell_Mover()
 
 void Cell_Mover::Tick()
 {
-	this->myOrganism->ExpendEnergy(1 + randPercent(this->myOrganism->myCells.size() * 2));
+	this->myOrganism->ExpendEnergy(1 + randPercent(this->myOrganism->myCells.size() * 4));
 }
 
 Cell_Mover *Cell_Mover::Clone()
@@ -597,7 +597,8 @@ void Cell_Carnivore::Tick()
 	{
 		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy);
-		this->digestCooldown = sqrt(gainedEnergy);
+		// this->digestCooldown = sqrt(gainedEnergy);
+		this->digestCooldown = 2;
 	}
 
 	if (!valid)
@@ -654,7 +655,9 @@ void Cell_Killer::Tick()
 			}
 		}
 	}
-	this->myOrganism->ExpendEnergy(damageDone * KILLER_DAMAGE_COST);
+	// base cost of 1 every third tick
+	// then some addl cost to actually hurt stuff
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 4 == 0));
 
 	if (!valid)
 	{

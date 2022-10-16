@@ -270,6 +270,8 @@ void Board::Stats()
 		   moverStats[count_maxconviction],
 		   moverStats[count_rotatevschange],
 		   moverStats[count_turnwhenrotate]);
+	printf("Plants/Movers ratio: %2.2f/1\n", plantStats[count_raw] / moverStats[count_raw]);
+	
 	printf("%lu (%.2f%%) movers have touch sensors (avg sense interval %2.2f)\n", touchSensorHaverCount, 100 * (float)touchSensorHaverCount / moverStats[count_raw], touchSensorInterval);
 	char cellShortNames[cell_null][5] = {"EMPT", "PMAS", "BMAS", "LEAF", "BARK", "FLWR", "FRUT", "HERB", "CARN", "MOVR", "KILR", "ARMR", "TUCH"};
 	printf("CELL:APLNTC|AMOVRC|ASSENT\n");
