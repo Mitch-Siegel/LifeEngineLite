@@ -127,40 +127,20 @@ int main(int argc, char *argv[])
 
 	// refresh();
 	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
-	// Organism *firstOrganism = board.createOrganism(0, 0);
-	// firstOrganism->AddCell(0, 0, new Cell_Bark());
-	int floweringIndex = 5;
-	firstOrganism->AddCell(0, 0, new Cell_Leaf(floweringIndex == 0 ? 100 : 0));
-	// firstOrganism->AddCell(0, 0, new Cell_Mover());
-	// firstOrganism->AddCell(0, 1, new Cell_Carnivore());
-	firstOrganism->AddCell(1, 0, new Cell_Leaf(floweringIndex == 1 ? 100 : 0));
-	firstOrganism->AddCell(0, 1, new Cell_Leaf(floweringIndex == 2 ? 100 : 0));
-	firstOrganism->AddCell(1, 1, new Cell_Leaf(floweringIndex == 3 ? 100 : 0));
-	// Cell_Leaf plantLeaf = Cell_Leaf();
-	/*
-	if (firstOrganism->AddCell(0, 1, new Cell_Leaf()))
-	{
-		std::cerr << "Error adding cell!";
-	}
-	else
-	{
-		std::cout << "added leaf cell " << std::endl;
-	}*/
-	// Organism *realFirstOrganism = firstOrganism->Reproduce();
+	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
+	firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
+	firstOrganism->lifespan = 5000;
+
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->GetMaxEnergy();
-	firstOrganism->mutability = 15;
+	firstOrganism->mutability = 25;
 	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
 	firstOrganism->Heal(100);
-	firstOrganism->lifespan = 5000;
 	firstOrganism->reproductionCooldown = 10;
-	// board.Organisms.push_back(firstOrganism);
 
 	SDL_Event e;
 	bool autoplay = false;
-	// getch();
-	// clear();
-	// refresh();
+
 	auto lastFrame = std::chrono::high_resolution_clock::now();
 	size_t autoplaySpeed = 1;
 	int leftover = 0;

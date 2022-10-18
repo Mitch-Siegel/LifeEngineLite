@@ -69,47 +69,37 @@ void Board::Tick()
 		case cell_fruit:
 			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
-				if (randPercent(FRUIT_GROW_PERCENT))
+				// if we roll grow percent, create a new random organism
+				Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
+				if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
 				{
-					// if we roll grow percent, create a new random organism
-					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
-					if (randPercent(FRUIT_MUTATE_PERCENT))
+					grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
+					board.replaceCell(this->FoodCells[i], new Cell_Empty());
+					grownFruit->AddCell(0, 0, GenerateRandomCell());
+					Cell *secondRandomCell = GenerateRandomCell();
+					bool couldAddSecond = false;
+					int dirIndex = randInt(0, 7);
+					for (int j = 0; j < 8; j++)
 					{
-						grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
-						board.replaceCell(this->FoodCells[i], new Cell_Empty());
-						grownFruit->AddCell(0, 0, GenerateRandomCell());
-						Cell *secondRandomCell = GenerateRandomCell();
-						bool couldAddSecond = false;
-						int dirIndex = randInt(0, 7);
-						for (int j = 0; j < 8; j++)
+						int *thisDirection = directions[(j + dirIndex) % 8];
+						if (board.isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
 						{
-							int *thisDirection = directions[(j + dirIndex) % 8];
-							if (board.isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
-							{
-								grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell);
-								couldAddSecond = true;
-								break;
-							}
+							grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell);
+							couldAddSecond = true;
+							break;
 						}
-						if (!couldAddSecond)
-						{
-							delete secondRandomCell;
-						}
+					}
+					if (!couldAddSecond)
+					{
+						delete secondRandomCell;
+					}
 
-					}
-					// if only rolled 1x, just create a new single-celled plant
-					else
-					{
-						grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
-						board.replaceCell(this->FoodCells[i], new Cell_Empty());
-						grownFruit->AddCell(0, 0, new Cell_Leaf());
-					}
 					grownFruit->RecalculateStats();
 					grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
 					grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
 					grownFruit->Heal(grownFruit->GetMaxHealth());
 
-					int newReproductioncooldown = (grownFruit->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
+					int newReproductioncooldown = (grownFruit->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER;
 					grownFruit->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
 				}
 				else
@@ -159,6 +149,7 @@ void Board::Stats()
 		count_cells,
 		count_energy,
 		count_maxenergy,
+		count_age,
 		count_lifespan,
 		count_mutability,
 		count_maxconviction,
@@ -187,6 +178,7 @@ void Board::Stats()
 			moverStats[count_cells] += o->myCells.size();
 			moverStats[count_energy] += o->GetEnergy();
 			moverStats[count_maxenergy] += o->GetMaxEnergy();
+			moverStats[count_age] += o->age;
 			moverStats[count_lifespan] += o->lifespan;
 			moverStats[count_mutability] += o->mutability;
 			moverStats[count_maxconviction] += o->brain.maxConviction;
@@ -219,6 +211,7 @@ void Board::Stats()
 			plantStats[count_cells] += o->myCells.size();
 			plantStats[count_energy] += o->GetEnergy();
 			plantStats[count_maxenergy] += o->GetMaxEnergy();
+			plantStats[count_age] += o->lifespan;
 			plantStats[count_lifespan] += o->lifespan;
 			plantStats[count_mutability] += o->mutability;
 			plantStats[count_maxconviction] += o->brain.maxConviction;
@@ -252,19 +245,21 @@ void Board::Stats()
 		touchSensorInterval /= touchSensorHaverCount;
 	}
 
-	printf("%5.0f Plants - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f lifespan, %.1f%% mutability\n",
+	printf("%5.0f Plants - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f/%.0f lifespan, %.1f%% mutability\n",
 		   plantStats[count_raw],
 		   plantStats[count_cells],
 		   plantStats[count_energy] / plantStats[count_maxenergy] * 100,
 		   (plantStats[count_energy] / plantStats[count_maxenergy]) * plantStats[count_energy],
+		   plantStats[count_age],
 		   plantStats[count_lifespan],
 		   plantStats[count_mutability]);
 
-	printf("%5.0f Movers - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotate vs change, %.1f turn when rotate\n",
+	printf("%5.0f Movers - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f/%.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotate vs change, %.1f turn when rotate\n",
 		   moverStats[count_raw],
 		   moverStats[count_cells],
 		   moverStats[count_energy] / moverStats[count_maxenergy] * 100,
 		   (moverStats[count_energy] / moverStats[count_maxenergy]) * moverStats[count_energy],
+		   moverStats[count_age],
 		   moverStats[count_lifespan],
 		   moverStats[count_mutability],
 		   moverStats[count_maxconviction],

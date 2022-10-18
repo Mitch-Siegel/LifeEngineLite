@@ -79,23 +79,23 @@ void Organism::Remove()
 
 Organism *Organism::Tick()
 {
-	if (this->myCells.size() > 1 || ((this->myCells.size() == 1) && (this->myCells[0]->type != cell_leaf)))
-	{
-		this->ExpendEnergy(1);
-	}
+	this->age++;
 
-	if (this->currentEnergy == 0 || this->currentHealth == 0 || this->lifespan == 0 || this->myCells.size() == 0)
+	// if (this->myCells.size() > 1 || this->age % 2 == 0)
+	// {
+	this->ExpendEnergy(1);
+	// }
+
+	if (this->currentEnergy == 0 || this->currentHealth == 0 || (this->age >= this->lifespan) || this->myCells.size() == 0)
 	{
 		this->Die();
 		return nullptr;
 	}
-	this->lifespan--;
 
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		this->myCells[i]->Tick();
 	}
-	this->age++;
 
 	if (this->cellCounts[cell_mover])
 	{
@@ -128,8 +128,28 @@ Organism *Organism::Tick()
 		}
 	}
 
-	// don't allow organisms of size 1 to reproduce
-	if (this->reproductionCooldown == 0 && this->myCells.size() > 1)
+	this->AddEnergy(((this->age % 3 == 0) ? this->cellCounts[cell_leaf] : 0) + 
+					(this->cellCounts[cell_leaf] ? (this->age % 2 == 0) : 0) + 
+					(((this->age % 5) == 0) ? this->cellCounts[cell_bark] * ceil(sqrt(this->cellCounts[cell_leaf])) : 0));
+	/*
+	if (this->myOrganism->age % 3 == 0 )
+	{
+		int energyGained = 1;
+		// small chance for each leaf to generate an extra energy
+		// chance is boosted by plants with bark on board
+		if (this->myOrganism->age % (200 - (10 * this->myOrganism->cellCounts[cell_bark])) == 0)
+		{
+			energyGained++;
+		} andPercent(2 * (this->myOrganism->myCells.size() - 4));
+		// if(this->myOrganism->myCells.size() < 5 && randPercent(15))
+		// {
+		// energyGained--;
+		// }
+		this->myOrganism->AddEnergy(energyGained);
+	}
+	*/
+
+	if (this->reproductionCooldown == 0)
 	{
 		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.2))
 		{
@@ -206,34 +226,34 @@ bool Organism::CheckValidity()
 	if (!invalid && this->cellCounts[cell_mover] == 0 && this->cellCounts[cell_killer])
 	{
 		for (Cell *c : this->myCells)
+		{
+			if (c->x == this->x && c->y == this->y)
 			{
-				if (c->x == this->x && c->y == this->y)
+				hasCenterCell = true;
+			}
+			if (c->type == cell_killer)
+			{
+				bool killerValid = false;
+				// killers on plants must have a bark directly adjacent (no diagonals)
+				for (int i = 0; i < 4; i++)
 				{
-					hasCenterCell = true;
+					int *thisDirection = directions[i];
+					int x_abs = c->x + thisDirection[0];
+					int y_abs = c->y + thisDirection[1];
+					if (!board.boundCheckPos(x_abs, y_abs))
+					{
+						Cell *neighborCell = board.cells[y_abs][x_abs];
+						killerValid |= ((neighborCell->myOrganism == this) &&
+										(neighborCell->type == cell_bark));
+					}
 				}
-				if(c->type == cell_killer)
+				if (!killerValid)
 				{
-					bool killerValid = false;
-					// killers on plants must have a bark directly adjacent (no diagonals)
-					for(int i = 0; i < 4; i++)
-					{
-						int *thisDirection = directions[i];
-						int x_abs = c->x + thisDirection[0];
-						int y_abs = c->y + thisDirection[1];
-						if(!board.boundCheckPos(x_abs, y_abs))
-						{
-							Cell *neighborCell = board.cells[y_abs][x_abs];
-							killerValid |= ((neighborCell->myOrganism == this) && 
-											(neighborCell->type == cell_bark));
-						}
-					}
-					if(!killerValid)
-					{
-						invalid = true;
-						break;
-					}
+					invalid = true;
+					break;
 				}
 			}
+		}
 	}
 
 	if (!invalid)
@@ -311,8 +331,10 @@ void Organism::Move()
 		/*
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-2
 		*/
+		size_t nCells = this->myCells.size();
+		int moveCost = (nCells > 2) ? nCells - 2 : 0;
 		// int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 1.5)) - 2;
-		// this->ExpendEnergy(moveCost);
+		this->ExpendEnergy(moveCost);
 	}
 	else
 	{
@@ -501,7 +523,7 @@ bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 
 Organism *Organism::Reproduce()
 {
-	this->reproductionCooldown = sqrt(this->GetMaxEnergy()) * REPRODUCTION_COOLDOWN_MULTIPLIER;
+	this->reproductionCooldown = ceil(this->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER);
 
 	int dirIndex = randInt(0, 7);
 	for (int i = 0; i < 8; i++)
@@ -516,12 +538,12 @@ Organism *Organism::Reproduce()
 			{
 				int dir_x_extra = 0;
 				int dir_y_extra = 0;
-				if (randPercent(this->mutability * 3))
+				if (randPercent(20))
 				{
-					for (int k = 0; k < 8; k++)
+					for (int k = 0; k < 16; k++)
 					{
-						dir_x_extra = randInt(-2, 2);
-						dir_y_extra = randInt(-2, 2);
+						dir_x_extra = randInt(-3, 3);
+						dir_y_extra = randInt(-3, 3);
 						if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
 						{
 							break;
@@ -557,31 +579,6 @@ Organism *Organism::Reproduce()
 				if (randPercent(this->mutability))
 				{
 					replicated->Mutate();
-					replicated->mutability += randInt(-1, 1);
-					if(replicated->mutability < 1)
-					{
-						replicated->mutability = 1;
-					}
-					else if(replicated->mutability > 100)
-					{
-						replicated->mutability = 100;
-					}
-				}
-				if (randPercent(this->mutability) && replicated->cellCounts[cell_mover])
-				{
-					replicated->Rotate(randPercent(50));
-				}
-
-				if (replicated->mutability < 0)
-				{
-					replicated->mutability = 0;
-				}
-				else
-				{
-					if (replicated->mutability > 100)
-					{
-						replicated->mutability = 100;
-					}
 				}
 
 				if (replicated->CheckValidity())
@@ -591,9 +588,25 @@ Organism *Organism::Reproduce()
 					return replicated;
 				}
 
-				// this->brain.Reward();
+				if (randPercent(this->mutability))
+				{
+					replicated->mutability += randInt(-1, 1);
+					if (replicated->mutability < 1)
+					{
+						replicated->mutability = 1;
+					}
+					else if (replicated->mutability > 100)
+					{
+						replicated->mutability = 100;
+					}
+				}
+				if (randPercent(this->mutability))
+				{
+					replicated->Rotate(randPercent(50));
+				}
 
-				int newReproductioncooldown = (this->GetMaxEnergy() / ENERGY_DENSITY_MULTIPLIER) * REPRODUCTION_COOLDOWN_MULTIPLIER;
+				// this->brain.Reward();
+				int newReproductioncooldown = ceil(replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER);
 				replicated->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->GetMaxHealth());
@@ -602,7 +615,7 @@ Organism *Organism::Reproduce()
 				{
 					replicated->brain.Mutate();
 				}
-				replicated->currentEnergy = randInt(1, replicated->maxEnergy / 3);
+				replicated->currentEnergy = randInt(1, replicated->maxEnergy);
 				replicated->lifespan = sqrt(replicated->maxEnergy) * sqrt(replicated->myCells.size()) * LIFESPAN_MULTIPLIER;
 				return replicated;
 			}
@@ -643,8 +656,9 @@ void Organism::Mutate()
 	}
 	else
 	{
+		bool allLeaves = this->cellCounts[cell_leaf] == this->myCells.size();
 		// remove a cell
-		if (this->myCells.size() > 2 && randPercent(50))
+		if (this->myCells.size() > 2 && randPercent(50) && !allLeaves)
 		{
 			Cell *toRemove = this->myCells[randInt(0, this->myCells.size() - 1)];
 			this->myCells.erase(std::find(this->myCells.begin(), this->myCells.end(), toRemove));
@@ -746,7 +760,8 @@ void Organism::Mutate()
 			*/
 			if (canAdd)
 			{
-				this->AddCell(x_rel, y_rel, GenerateRandomCell());
+
+				this->AddCell(x_rel, y_rel, allLeaves ? new Cell_Leaf : GenerateRandomCell());
 			}
 		}
 	}

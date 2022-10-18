@@ -6,19 +6,19 @@
 
 extern Board board;
 int CellEnergyDensities[cell_null] = {
-	0,	// empty
-	0,	// pcell_bark
-	0,	// biomass
-	1,	// leaf
-	6,	// bark
-	2,	// flower
-	0,	// fruit
-	75, // herbivore
+	0,	 // empty
+	0,	 // pcell_bark
+	0,	 // biomass
+	1,	 // leaf
+	6,	 // bark
+	2,	 // flower
+	0,	 // fruit
+	75,	 // herbivore
 	300, // carnivore
 	100, // mover
-	28, // killer
-	35, // armor
-	40,	// touch sensor
+	28,	 // killer
+	35,	 // armor
+	40,	 // touch sensor
 };
 
 Cell *GenerateRandomCell()
@@ -200,23 +200,6 @@ void Cell_Leaf::Tick()
 			}
 		}
 	}
-
-	if (this->myOrganism->age % 3 == 0 /* || this->myOrganism->age % 6 == 0 || this->myOrganism->age % 7 == 0*/)
-	{
-		int energyGained = 1;
-		// small chance for each leaf to generate an extra energy
-		// chance is boosted by plants with bark on board
-		if (randPercent((2 * this->myOrganism->cellCounts[cell_bark]) + 5) && randPercent(30))
-		{
-			energyGained++;
-		}
-		// energyGained += randPercent(2 * (this->myOrganism->myCells.size() - 4));
-		// if(this->myOrganism->myCells.size() < 5 && randPercent(15))
-		// {
-		// energyGained--;
-		// }
-		this->myOrganism->AddEnergy(energyGained);
-	}
 }
 
 Cell_Leaf *Cell_Leaf::Clone()
@@ -245,40 +228,27 @@ void Cell_Bark::Tick()
 		return;
 	}
 
-	if (this->integrity < BARK_MAX_INTEGRITY)
+	if (this->integrity < 1)
 	{
-		if (this->integrity < 1)
-		{
-			this->myOrganism->RemoveCell(this);
-			board.replaceCell(this, new Cell_Empty());
-			return;
-		}
-		else if (this->myOrganism->GetEnergy() > (BARK_REGENERATE_INTEGRITY_COST + 1))
-		{
-			this->integrity++;
-			this->myOrganism->ExpendEnergy(BARK_REGENERATE_INTEGRITY_COST);
-			this->actionCooldown = BARK_GROW_COOLDOWN;
-		}
+		this->myOrganism->RemoveCell(this);
+		board.replaceCell(this, new Cell_Empty());
+		return;
 	}
 
-	// if greater than half integrity, can grow a leaf
-	if (this->integrity > (BARK_MAX_INTEGRITY / 2))
+	if (this->myOrganism->GetEnergy() > BARK_GROW_COST)
 	{
-		if (this->myOrganism->GetEnergy() > BARK_GROW_COST)
+		int checkDirIndex = randInt(0, 3);
+		for (int i = 0; i < 4; i++)
 		{
-			int checkDirIndex = randInt(0, 3);
-			for (int i = 0; i < 4; i++)
+			int *thisDirection = directions[(checkDirIndex + i) % 4];
+			int x_abs = this->x + thisDirection[0];
+			int y_abs = this->y + thisDirection[1];
+			if (board.isCellOfType(x_abs, y_abs, cell_empty))
 			{
-				int *thisDirection = directions[(checkDirIndex + i) % 4];
-				int x_abs = this->x + thisDirection[0];
-				int y_abs = this->y + thisDirection[1];
-				if (board.isCellOfType(x_abs, y_abs, cell_empty))
-				{
-					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf());
-					this->myOrganism->ExpendEnergy(BARK_GROW_COST);
-					this->actionCooldown = BARK_GROW_COOLDOWN;
-					return;
-				}
+				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(100));
+				this->myOrganism->ExpendEnergy(BARK_GROW_COST);
+				this->actionCooldown = BARK_GROW_COOLDOWN;
+				return;
 			}
 		}
 	}
@@ -338,8 +308,7 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				// new leaf cell should have some chance of flowering
-				this->myOrganism->ReplaceCell(this, new Cell_Leaf(LEAF_FLOWERING_ABILITY_PERCENT / 2));
+				this->myOrganism->ReplaceCell(this, new Cell_Leaf(30));
 			}
 		}
 	}
@@ -655,7 +624,7 @@ void Cell_Killer::Tick()
 			}
 		}
 	}
-	// base cost of 1 every third tick
+	// base cost of 1 every few ticks
 	// then some addl cost to actually hurt stuff
 	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 4 == 0));
 
@@ -730,15 +699,12 @@ Cell_Touch::Cell_Touch()
 
 void Cell_Touch::Tick()
 {
-	// this->myOrganism->AddEnergy(1);
 	if (this->senseCooldown > 0)
 	{
 		this->senseCooldown--;
 		return;
 	}
 	int totalSense = 0;
-	// for (Cell *myCell : this->myOrganism->myCells)
-	// {
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[i];
