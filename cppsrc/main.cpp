@@ -6,28 +6,30 @@
 #include <SDL2/SDL.h>
 #include <chrono>
 
+#include "windowhandler.h"
 #include "lifeforms.h"
 #include "board.h"
 #include "rng.h"
 
 static volatile int running = 1;
-
+Board board = Board(0, 0);
 void intHandler(int dummy)
 {
 	running = 0;
 }
 
-// Board board = Board(256, 128);
-Board board = Board(512, 256);
+bool autoplay = false;
+int frameToRender = 1;
+size_t autoplaySpeed = 1000;
 
-void Render(SDL_Window *window, SDL_Renderer *renderer)
+void RenderBoard(GameWindow *gw)
 {
 	// we'll use this texture as our own backbuffer
-	static SDL_Texture *boardBuf = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888,
+	static SDL_Texture *boardBuf = SDL_CreateTexture(gw->renderer(), SDL_PIXELFORMAT_RGB888,
 													 SDL_TEXTUREACCESS_TARGET, board.dim_x, board.dim_y);
 
 	// draw to board buffer instead of backbuffer
-	SDL_SetRenderTarget(renderer, boardBuf);
+	SDL_SetRenderTarget(gw->renderer(), boardBuf);
 
 	for (int y = 0; y < board.dim_y; y++)
 	{
@@ -40,90 +42,200 @@ void Render(SDL_Window *window, SDL_Renderer *renderer)
 				switch (thisCell->type)
 				{
 				case cell_empty:
-					SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+					SDL_SetRenderDrawColor(gw->renderer(), 0, 0, 0, 0);
 					break;
 
 				case cell_plantmass:
-					SDL_SetRenderDrawColor(renderer, 10, 40, 10, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 10, 40, 10, 255);
 					break;
 
 				case cell_biomass:
-					SDL_SetRenderDrawColor(renderer, 150, 60, 60, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 150, 60, 60, 255);
 					break;
 
 				case cell_leaf:
-					SDL_SetRenderDrawColor(renderer, 30, 120, 30, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 30, 120, 30, 255);
 					break;
 
 				case cell_bark:
-					SDL_SetRenderDrawColor(renderer, 75, 25, 25, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 75, 25, 25, 255);
 					break;
 
 				case cell_mover:
-					SDL_SetRenderDrawColor(renderer, 50, 120, 255, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 50, 120, 255, 255);
 					break;
 
 				case cell_herbivore_mouth:
-					SDL_SetRenderDrawColor(renderer, 255, 150, 0, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 255, 150, 0, 255);
 					break;
 
 				case cell_carnivore_mouth:
-					SDL_SetRenderDrawColor(renderer, 255, 100, 150, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 255, 100, 150, 255);
 					break;
 
 				case cell_flower:
-					SDL_SetRenderDrawColor(renderer, 50, 250, 150, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 50, 250, 150, 255);
 					break;
 
 				case cell_fruit:
-					SDL_SetRenderDrawColor(renderer, 200, 200, 0, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 200, 200, 0, 255);
 					break;
 
 				case cell_killer:
-					SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 255, 0, 0, 255);
 					break;
 
 				case cell_armor:
-					SDL_SetRenderDrawColor(renderer, 175, 0, 255, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 175, 0, 255, 255);
 					break;
 
 				case cell_touch:
-					SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+					SDL_SetRenderDrawColor(gw->renderer(), 255, 255, 255, 255);
 					break;
 
 				case cell_null:
 					break;
 				}
-				SDL_RenderDrawPoint(renderer, x, y);
+				SDL_RenderDrawPoint(gw->renderer(), x, y);
 			}
 		}
 	}
 	// reset render target, copy board buf, and spit it out to the screen
-	SDL_SetRenderTarget(renderer, NULL);
-	SDL_RenderCopy(renderer, boardBuf, NULL, NULL);
-	SDL_RenderPresent(renderer);
+	SDL_SetRenderTarget(gw->renderer(), NULL);
+	SDL_RenderCopy(gw->renderer(), boardBuf, NULL, NULL);
+	SDL_RenderPresent(gw->renderer());
+}
+
+void GameWindow::BoardInputHandler(SDL_Event &e)
+{
+	if (e.type == SDL_QUIT)
+	{
+		running = false;
+	}
+	if (e.type == SDL_KEYDOWN)
+	{
+
+		switch (e.key.keysym.sym)
+		{
+		case SDLK_RETURN:
+			autoplay = false;
+			frameToRender = 1;
+			board.Tick();
+			RenderBoard(this);
+			board.Stats();
+			break;
+
+		case SDLK_UP:
+			if (!autoplay)
+			{
+				autoplaySpeed = 1000;
+				autoplay = true;
+			}
+			else
+			{
+				if (autoplaySpeed > 1)
+				{
+					autoplaySpeed /= 2;
+					if (autoplaySpeed < 1)
+					{
+						autoplaySpeed = 1;
+					}
+				}
+				else
+				{
+					autoplaySpeed = 0;
+				}
+			}
+			printf("Delay %lums between frames\n", autoplaySpeed);
+			break;
+
+		case SDLK_DOWN:
+			if (!autoplay)
+			{
+				autoplaySpeed = 1000;
+				autoplay = true;
+			}
+			else
+			{
+				if (autoplaySpeed == 0)
+				{
+					autoplaySpeed = 1;
+				}
+				else
+				{
+					autoplaySpeed *= 2;
+					if (autoplaySpeed > 1000)
+					{
+						autoplaySpeed = 1000;
+					}
+				}
+			}
+			printf("Delay %lums between frames\n", autoplaySpeed);
+			break;
+
+		case SDLK_RIGHT:
+			frameToRender *= 2;
+			printf("Rendering every %d tick(s)\n", frameToRender);
+			break;
+
+		case SDLK_LEFT:
+			frameToRender /= 2;
+			if (frameToRender < 1)
+			{
+				frameToRender = 1;
+			}
+			printf("Rendering every %d tick(s)\n", frameToRender);
+			break;
+
+		case SDLK_SPACE:
+			// if not autoplaying, set max autoplay speed
+			if (!autoplay)
+			{
+				autoplay = true;
+				autoplaySpeed = 0;
+				break;
+			}
+
+			// if autoplaying, fall through and stop the autoplay
+
+		default:
+			autoplay = false;
+			frameToRender = 1;
+			break;
+		}
+	}
+	else if (e.type == SDL_MOUSEBUTTONDOWN)
+	{
+		int x, y;
+		SDL_GetMouseState(&x, &y);
+
+		printf("Mouse is at %d, %d\n", x, y);
+	}
+}
+
+#define BOARD_X 512
+#define BOARD_Y 256
+#define BOARD_SCALE 4.0
+
+void ShowOrganism(Organism *o)
+{
+	printf("showorganism %p\n", o);
 }
 
 int main(int argc, char *argv[])
 {
-	srand(0);
-	SDL_Window *window = nullptr;
-	SDL_Renderer *renderer = nullptr;
-
 	SDL_Init(SDL_INIT_VIDEO);
-	// SDL_CreateWindowAndRenderer(2816, 1408, 0, &window, &renderer);
-	SDL_CreateWindowAndRenderer(2560, 1280, 0, &window, &renderer);
-	// SDL_RenderSetScale(renderer, 11, 11);
-	SDL_RenderSetScale(renderer, 5, 5);
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer);
-
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	SDL_RenderDrawPoint(renderer, 640 / 2, 640 / 2);
-
-	SDL_RenderPresent(renderer);
-
 	signal(SIGINT, intHandler);
+	WindowingSystem ws;
+	std::string name = std::string("LifeEngineLite");
+	GameWindow *mainWindow = ws.Create(BOARD_X, BOARD_Y, BOARD_SCALE, name);
+	mainWindow->SetInputHandler(GameWindow::handler_board);
+	board = Board(BOARD_X, BOARD_Y);
+	printf("created board with dimension %d %d\n", board.dim_x, board.dim_y);
+	// srand(0);
+
+	// SDL_Window *window = nullptr;
+	// SDL_Renderer *renderer = nullptr;
 
 	// refresh();
 	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
@@ -137,9 +249,6 @@ int main(int argc, char *argv[])
 	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
 	firstOrganism->Heal(100);
 	firstOrganism->reproductionCooldown = 10;
-
-	SDL_Event e;
-	bool autoplay = false;
 
 	auto lastFrame = std::chrono::high_resolution_clock::now();
 	size_t autoplaySpeed = 1;
@@ -162,7 +271,7 @@ int main(int argc, char *argv[])
 			}
 			if (board.tickCount % frameToRender == 0)
 			{
-				Render(window, renderer);
+				RenderBoard(mainWindow);
 			}
 			auto thisFrame = std::chrono::high_resolution_clock::now();
 			auto diff = thisFrame - lastFrame;
@@ -183,132 +292,32 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-		
+
 		int pollattempts = 0;
-		while(pollattempts++ < 5)
+		while (pollattempts++ < 5)
 		{
-		if (SDL_PollEvent(&e))
-		{
-			if (e.type == SDL_QUIT)
-			{
-				running = false;
-			}
-			if (e.type == SDL_KEYDOWN)
-			{
 
-				switch (e.key.keysym.sym)
+			if (pollattempts == 5)
+			{
+				if (!autoplay)
 				{
-				case SDLK_RETURN:
-					autoplay = false;
-					frameToRender = 1;
-					board.Tick();
-					Render(window, renderer);
-					board.Stats();
-					break;
-
-				case SDLK_UP:
-					if (!autoplay)
-					{
-						autoplaySpeed = 1000;
-						autoplay = true;
-					}
-					else
-					{
-						if (autoplaySpeed > 1)
-						{
-							autoplaySpeed /= 2;
-							if (autoplaySpeed < 1)
-							{
-								autoplaySpeed = 1;
-							}
-						}
-						else
-						{
-							autoplaySpeed = 0;
-						}
-					}
-					printf("Delay %lums between frames\n", autoplaySpeed);
-					break;
-
-				case SDLK_DOWN:
-					if (!autoplay)
-					{
-						autoplaySpeed = 1000;
-						autoplay = true;
-					}
-					else
-					{
-						if (autoplaySpeed == 0)
-						{
-							autoplaySpeed = 1;
-						}
-						else
-						{
-							autoplaySpeed *= 2;
-							if (autoplaySpeed > 1000)
-							{
-								autoplaySpeed = 1000;
-							}
-						}
-					}
-					printf("Delay %lums between frames\n", autoplaySpeed);
-					break;
-
-				case SDLK_RIGHT:
-					frameToRender *= 2;
-					printf("Rendering every %d tick(s)\n", frameToRender);
-					break;
-
-				case SDLK_LEFT:
-					frameToRender /= 2;
-					if (frameToRender < 1)
-					{
-						frameToRender = 1;
-					}
-					printf("Rendering every %d tick(s)\n", frameToRender);
-					break;
-
-				case SDLK_SPACE:
-					// if not autoplaying, set max autoplay speed
-					if (!autoplay)
-					{
-						autoplay = true;
-						autoplaySpeed = 0;
-						break;
-					}
-
-					// if autoplaying, fall through and stop the autoplay
-
-				default:
-					autoplay = false;
-					frameToRender = 1;
-					break;
+					SDL_Delay(25);
 				}
 			}
-		}
-		
+			// SDL_Delay(1000);
+			// refresh();
+			// attron(COLOR_PAIR(10));
+			// getch();
 		}
 
-		if(pollattempts == 5)
-		{
-			if (!autoplay)
-			{
-				SDL_Delay(25);
-			}
-		}
-		// SDL_Delay(1000);
+		// SDL_DestroyWindow(window);
+		// SDL_DestroyRenderer(renderer);
+
+		// move(0, 0);
+		// mvprintw(0, 0, "Press any key to exit");
 		// refresh();
-		// attron(COLOR_PAIR(10));
+
 		// getch();
+		// endwin();
 	}
-
-	SDL_DestroyWindow(window);
-	SDL_DestroyRenderer(renderer);
-
-	// move(0, 0);
-	// mvprintw(0, 0, "Press any key to exit");
-	// refresh();
-
-	// getch();
-	// endwin();
 }

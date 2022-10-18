@@ -3,6 +3,8 @@
 #include "config.h"
 #include "lifeforms.h"
 
+class GameWindow;
+
 #pragma once
 extern int directions[8][2];
 class Cell;

@@ -2,12 +2,15 @@ CC = g++
 CFLAGS = -g -Werror -Wall -O2
 programs: lel
 
-lel: main.o organism.o cell.o board.o rng.o brain.o
+lel: main.o windowhandler.o organism.o cell.o board.o rng.o brain.o
 	$(CC) $(CFLAGS) -lSDL2 -o $@ $^
 
 
 main.o: main.cpp 
 	$(CC) -c $(CFLAGS) main.cpp
+
+windowhandler.o: windowhandler.cpp
+	$(CC) -c $(CFLAGS) windowhandler.cpp
 
 board.o: board.cpp
 	$(CC) -c $(CFLAGS) board.cpp

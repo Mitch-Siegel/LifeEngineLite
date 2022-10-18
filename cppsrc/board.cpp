@@ -2,7 +2,8 @@
 #include "lifeforms.h"
 #include "rng.h"
 
-#include <curses.h>
+
+#include <SDL2/SDL.h>
 #include <iostream>
 #include <algorithm>
 #include <chrono>
@@ -196,9 +197,9 @@ void Board::Stats()
 				{
 					moverCellSentiments[i] += o->brain.cellSentiments[i];
 				}
-				for(Cell* c : o->myCells)
+				for (Cell *c : o->myCells)
 				{
-					if(c->type == cell_touch)
+					if (c->type == cell_touch)
 					{
 						Cell_Touch *t = (Cell_Touch *)c;
 						touchSensorInterval += t->senseCooldown;
@@ -266,17 +267,17 @@ void Board::Stats()
 		   moverStats[count_rotatevschange],
 		   moverStats[count_turnwhenrotate]);
 	printf("Plants/Movers ratio: %2.2f/1\n", plantStats[count_raw] / moverStats[count_raw]);
-	
+
 	printf("%lu (%.2f%%) movers have touch sensors (avg sense interval %2.2f)\n", touchSensorHaverCount, 100 * (float)touchSensorHaverCount / moverStats[count_raw], touchSensorInterval);
 	char cellShortNames[cell_null][5] = {"EMPT", "PMAS", "BMAS", "LEAF", "BARK", "FLWR", "FRUT", "HERB", "CARN", "MOVR", "KILR", "ARMR", "TUCH"};
 	printf("CELL:APLNTC|AMOVRC|ASSENT\n");
 	for (int i = cell_empty; i < cell_null; i++)
 	{
-		printf("%4s: %2.2f | %2.2f | %02.2f\n", 
-		cellShortNames[i], 
-		plantCellCounts[i], 
-		moverCellCounts[i], 
-		moverCellSentiments[i]);
+		printf("%4s: %2.2f | %2.2f | %02.2f\n",
+			   cellShortNames[i],
+			   plantCellCounts[i],
+			   moverCellCounts[i],
+			   moverCellSentiments[i]);
 	}
 }
 
@@ -285,6 +286,7 @@ bool Board::boundCheckPos(int x, int y)
 {
 	if (0 > x || 0 > y || x >= this->dim_x || y >= this->dim_y)
 	{
+		printf("out of bounds (dim is %d, %d)\n", this->dim_x, this->dim_y);
 		return true;
 	}
 	return false;
@@ -375,3 +377,4 @@ Organism *Board::createOrganism(const int _x, const int _y)
 	this->Organisms.push_back(newOrganism);
 	return newOrganism;
 }
+
