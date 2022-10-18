@@ -129,8 +129,8 @@ Organism *Organism::Tick()
 	}
 
 	this->AddEnergy(((this->age % 3 == 0) ? this->cellCounts[cell_leaf] : 0) + 
-					(this->cellCounts[cell_leaf] ? (this->age % 2 == 0) : 0) + 
-					(((this->age % 5) == 0) ? this->cellCounts[cell_bark] * ceil(sqrt(this->cellCounts[cell_leaf])) : 0));
+					(this->cellCounts[cell_leaf] ? (this->age % 2 == 0) : 0));
+					// (((this->age % 3) == 0) ? this->cellCounts[cell_bark] * ceil(sqrt(this->cellCounts[cell_leaf])) : 0));
 	/*
 	if (this->myOrganism->age % 3 == 0 )
 	{

@@ -16,8 +16,8 @@ int CellEnergyDensities[cell_null] = {
 	75,	 // herbivore
 	300, // carnivore
 	100, // mover
-	28,	 // killer
-	35,	 // armor
+	0,	 // killer
+	0,	 // armor
 	40,	 // touch sensor
 };
 
@@ -235,22 +235,29 @@ void Cell_Bark::Tick()
 		return;
 	}
 
-	if (this->myOrganism->GetEnergy() > BARK_GROW_COST)
+	int bonusEnergy = 0;
+	bool canGrow = true;
+	int checkDirIndex = randInt(0, 3);
+	for (int i = 0; i < 4; i++)
 	{
-		int checkDirIndex = randInt(0, 3);
-		for (int i = 0; i < 4; i++)
+		int *thisDirection = directions[(checkDirIndex + i) % 4];
+		int x_abs = this->x + thisDirection[0];
+		int y_abs = this->y + thisDirection[1];
+		if (board.isCellOfType(x_abs, y_abs, cell_empty) && canGrow && this->myOrganism->GetEnergy() > BARK_GROW_COST)
 		{
-			int *thisDirection = directions[(checkDirIndex + i) % 4];
-			int x_abs = this->x + thisDirection[0];
-			int y_abs = this->y + thisDirection[1];
-			if (board.isCellOfType(x_abs, y_abs, cell_empty))
-			{
-				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(100));
-				this->myOrganism->ExpendEnergy(BARK_GROW_COST);
-				this->actionCooldown = BARK_GROW_COOLDOWN;
-				return;
-			}
+			this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(100));
+			this->myOrganism->ExpendEnergy(BARK_GROW_COST);
+			this->actionCooldown = BARK_GROW_COOLDOWN;
+			canGrow = false;
 		}
+		else if (board.isCellOfType(x_abs, y_abs, cell_leaf) && board.cells[y_abs][x_abs]->myOrganism == this->myOrganism)
+		{
+			bonusEnergy++;
+		}
+	}
+	if (this->myOrganism->age % 2 == 0)
+	{
+		this->myOrganism->AddEnergy(bonusEnergy);
 	}
 }
 
@@ -626,7 +633,7 @@ void Cell_Killer::Tick()
 	}
 	// base cost of 1 every few ticks
 	// then some addl cost to actually hurt stuff
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 4 == 0));
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 5 == 0));
 
 	if (!valid)
 	{
