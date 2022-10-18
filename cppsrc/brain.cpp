@@ -123,7 +123,8 @@ void Brain::RotateSuccess(bool clockwise)
 
 void Brain::Mutate()
 {
-    this->maxConviction += (randInt(-1, 1) * (1 + (randPercent(25) * randInt(0, 2))));
+    // slightly bias towards lowering conviction so it doesn't just always shoot up
+    this->maxConviction += (randInt(-3, 2));
     if (this->maxConviction < 1)
     {
         this->maxConviction = 1;

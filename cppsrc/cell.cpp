@@ -14,10 +14,10 @@ int CellEnergyDensities[cell_null] = {
 	2,	 // flower
 	0,	 // fruit
 	75,	 // herbivore
-	300, // carnivore
+	200, // carnivore
 	100, // mover
 	0,	 // killer
-	10,	 // armor
+	-10, // armor
 	40,	 // touch sensor
 };
 
@@ -262,7 +262,12 @@ void Cell_Bark::Tick()
 			bonusEnergy++;
 		}
 	}
-	this->myOrganism->AddEnergy(bonusEnergy);
+
+	// any leaves attached to bark generate a bonus energy every few ticks
+	if (this->myOrganism->age % 5 == 0)
+	{
+		this->myOrganism->AddEnergy(bonusEnergy);
+	}
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -448,7 +453,7 @@ void Cell_Herbivore::Tick()
 
 				case cell_fruit:
 					gainedEnergy = FRUIT_FOOD_ENERGY;
-					this->digestCooldown = 2;
+					this->digestCooldown = 3;
 					break;
 
 				case cell_plantmass:
@@ -489,7 +494,7 @@ void Cell_Herbivore::Tick()
 	if (couldEat)
 	{
 		// this->myOrganism->brain.Reward();
-		this->myOrganism->AddEnergy(gainedEnergy * HERB_FOOD_MULTIPLIER);
+		this->myOrganism->AddEnergy(gainedEnergy * FOOD_MULTIPLIER);
 		// this->digestCooldown = gainedEnergy - 1;
 	}
 
@@ -576,9 +581,9 @@ void Cell_Carnivore::Tick()
 	if (couldEat)
 	{
 		// this->myOrganism->brain.Reward();
-		this->myOrganism->AddEnergy(gainedEnergy);
+		this->myOrganism->AddEnergy(gainedEnergy * FOOD_MULTIPLIER);
 		// this->digestCooldown = sqrt(gainedEnergy);
-		this->digestCooldown = 2;
+		this->digestCooldown = 6;
 	}
 
 	if (!valid)
@@ -632,7 +637,7 @@ void Cell_Killer::Tick()
 	}
 	// base cost of 1 every few ticks
 	// then some addl cost to actually hurt stuff
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 5 == 0));
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 4 == 0));
 
 	int adjacentLeaves = 0;
 	int adjacentBark = 0;
@@ -644,20 +649,20 @@ void Cell_Killer::Tick()
 		if (!board.boundCheckPos(abs_x, abs_y))
 		{
 			Cell *adjacentCell = board.cells[abs_y][abs_x];
-			if(adjacentCell->myOrganism == this->myOrganism)
+			if (adjacentCell->myOrganism == this->myOrganism)
 			{
-				switch(adjacentCell->type)
+				switch (adjacentCell->type)
 				{
-					case cell_leaf:
-						adjacentLeaves++;
-						break;
+				case cell_leaf:
+					adjacentLeaves++;
+					break;
 
-					case cell_bark:
-						adjacentBark++;
-						break;
+				case cell_bark:
+					adjacentBark++;
+					break;
 
-					default:
-						break;
+				default:
+					break;
 				}
 			}
 		}
@@ -725,7 +730,7 @@ Cell_Touch::Cell_Touch()
 	this->type = cell_touch;
 	this->myOrganism = nullptr;
 	this->senseCooldown = 0;
-	this->senseInterval = randInt(0, 25);
+	this->senseInterval = randInt(0, 20);
 }
 
 void Cell_Touch::Tick()

@@ -52,8 +52,9 @@ void Organism::Die()
 			replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 
+		case cell_armor:
 		case cell_killer:
-			if (this->cellCounts[cell_leaf] >= this->myCells.size() * 0.5)
+			if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_bark]) >= this->myCells.size() * 0.25)
 			{
 				replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 			}
@@ -67,7 +68,6 @@ void Organism::Die()
 		case cell_mover:
 		case cell_herbivore_mouth:
 		case cell_carnivore_mouth:
-		case cell_armor:
 		case cell_touch:
 			replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * BIOMASS_SPOIL_TIME_MULTIPLIER);
 			break;
@@ -139,8 +139,8 @@ Organism *Organism::Tick()
 		}
 	}
 
-	this->AddEnergy(((this->age % 3 == 0) ? this->cellCounts[cell_leaf] : 0) +
-					(this->cellCounts[cell_leaf] ? (this->age % 2 == 0) : 0));
+	this->AddEnergy(((this->age % 5 == 0) ? this->cellCounts[cell_leaf] : 0) +
+					(this->cellCounts[cell_leaf] > 0));
 	// (((this->age % 3) == 0) ? this->cellCounts[cell_bark] * ceil(sqrt(this->cellCounts[cell_leaf])) : 0));
 	/*
 	if (this->myOrganism->age % 3 == 0 )
@@ -179,7 +179,7 @@ Organism *Organism::Tick()
 
 void Organism::RecalculateStats()
 {
-	this->maxEnergy = 10;
+	this->maxEnergy = 0;
 	int calculatedMaxEnergy = 10;
 	for (int i = 0; i < cell_null; i++)
 	{
@@ -342,7 +342,7 @@ void Organism::Move()
 		/*
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-2
 		*/
-		int moveCost = this->myCells.size() - 1;
+		int moveCost = floor(this->myCells.size() * 0.5) * (this->cellCounts[cell_leaf] + 1);
 		// int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 1.5)) - 2;
 		this->ExpendEnergy(moveCost);
 	}
@@ -591,7 +591,7 @@ Organism *Organism::Reproduce()
 					replicated->Mutate();
 				}
 
-				if (replicated->CheckValidity())
+				if (replicated->CheckValidity() || replicated->maxEnergy == 0)
 				{
 
 					replicated->Remove();
@@ -625,7 +625,7 @@ Organism *Organism::Reproduce()
 				{
 					replicated->brain.Mutate();
 				}
-				replicated->currentEnergy = randInt(1, replicated->maxEnergy);
+				replicated->currentEnergy = randInt(replicated->maxEnergy / 2, replicated->maxEnergy);
 				replicated->lifespan = sqrt(replicated->maxEnergy) * sqrt(replicated->myCells.size()) * LIFESPAN_MULTIPLIER;
 				return replicated;
 			}
