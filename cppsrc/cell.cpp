@@ -17,7 +17,7 @@ int CellEnergyDensities[cell_null] = {
 	300, // carnivore
 	100, // mover
 	0,	 // killer
-	0,	 // armor
+	10,	 // armor
 	40,	 // touch sensor
 };
 
@@ -245,7 +245,14 @@ void Cell_Bark::Tick()
 		int y_abs = this->y + thisDirection[1];
 		if (board.isCellOfType(x_abs, y_abs, cell_empty) && canGrow && this->myOrganism->GetEnergy() > BARK_GROW_COST)
 		{
-			this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(100));
+			if (randPercent(BARK_PLANT_VS_THORN))
+			{
+				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(75));
+			}
+			else
+			{
+				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Killer());
+			}
 			this->myOrganism->ExpendEnergy(BARK_GROW_COST);
 			this->actionCooldown = BARK_GROW_COOLDOWN;
 			canGrow = false;
@@ -255,10 +262,7 @@ void Cell_Bark::Tick()
 			bonusEnergy++;
 		}
 	}
-	if (this->myOrganism->age % 2 == 0)
-	{
-		this->myOrganism->AddEnergy(bonusEnergy);
-	}
+	this->myOrganism->AddEnergy(bonusEnergy);
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -315,7 +319,7 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				this->myOrganism->ReplaceCell(this, new Cell_Leaf(30));
+				this->myOrganism->ReplaceCell(this, new Cell_Leaf(25));
 			}
 		}
 	}
@@ -602,7 +606,6 @@ Cell_Killer::Cell_Killer()
 
 void Cell_Killer::Tick()
 {
-	bool valid = false;
 	int damageDone = 0;
 	for (int i = 0; i < 4; i++)
 	{
@@ -624,10 +627,6 @@ void Cell_Killer::Tick()
 						adjacent->myOrganism->Damage(1);
 					}
 				}
-				else
-				{
-					valid = true;
-				}
 			}
 		}
 	}
@@ -635,17 +634,42 @@ void Cell_Killer::Tick()
 	// then some addl cost to actually hurt stuff
 	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 5 == 0));
 
-	if (!valid)
+	int adjacentLeaves = 0;
+	int adjacentBark = 0;
+	for (int i = 0; i < 4; i++)
 	{
-		for (int i = 0; i < 8; i++)
+		int *thisDirection = directions[i];
+		int abs_x = this->x + thisDirection[0];
+		int abs_y = this->y + thisDirection[1];
+		if (!board.boundCheckPos(abs_x, abs_y))
 		{
-			int *thisDirection = directions[i];
-			int abs_x = this->x + thisDirection[0];
-			int abs_y = this->y + thisDirection[1];
-			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
+			Cell *adjacentCell = board.cells[abs_y][abs_x];
+			if(adjacentCell->myOrganism == this->myOrganism)
+			{
+				switch(adjacentCell->type)
+				{
+					case cell_leaf:
+						adjacentLeaves++;
+						break;
+
+					case cell_bark:
+						adjacentBark++;
+						break;
+
+					default:
+						break;
+				}
+			}
 		}
 	}
-	if (!valid)
+	if (adjacentBark || (this->myOrganism->cellCounts[cell_leaf] < this->myOrganism->myCells.size() * 0.5))
+	{
+		if (adjacentBark + adjacentLeaves > 2)
+		{
+			this->myOrganism->ReplaceCell(this, new Cell_Bark());
+		}
+	}
+	else
 	{
 		this->myOrganism->RemoveCell(this);
 		board.replaceCell(this, new Cell_Empty());

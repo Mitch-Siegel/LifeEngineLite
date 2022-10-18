@@ -52,10 +52,21 @@ void Organism::Die()
 			replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 
+		case cell_killer:
+			if (this->cellCounts[cell_leaf] >= this->myCells.size() * 0.5)
+			{
+				replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
+			}
+			else
+			{
+				replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * BIOMASS_SPOIL_TIME_MULTIPLIER);
+			}
+
+			break;
+
 		case cell_mover:
 		case cell_herbivore_mouth:
 		case cell_carnivore_mouth:
-		case cell_killer:
 		case cell_armor:
 		case cell_touch:
 			replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * BIOMASS_SPOIL_TIME_MULTIPLIER);
@@ -128,9 +139,9 @@ Organism *Organism::Tick()
 		}
 	}
 
-	this->AddEnergy(((this->age % 3 == 0) ? this->cellCounts[cell_leaf] : 0) + 
+	this->AddEnergy(((this->age % 3 == 0) ? this->cellCounts[cell_leaf] : 0) +
 					(this->cellCounts[cell_leaf] ? (this->age % 2 == 0) : 0));
-					// (((this->age % 3) == 0) ? this->cellCounts[cell_bark] * ceil(sqrt(this->cellCounts[cell_leaf])) : 0));
+	// (((this->age % 3) == 0) ? this->cellCounts[cell_bark] * ceil(sqrt(this->cellCounts[cell_leaf])) : 0));
 	/*
 	if (this->myOrganism->age % 3 == 0 )
 	{
@@ -331,8 +342,7 @@ void Organism::Move()
 		/*
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-2
 		*/
-		size_t nCells = this->myCells.size();
-		int moveCost = (nCells > 2) ? nCells - 2 : 0;
+		int moveCost = this->myCells.size() - 1;
 		// int moveCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 1.5)) - 2;
 		this->ExpendEnergy(moveCost);
 	}
