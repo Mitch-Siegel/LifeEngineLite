@@ -16,18 +16,17 @@ public:
     void BoardInputHandler(SDL_Event &e);
     void OrganismViewInputHandler(SDL_Event &e);
 
-
     enum HandlerTypes
     {
         handler_board,
         handler_organismview,
         max_handlers,
     };
-    
+
     void SetInputHandler(HandlerTypes t);
-
-
-    void (*handlerFunctions[max_handlers]) (SDL_Event &e) = {nullptr};
+    // typedef B* (A::*BMemFun)(void);
+    // BMemFun funcs_[2];
+    void (GameWindow::*handlerFunctions[max_handlers])(SDL_Event &e) = {GameWindow::BoardInputHandler, GameWindow::OrganismViewInputHandler};
 
 private:
     uint32_t id_;
@@ -37,10 +36,9 @@ private:
     SDL_Renderer *r;
     int width, height;
     bool focused;
-    void (*inputHandlerFunction) (SDL_Event &e);
+    void (*EventHandlerFunction)(SDL_Event &e);
 
 public:
-
     const decltype(id_) &id() const { return id_; }
     const decltype(w) &window() const { return w; }
     const decltype(r) &renderer() const { return r; }
@@ -55,6 +53,8 @@ public:
     GameWindow *Create(int width, int height, std::string &title);
 
     GameWindow *Create(int width, int height, float scale, std::string &title);
+
+    void HandleEvent(SDL_Event &e);
 
 private:
     std::map<int, GameWindow *> activeWindows;

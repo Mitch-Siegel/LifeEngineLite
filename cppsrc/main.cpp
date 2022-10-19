@@ -12,7 +12,7 @@
 #include "rng.h"
 
 static volatile int running = 1;
-Board board = Board(0, 0);
+Board *board = nullptr;
 void intHandler(int dummy)
 {
 	running = 0;
@@ -26,19 +26,19 @@ void RenderBoard(GameWindow *gw)
 {
 	// we'll use this texture as our own backbuffer
 	static SDL_Texture *boardBuf = SDL_CreateTexture(gw->renderer(), SDL_PIXELFORMAT_RGB888,
-													 SDL_TEXTUREACCESS_TARGET, board.dim_x, board.dim_y);
+													 SDL_TEXTUREACCESS_TARGET, board->dim_x, board->dim_y);
 
 	// draw to board buffer instead of backbuffer
 	SDL_SetRenderTarget(gw->renderer(), boardBuf);
 
-	for (int y = 0; y < board.dim_y; y++)
+	for (int y = 0; y < board->dim_y; y++)
 	{
-		for (int x = 0; x < board.dim_x; x++)
+		for (int x = 0; x < board->dim_x; x++)
 		{
-			if (board.DeltaCells[y][x])
+			if (board->DeltaCells[y][x])
 			{
-				board.DeltaCells[y][x] = false;
-				Cell *thisCell = board.cells[y][x];
+				board->DeltaCells[y][x] = false;
+				Cell *thisCell = board->cells[y][x];
 				switch (thisCell->type)
 				{
 				case cell_empty:
@@ -108,6 +108,7 @@ void RenderBoard(GameWindow *gw)
 
 void GameWindow::BoardInputHandler(SDL_Event &e)
 {
+	printf("boardinputhandler called\n");
 	if (e.type == SDL_QUIT)
 	{
 		running = false;
@@ -120,9 +121,9 @@ void GameWindow::BoardInputHandler(SDL_Event &e)
 		case SDLK_RETURN:
 			autoplay = false;
 			frameToRender = 1;
-			board.Tick();
+			board->Tick();
 			RenderBoard(this);
-			board.Stats();
+			board->Stats();
 			break;
 
 		case SDLK_UP:
@@ -209,7 +210,7 @@ void GameWindow::BoardInputHandler(SDL_Event &e)
 		int x, y;
 		SDL_GetMouseState(&x, &y);
 
-		printf("Mouse is at %d, %d\n", x, y);
+		printf("%d, %d\n", x, y);
 	}
 }
 
@@ -230,15 +231,15 @@ int main(int argc, char *argv[])
 	std::string name = std::string("LifeEngineLite");
 	GameWindow *mainWindow = ws.Create(BOARD_X, BOARD_Y, BOARD_SCALE, name);
 	mainWindow->SetInputHandler(GameWindow::handler_board);
-	board = Board(BOARD_X, BOARD_Y);
-	printf("created board with dimension %d %d\n", board.dim_x, board.dim_y);
+	board = new Board(BOARD_X, BOARD_Y);
+	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 	// srand(0);
 
 	// SDL_Window *window = nullptr;
 	// SDL_Renderer *renderer = nullptr;
 
 	// refresh();
-	Organism *firstOrganism = board.createOrganism(board.dim_x / 2, board.dim_y / 2);
+	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
 	firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
 	firstOrganism->lifespan = 5000;
@@ -254,22 +255,33 @@ int main(int argc, char *argv[])
 	size_t autoplaySpeed = 1;
 	int leftover = 0;
 	int frameToRender = 1;
-	while (running /* && board.tickCount < 100*/)
+	SDL_Event e;
+	while (running /* && board->tickCount < 100*/)
 	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			// User requests quit
+			if (e.type == SDL_QUIT)
+			{
+				running = false;
+			}
+
+			ws.HandleEvent(e);
+		}
 		if (autoplay)
 		{
 
-			board.Tick();
+			board->Tick();
 
-			/*if (board.tickCount % (1000 / autoplaySpeed) == 0)
+			/*if (board->tickCount % (1000 / autoplaySpeed) == 0)
 			{*/
-			// if (board.tickCount % 10 == 0)
+			// if (board->tickCount % 10 == 0)
 			// {
-			if (board.tickCount % 50 == 0)
+			if (board->tickCount % 50 == 0)
 			{
-				board.Stats();
+				board->Stats();
 			}
-			if (board.tickCount % frameToRender == 0)
+			if (board->tickCount % frameToRender == 0)
 			{
 				RenderBoard(mainWindow);
 			}

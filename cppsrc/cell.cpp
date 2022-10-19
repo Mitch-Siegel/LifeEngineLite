@@ -4,7 +4,7 @@
 #include "board.h"
 #include "rng.h"
 
-extern Board board;
+extern Board *board;
 int CellEnergyDensities[cell_null] = {
 	0,	 // empty
 	0,	 // pcell_bark
@@ -179,7 +179,7 @@ void Cell_Leaf::Tick()
 			int *thisDirection = directions[i];
 			int x_abs = this->x + thisDirection[0];
 			int y_abs = this->y + thisDirection[1];
-			if (board.isCellOfType(x_abs, y_abs, cell_flower) && board.cells[y_abs][x_abs]->myOrganism == this->myOrganism)
+			if (board->isCellOfType(x_abs, y_abs, cell_flower) && board->cells[y_abs][x_abs]->myOrganism == this->myOrganism)
 			{
 				return;
 			}
@@ -191,7 +191,7 @@ void Cell_Leaf::Tick()
 			int *thisDirection = directions[(checkDirIndex + i) % 4];
 			int x_abs = this->x + thisDirection[0];
 			int y_abs = this->y + thisDirection[1];
-			if (board.isCellOfType(x_abs, y_abs, cell_empty))
+			if (board->isCellOfType(x_abs, y_abs, cell_empty))
 			{
 				this->myOrganism->ExpendEnergy(FLOWER_COST);
 				Cell_Flower *newFlower = new Cell_Flower();
@@ -231,7 +231,7 @@ void Cell_Bark::Tick()
 	if (this->integrity < 1)
 	{
 		this->myOrganism->RemoveCell(this);
-		board.replaceCell(this, new Cell_Empty());
+		board->replaceCell(this, new Cell_Empty());
 		return;
 	}
 
@@ -243,7 +243,7 @@ void Cell_Bark::Tick()
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board.isCellOfType(x_abs, y_abs, cell_empty) && canGrow && this->myOrganism->GetEnergy() > BARK_GROW_COST)
+		if (board->isCellOfType(x_abs, y_abs, cell_empty) && canGrow && this->myOrganism->GetEnergy() > BARK_GROW_COST)
 		{
 			if (randPercent(BARK_PLANT_VS_THORN))
 			{
@@ -257,7 +257,7 @@ void Cell_Bark::Tick()
 			this->actionCooldown = BARK_GROW_COOLDOWN;
 			canGrow = false;
 		}
-		else if (board.isCellOfType(x_abs, y_abs, cell_leaf) && board.cells[y_abs][x_abs]->myOrganism == this->myOrganism)
+		else if (board->isCellOfType(x_abs, y_abs, cell_leaf) && board->cells[y_abs][x_abs]->myOrganism == this->myOrganism)
 		{
 			bonusEnergy++;
 		}
@@ -308,9 +308,9 @@ void Cell_Flower::Tick()
 				int *thisDirection = directions[(checkDirIndex + i) % 4];
 				int x_abs = this->x + thisDirection[0];
 				int y_abs = this->y + thisDirection[1];
-				if (board.isCellOfType(x_abs, y_abs, cell_empty))
+				if (board->isCellOfType(x_abs, y_abs, cell_empty))
 				{
-					board.replaceCellAt(x_abs, y_abs, new Cell_Fruit(this->myOrganism->mutability));
+					board->replaceCellAt(x_abs, y_abs, new Cell_Fruit(this->myOrganism->mutability));
 					break;
 					// this->myOrganism->AddCell(x_rel, y_rel, new Cell_Fruit());
 				}
@@ -425,11 +425,11 @@ void Cell_Herbivore::Tick()
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board.boundCheckPos(x_abs, y_abs))
+		if (board->boundCheckPos(x_abs, y_abs))
 		{
 			continue;
 		}
-		Cell *potentiallyEaten = board.cells[y_abs][x_abs];
+		Cell *potentiallyEaten = board->cells[y_abs][x_abs];
 		if (potentiallyEaten->type == cell_leaf ||
 			potentiallyEaten->type == cell_flower ||
 			potentiallyEaten->type == cell_fruit ||
@@ -474,11 +474,11 @@ void Cell_Herbivore::Tick()
 				if (potentiallyEaten->myOrganism != nullptr)
 				{
 					potentiallyEaten->myOrganism->RemoveCell(potentiallyEaten);
-					board.replaceCell(potentiallyEaten, new Cell_Empty());
+					board->replaceCell(potentiallyEaten, new Cell_Empty());
 				}
 				else
 				{
-					board.replaceCell(potentiallyEaten, new Cell_Empty());
+					board->replaceCell(potentiallyEaten, new Cell_Empty());
 				}
 				couldEat = true;
 			}
@@ -505,14 +505,14 @@ void Cell_Herbivore::Tick()
 			int *thisDirection = directions[i];
 			int abs_x = this->x + thisDirection[0];
 			int abs_y = this->y + thisDirection[1];
-			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
+			valid = valid || (!board->boundCheckPos(abs_x, abs_y) && board->cells[abs_y][abs_x]->myOrganism == this->myOrganism);
 		}
 	}
 
 	if (!valid)
 	{
 		this->myOrganism->RemoveCell(this);
-		board.replaceCell(this, new Cell_Empty());
+		board->replaceCell(this, new Cell_Empty());
 	}
 }
 
@@ -553,16 +553,16 @@ void Cell_Carnivore::Tick()
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board.boundCheckPos(x_abs, y_abs))
+		if (board->boundCheckPos(x_abs, y_abs))
 		{
 			continue;
 		}
-		Cell *potentiallyEaten = board.cells[y_abs][x_abs];
+		Cell *potentiallyEaten = board->cells[y_abs][x_abs];
 		if (potentiallyEaten->type == cell_biomass)
 		{
 			gainedEnergy = BIOMASS_FOOD_ENERGY;
 			// this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
-			board.replaceCell(potentiallyEaten, new Cell_Empty());
+			board->replaceCell(potentiallyEaten, new Cell_Empty());
 			couldEat = true;
 		}
 	}
@@ -574,7 +574,7 @@ void Cell_Carnivore::Tick()
 			int *thisDirection = directions[i];
 			int abs_x = this->x + thisDirection[0];
 			int abs_y = this->y + thisDirection[1];
-			valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
+			valid = valid || (!board->boundCheckPos(abs_x, abs_y) && board->cells[abs_y][abs_x]->myOrganism == this->myOrganism);
 		}
 	}
 
@@ -589,7 +589,7 @@ void Cell_Carnivore::Tick()
 	if (!valid)
 	{
 		this->myOrganism->RemoveCell(this);
-		board.replaceCell(this, new Cell_Empty());
+		board->replaceCell(this, new Cell_Empty());
 	}
 }
 
@@ -617,9 +617,9 @@ void Cell_Killer::Tick()
 		int *thisDirection = directions[i];
 		int abs_x = this->x + thisDirection[0];
 		int abs_y = this->y + thisDirection[1];
-		if (!board.boundCheckPos(abs_x, abs_y))
+		if (!board->boundCheckPos(abs_x, abs_y))
 		{
-			Cell *adjacent = board.cells[abs_y][abs_x];
+			Cell *adjacent = board->cells[abs_y][abs_x];
 			if (adjacent->myOrganism != nullptr)
 			{
 				if (adjacent->myOrganism != this->myOrganism)
@@ -646,9 +646,9 @@ void Cell_Killer::Tick()
 		int *thisDirection = directions[i];
 		int abs_x = this->x + thisDirection[0];
 		int abs_y = this->y + thisDirection[1];
-		if (!board.boundCheckPos(abs_x, abs_y))
+		if (!board->boundCheckPos(abs_x, abs_y))
 		{
-			Cell *adjacentCell = board.cells[abs_y][abs_x];
+			Cell *adjacentCell = board->cells[abs_y][abs_x];
 			if (adjacentCell->myOrganism == this->myOrganism)
 			{
 				switch (adjacentCell->type)
@@ -677,7 +677,7 @@ void Cell_Killer::Tick()
 	else
 	{
 		this->myOrganism->RemoveCell(this);
-		board.replaceCell(this, new Cell_Empty());
+		board->replaceCell(this, new Cell_Empty());
 	}
 }
 
@@ -706,12 +706,12 @@ void Cell_Armor::Tick()
 		int *thisDirection = directions[i];
 		int abs_x = this->x + thisDirection[0];
 		int abs_y = this->y + thisDirection[1];
-		valid = valid || (!board.boundCheckPos(abs_x, abs_y) && board.cells[abs_y][abs_x]->myOrganism == this->myOrganism);
+		valid = valid || (!board->boundCheckPos(abs_x, abs_y) && board->cells[abs_y][abs_x]->myOrganism == this->myOrganism);
 	}
 	if (!valid)
 	{
 		this->myOrganism->RemoveCell(this);
-		board.replaceCell(this, new Cell_Empty());
+		board->replaceCell(this, new Cell_Empty());
 	}
 }
 
@@ -746,9 +746,9 @@ void Cell_Touch::Tick()
 		int *thisDirection = directions[i];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (!board.boundCheckPos(x_abs, y_abs))
+		if (!board->boundCheckPos(x_abs, y_abs))
 		{
-			Cell *checked = board.cells[y_abs][x_abs];
+			Cell *checked = board->cells[y_abs][x_abs];
 			if (checked->myOrganism == this->myOrganism)
 			{
 				continue;

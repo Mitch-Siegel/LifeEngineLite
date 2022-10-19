@@ -212,7 +212,7 @@ void Board::Stats()
 			plantStats[count_cells] += o->myCells.size();
 			plantStats[count_energy] += o->GetEnergy();
 			plantStats[count_maxenergy] += o->GetMaxEnergy();
-			plantStats[count_age] += o->lifespan;
+			plantStats[count_age] += o->age;
 			plantStats[count_lifespan] += o->lifespan;
 			plantStats[count_mutability] += o->mutability;
 			plantStats[count_maxconviction] += o->brain.maxConviction;

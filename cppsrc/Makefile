@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -g -Werror -Wall -O2
+CFLAGS = -g -Werror -Wall -O0
 programs: lel
 
 lel: main.o windowhandler.o organism.o cell.o board.o rng.o brain.o

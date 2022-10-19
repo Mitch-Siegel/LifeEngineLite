@@ -9,7 +9,7 @@
 #include "board.h"
 #include "rng.h"
 
-extern Board board;
+extern Board *board;
 Organism::Organism(int center_x, int center_y)
 {
 	this->x = center_x;
@@ -72,7 +72,7 @@ void Organism::Die()
 			replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * BIOMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 		}
-		board.replaceCell(thisCell, replacedWith);
+		board->replaceCell(thisCell, replacedWith);
 	}
 	this->myCells.clear();
 	this->alive = false;
@@ -83,7 +83,7 @@ void Organism::Remove()
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
-		board.replaceCellAt(thisCell->x, thisCell->y, new Cell_Empty());
+		board->replaceCellAt(thisCell->x, thisCell->y, new Cell_Empty());
 	}
 	this->alive = false;
 }
@@ -251,9 +251,9 @@ bool Organism::CheckValidity()
 					int *thisDirection = directions[i];
 					int x_abs = c->x + thisDirection[0];
 					int y_abs = c->y + thisDirection[1];
-					if (!board.boundCheckPos(x_abs, y_abs))
+					if (!board->boundCheckPos(x_abs, y_abs))
 					{
-						Cell *neighborCell = board.cells[y_abs][x_abs];
+						Cell *neighborCell = board->cells[y_abs][x_abs];
 						killerValid |= ((neighborCell->myOrganism == this) &&
 										(neighborCell->type == cell_bark));
 					}
@@ -316,13 +316,13 @@ void Organism::Move()
 			Cell *filler = new Cell_Empty();
 			filler->x = movedCell->x;
 			filler->y = movedCell->y;
-			board.cells[movedCell->y][movedCell->x] = filler;
+			board->cells[movedCell->y][movedCell->x] = filler;
 
 			// calculate the new x and y position we are moving to
 			int newX = movedCell->x + moveDir[0];
 			int newY = movedCell->y + moveDir[1];
-			board.DeltaCells[movedCell->y][movedCell->x] = true;
-			board.DeltaCells[newY][newX] = true;
+			board->DeltaCells[movedCell->y][movedCell->x] = true;
+			board->DeltaCells[newY][newX] = true;
 
 			movedCell->x = newX;
 			movedCell->y = newY;
@@ -332,8 +332,8 @@ void Organism::Move()
 		// second pass - delete empties and place cells back down at delta pos
 		for (MovedCell m : moves)
 		{
-			delete board.cells[m.newY][m.newX];
-			board.cells[m.newY][m.newX] = m.c;
+			delete board->cells[m.newY][m.newX];
+			board->cells[m.newY][m.newX] = m.c;
 		}
 		this->x += moveDir[0];
 		this->y += moveDir[1];
@@ -385,13 +385,13 @@ void Organism::Rotate(bool clockwise)
 				new_y = this->y + (x_rel * -1);
 			}
 
-			if (board.boundCheckPos(new_x, new_y))
+			if (board->boundCheckPos(new_x, new_y))
 			{
 				// this->brain.Punish();
 				return;
 			}
 
-			Cell *swappedWith = board.cells[new_y][new_x];
+			Cell *swappedWith = board->cells[new_y][new_x];
 			// can't rotate!
 			if (swappedWith->type != cell_empty && swappedWith->myOrganism != this)
 			{
@@ -417,13 +417,13 @@ void Organism::Rotate(bool clockwise)
 		int oldY = a->y;
 		a->x = b->x;
 		a->y = b->y;
-		board.cells[a->y][a->x] = a;
-		board.DeltaCells[a->y][a->x] = true;
+		board->cells[a->y][a->x] = a;
+		board->DeltaCells[a->y][a->x] = true;
 
 		b->x = oldX;
 		b->y = oldY;
-		board.cells[b->y][b->x] = b;
-		board.DeltaCells[b->y][b->x] = true;
+		board->cells[b->y][b->x] = b;
+		board->DeltaCells[b->y][b->x] = true;
 	}
 
 	int rotateCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2)) - 2;
@@ -498,9 +498,9 @@ bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 		int newCellY_rel = thisCell->y - this->y;
 		int new_x_abs = _x_abs + newCellX_rel;
 		int new_y_abs = _y_abs + newCellY_rel;
-		bool boundCheckResult = board.boundCheckPos(new_x_abs, new_y_abs);
+		bool boundCheckResult = board->boundCheckPos(new_x_abs, new_y_abs);
 		// if location out of bounds or not empty
-		if (boundCheckResult || board.cells[new_y_abs][new_x_abs]->type != cell_empty)
+		if (boundCheckResult || board->cells[new_y_abs][new_x_abs]->type != cell_empty)
 		{
 			// fail
 			return false;
@@ -519,9 +519,9 @@ bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 		int newCellY_rel = thisCell->y - this->y;
 		int new_x_abs = _x_abs + newCellX_rel;
 		int new_y_abs = _y_abs + newCellY_rel;
-		bool boundCheckResult = board.boundCheckPos(new_x_abs, new_y_abs);
+		bool boundCheckResult = board->boundCheckPos(new_x_abs, new_y_abs);
 		if (boundCheckResult ||																													  // if out of bounds
-			(!boundCheckResult && board.cells[new_y_abs][new_x_abs]->type != cell_empty && board.cells[new_y_abs][new_x_abs]->myOrganism != this) // or in-bounds and this position is occupied by something else
+			(!boundCheckResult && board->cells[new_y_abs][new_x_abs]->type != cell_empty && board->cells[new_y_abs][new_x_abs]->myOrganism != this) // or in-bounds and this position is occupied by something else
 		)
 		{
 			// fail
@@ -659,7 +659,7 @@ void Organism::Mutate()
 		Cell *replacedWith = GenerateRandomCell();
 		replacedWith->myOrganism = this;
 
-		board.replaceCell(toReplace, replacedWith);
+		board->replaceCell(toReplace, replacedWith);
 		this->myCells.push_back(replacedWith);
 		// int cellIndex = (rand() >> 5) % this->myCells.size();
 		// this->myCells[cellIndex].type = (enum CellTypes)((rand() >> 5) % (int)cell_mouth);
@@ -672,7 +672,7 @@ void Organism::Mutate()
 		{
 			Cell *toRemove = this->myCells[randInt(0, this->myCells.size() - 1)];
 			this->myCells.erase(std::find(this->myCells.begin(), this->myCells.end(), toRemove));
-			board.replaceCell(toRemove, new Cell_Empty());
+			board->replaceCell(toRemove, new Cell_Empty());
 		}
 		// add a cell
 		else
@@ -697,13 +697,13 @@ void Organism::Mutate()
 				bool looking = true;
 				while (looking)
 				{
-					if (board.boundCheckPos(this->x + x_rel, this->y + y_rel))
+					if (board->boundCheckPos(this->x + x_rel, this->y + y_rel))
 					{
 						looking = false;
 						break;
 					}
 
-					if (board.isCellOfType(this->x + x_rel, this->y + y_rel, cell_empty))
+					if (board->isCellOfType(this->x + x_rel, this->y + y_rel, cell_empty))
 					{
 						looking = false;
 						canAdd = true;
@@ -736,7 +736,7 @@ void Organism::Mutate()
 					int *thisDirection = directions[(thisDirectionIndex + j) % 4];
 					int x_abs = thisAttempt->x + thisDirection[0];
 					int y_abs = thisAttempt->y + thisDirection[1];
-					if (board.isCellOfType(x_abs, y_abs, cell_empty))
+					if (board->isCellOfType(x_abs, y_abs, cell_empty))
 					{
 						x_rel = x_abs - this->x;
 						y_rel = y_abs - this->y;
@@ -758,7 +758,7 @@ void Organism::Mutate()
 					int *thisDirection = directions[((thisDirectionIndex + j) % 4) + 4];
 					int x_abs = thisAttempt->x + thisDirection[0];
 					int y_abs = thisAttempt->y + thisDirection[1];
-					if (board.isCellOfType(x_abs, y_abs, cell_empty))
+					if (board->isCellOfType(x_abs, y_abs, cell_empty))
 					{
 						x_rel = x_abs - this->x;
 						y_rel = y_abs - this->y;
@@ -782,7 +782,7 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 {
 	int x_abs = this->x + x_rel;
 	int y_abs = this->y + y_rel;
-	if (!board.isCellOfType(x_abs, y_abs, cell_empty))
+	if (!board->isCellOfType(x_abs, y_abs, cell_empty))
 	{
 		printf("Can't add cell at %d, %d (organism at %d, %d)\n", x_abs, y_abs, this->x, this->y);
 		exit(1);
@@ -791,7 +791,7 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	_cell->x = x_abs;
 	_cell->y = y_abs;
 	_cell->myOrganism = this;
-	board.replaceCellAt(x_abs, y_abs, _cell);
+	board->replaceCellAt(x_abs, y_abs, _cell);
 	this->myCells.push_back(_cell);
 	this->RecalculateStats();
 }
@@ -815,7 +815,7 @@ void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 	this->myCells.push_back(_newCell);
 	// int x_rel = _myCell->x - this->x;
 	// int y_rel = _myCell->y - this->y;
-	board.replaceCell(_myCell, _newCell);
+	board->replaceCell(_myCell, _newCell);
 	this->RecalculateStats();
 	// this->AddCell(x_rel, y_rel, _newCell);
 }
