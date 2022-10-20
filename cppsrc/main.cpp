@@ -106,114 +106,6 @@ void RenderBoard(GameWindow *gw)
 	SDL_RenderPresent(gw->renderer());
 }
 
-void GameWindow::BoardInputHandler(SDL_Event &e)
-{
-	printf("boardinputhandler called\n");
-	if (e.type == SDL_QUIT)
-	{
-		running = false;
-	}
-	if (e.type == SDL_KEYDOWN)
-	{
-
-		switch (e.key.keysym.sym)
-		{
-		case SDLK_RETURN:
-			autoplay = false;
-			frameToRender = 1;
-			board->Tick();
-			RenderBoard(this);
-			board->Stats();
-			break;
-
-		case SDLK_UP:
-			if (!autoplay)
-			{
-				autoplaySpeed = 1000;
-				autoplay = true;
-			}
-			else
-			{
-				if (autoplaySpeed > 1)
-				{
-					autoplaySpeed /= 2;
-					if (autoplaySpeed < 1)
-					{
-						autoplaySpeed = 1;
-					}
-				}
-				else
-				{
-					autoplaySpeed = 0;
-				}
-			}
-			printf("Delay %lums between frames\n", autoplaySpeed);
-			break;
-
-		case SDLK_DOWN:
-			if (!autoplay)
-			{
-				autoplaySpeed = 1000;
-				autoplay = true;
-			}
-			else
-			{
-				if (autoplaySpeed == 0)
-				{
-					autoplaySpeed = 1;
-				}
-				else
-				{
-					autoplaySpeed *= 2;
-					if (autoplaySpeed > 1000)
-					{
-						autoplaySpeed = 1000;
-					}
-				}
-			}
-			printf("Delay %lums between frames\n", autoplaySpeed);
-			break;
-
-		case SDLK_RIGHT:
-			frameToRender *= 2;
-			printf("Rendering every %d tick(s)\n", frameToRender);
-			break;
-
-		case SDLK_LEFT:
-			frameToRender /= 2;
-			if (frameToRender < 1)
-			{
-				frameToRender = 1;
-			}
-			printf("Rendering every %d tick(s)\n", frameToRender);
-			break;
-
-		case SDLK_SPACE:
-			// if not autoplaying, set max autoplay speed
-			if (!autoplay)
-			{
-				autoplay = true;
-				autoplaySpeed = 0;
-				break;
-			}
-
-			// if autoplaying, fall through and stop the autoplay
-
-		default:
-			autoplay = false;
-			frameToRender = 1;
-			break;
-		}
-	}
-	else if (e.type == SDL_MOUSEBUTTONDOWN)
-	{
-		int x, y;
-		SDL_GetMouseState(&x, &y);
-
-		printf("%d, %d\n", x, y);
-	}
-}
-
 #define BOARD_X 512
 #define BOARD_Y 256
 #define BOARD_SCALE 4.0
@@ -229,9 +121,9 @@ int main(int argc, char *argv[])
 	signal(SIGINT, intHandler);
 	WindowingSystem ws;
 	std::string name = std::string("LifeEngineLite");
-	GameWindow *mainWindow = ws.Create(BOARD_X, BOARD_Y, BOARD_SCALE, name);
-	mainWindow->SetInputHandler(GameWindow::handler_board);
+	BoardWindow *boardWindow = static_cast<BoardWindow *>(ws.Add(new BoardWindow(BOARD_X * BOARD_SCALE, BOARD_Y * BOARD_SCALE, name, BOARD_SCALE)));
 	board = new Board(BOARD_X, BOARD_Y);
+	boardWindow->SetBoard(board);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 	// srand(0);
 
@@ -251,85 +143,23 @@ int main(int argc, char *argv[])
 	firstOrganism->Heal(100);
 	firstOrganism->reproductionCooldown = 10;
 
-	auto lastFrame = std::chrono::high_resolution_clock::now();
-	size_t autoplaySpeed = 1;
-	int leftover = 0;
-	int frameToRender = 1;
 	SDL_Event e;
 	while (running /* && board->tickCount < 100*/)
 	{
-		while (SDL_PollEvent(&e) != 0)
+		while(SDL_PollEvent(&e))
 		{
-			// User requests quit
-			if (e.type == SDL_QUIT)
-			{
-				running = false;
-			}
-
 			ws.HandleEvent(e);
 		}
-		if (autoplay)
-		{
-
-			board->Tick();
-
-			/*if (board->tickCount % (1000 / autoplaySpeed) == 0)
-			{*/
-			// if (board->tickCount % 10 == 0)
-			// {
-			if (board->tickCount % 50 == 0)
-			{
-				board->Stats();
-			}
-			if (board->tickCount % frameToRender == 0)
-			{
-				RenderBoard(mainWindow);
-			}
-			auto thisFrame = std::chrono::high_resolution_clock::now();
-			auto diff = thisFrame - lastFrame;
-			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
-			lastFrame = thisFrame;
-			if (autoplaySpeed)
-			{
-				if (leftover > 1000000)
-				{
-					int leftovermillis = leftover / 1000000;
-					SDL_Delay(leftovermillis);
-					leftover = leftover - (leftovermillis * 1000000);
-				}
-				if (autoplaySpeed > (micros / 1000))
-				{
-					SDL_Delay(autoplaySpeed - (micros / 1000));
-					leftover += micros - (micros / 1000);
-				}
-			}
-		}
-
-		int pollattempts = 0;
-		while (pollattempts++ < 5)
-		{
-
-			if (pollattempts == 5)
-			{
-				if (!autoplay)
-				{
-					SDL_Delay(25);
-				}
-			}
-			// SDL_Delay(1000);
-			// refresh();
-			// attron(COLOR_PAIR(10));
-			// getch();
-		}
-
-		// SDL_DestroyWindow(window);
-		// SDL_DestroyRenderer(renderer);
-
-		// move(0, 0);
-		// mvprintw(0, 0, "Press any key to exit");
-		// refresh();
-
-		// getch();
-		// endwin();
+		ws.Tick();
 	}
+
+	// SDL_DestroyWindow(window);
+	// SDL_DestroyRenderer(renderer);
+
+	// move(0, 0);
+	// mvprintw(0, 0, "Press any key to exit");
+	// refresh();
+
+	// getch();
+	// endwin();
 }

@@ -9,8 +9,7 @@
 #include <chrono>
 
 int directions[8][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
-extern Board board;
-
+extern Board *board;
 Board::Board(const int _dim_x, const int _dim_y)
 {
 	this->tickCount = 0;
@@ -54,7 +53,7 @@ void Board::Tick()
 		case cell_biomass:
 			if (((Cell_Biomass *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
-				board.replaceCell(this->FoodCells[i], new Cell_Empty());
+				board->replaceCell(this->FoodCells[i], new Cell_Empty());
 				i--;
 			}
 			break;
@@ -62,7 +61,7 @@ void Board::Tick()
 		case cell_plantmass:
 			if (((Cell_Plantmass *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
-				board.replaceCell(this->FoodCells[i], new Cell_Empty());
+				board->replaceCell(this->FoodCells[i], new Cell_Empty());
 				i--;
 			}
 			break;
@@ -75,7 +74,7 @@ void Board::Tick()
 				if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
 				{
 					grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
-					board.replaceCell(this->FoodCells[i], new Cell_Empty());
+					board->replaceCell(this->FoodCells[i], new Cell_Empty());
 					grownFruit->AddCell(0, 0, GenerateRandomCell());
 					Cell *secondRandomCell = GenerateRandomCell();
 					bool couldAddSecond = false;
@@ -83,7 +82,7 @@ void Board::Tick()
 					for (int j = 0; j < 8; j++)
 					{
 						int *thisDirection = directions[(j + dirIndex) % 8];
-						if (board.isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
+						if (board->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
 						{
 							grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell);
 							couldAddSecond = true;
@@ -105,7 +104,7 @@ void Board::Tick()
 				}
 				else
 				{
-					board.replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Plantmass(FRUIT_SPOIL_TIME));
+					board->replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Plantmass(FRUIT_SPOIL_TIME));
 				}
 				i--;
 			}
@@ -286,7 +285,6 @@ bool Board::boundCheckPos(int x, int y)
 {
 	if (0 > x || 0 > y || x >= this->dim_x || y >= this->dim_y)
 	{
-		printf("out of bounds (dim is %d, %d)\n", this->dim_x, this->dim_y);
 		return true;
 	}
 	return false;
