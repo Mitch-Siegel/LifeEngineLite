@@ -7,10 +7,12 @@
 #include <chrono>
 
 #include "windowhandler.h"
+#include "boardwindow.h"
 #include "lifeforms.h"
 #include "board.h"
 #include "rng.h"
 
+int scalefactor = 5;
 static volatile int running = 1;
 Board *board = nullptr;
 void intHandler(int dummy)
@@ -108,7 +110,6 @@ void RenderBoard(GameWindow *gw)
 
 #define BOARD_X 512
 #define BOARD_Y 256
-#define BOARD_SCALE 4.0
 
 void ShowOrganism(Organism *o)
 {
@@ -121,7 +122,7 @@ int main(int argc, char *argv[])
 	signal(SIGINT, intHandler);
 	WindowingSystem ws;
 	std::string name = std::string("LifeEngineLite");
-	BoardWindow *boardWindow = static_cast<BoardWindow *>(ws.Add(new BoardWindow(BOARD_X * BOARD_SCALE, BOARD_Y * BOARD_SCALE, name, BOARD_SCALE)));
+	BoardWindow *boardWindow = static_cast<BoardWindow *>(ws.Add(new BoardWindow(BOARD_X * scalefactor, BOARD_Y * scalefactor, name, scalefactor)));
 	board = new Board(BOARD_X, BOARD_Y);
 	boardWindow->SetBoard(board);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);

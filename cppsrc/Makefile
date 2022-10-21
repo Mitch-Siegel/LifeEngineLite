@@ -1,8 +1,8 @@
 CC = g++
-CFLAGS = -g -Werror -Wall -O0
+CFLAGS = -g -Werror -Wall -O2
 programs: lel
 
-lel: main.o windowhandler.o organism.o cell.o board.o rng.o brain.o
+lel: main.o windowhandler.o boardwindow.o organismwindow.o organism.o cell.o board.o rng.o brain.o
 	$(CC) $(CFLAGS) -lSDL2 -o $@ $^
 
 
@@ -11,6 +11,12 @@ main.o: main.cpp
 
 windowhandler.o: windowhandler.cpp
 	$(CC) -c $(CFLAGS) windowhandler.cpp
+
+boardwindow.o: boardwindow.cpp
+	$(CC) -c $(CFLAGS) boardwindow.cpp
+
+organismwindow.o: organismwindow.cpp
+	$(CC) -c $(CFLAGS) organismwindow.cpp
 
 board.o: board.cpp
 	$(CC) -c $(CFLAGS) board.cpp

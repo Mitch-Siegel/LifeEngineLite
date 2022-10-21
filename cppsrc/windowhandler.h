@@ -2,16 +2,22 @@
 #include <string>
 #include <map>
 
-#include "board.h"
+extern int scalefactor;
+
+#pragma once
+
+class WindowingSystem;
 
 class GameWindow
 {
     friend class WindowingSystem;
     friend class BoardWindow;
+    friend class OrganismWindow;
 
 public:
-    GameWindow(int width, int height, std::string &title, float scale);
+    GameWindow();
     ~GameWindow();
+    void Init(int width, int height, std::string &title, float scale);
     void Focus();
     void Render();
 
@@ -24,6 +30,7 @@ private:
 
     SDL_Window *w;
     SDL_Renderer *r;
+    WindowingSystem *myWS;
     int width, height;
     bool focused;
     virtual void EventHandler(SDL_Event &e) = 0;
@@ -34,29 +41,6 @@ public:
     const decltype(r) &renderer() const { return r; }
 };
 
-class BoardWindow : public GameWindow
-{
-
-public:
-    BoardWindow(int width, int height, std::string &title, float scale);
-    
-    void SetBoard(Board *b);
-    
-    void EventHandler(SDL_Event &e);
-    
-    void Tick();
-    
-    void Draw();
-
-private:
-    bool autoplay;
-    
-    size_t autoplaySpeed;
-    
-    int frameToRender;
-    
-    Board *myBoard;
-};
 
 class WindowingSystem
 {
