@@ -220,6 +220,53 @@ void Organism::RecalculateStats()
 // return true if invalid
 bool Organism::CheckValidity()
 {
+	if(board->boundCheckPos(this->x, this->y))
+	{
+		return true;
+	}
+	if(board->cells[this->y][this->x]->myOrganism != this)
+	{
+		return true;
+	}
+	
+	std::unordered_map<Cell *, bool> cellValidity;
+	// conduct a search on cells, only keep ones directly attached to the organism
+	std::vector<Cell *> searchQueue;
+	Cell *start = board->cells[this->y][this->x];
+	searchQueue.push_back(start);
+	while (searchQueue.size() > 0)
+	{
+		Cell *examined = searchQueue.back();
+		searchQueue.pop_back();
+		cellValidity[examined] = true;
+		for (int i = 0; i < 8; i++)
+		{
+			int x_abs = examined->x + directions[i][0];
+			int y_abs = examined->y + directions[i][1];
+			if (!board->boundCheckPos(x_abs, y_abs))
+			{
+				Cell *neighbor = board->cells[y_abs][x_abs];
+				if (neighbor->myOrganism == this && cellValidity[neighbor] == false)
+				{
+					searchQueue.push_back(neighbor);
+				}
+			}
+		}
+	}
+
+	for (std::vector<Cell *>::iterator c = this->myCells.begin(); c != this->myCells.end();)
+	{
+		if (cellValidity[*c] == true)
+		{
+			c++;
+		}
+		else
+		{
+			board->replaceCell(*c, new Cell_Empty());
+			c = this->myCells.erase(c);
+		}
+	}
+
 	bool invalid = false;
 
 	// disallow organisms that are all mouths
@@ -520,7 +567,7 @@ bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 		int new_x_abs = _x_abs + newCellX_rel;
 		int new_y_abs = _y_abs + newCellY_rel;
 		bool boundCheckResult = board->boundCheckPos(new_x_abs, new_y_abs);
-		if (boundCheckResult ||																													  // if out of bounds
+		if (boundCheckResult ||																														// if out of bounds
 			(!boundCheckResult && board->cells[new_y_abs][new_x_abs]->type != cell_empty && board->cells[new_y_abs][new_x_abs]->myOrganism != this) // or in-bounds and this position is occupied by something else
 		)
 		{
@@ -775,7 +822,6 @@ void Organism::Mutate()
 			}
 		}
 	}
-	this->RecalculateStats();
 }
 
 void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)

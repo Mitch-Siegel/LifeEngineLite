@@ -33,63 +33,38 @@ void BoardWindow::EventHandler(SDL_Event &e)
         case SDLK_UP:
             if (!autoplay)
             {
-                autoplaySpeed = 1000;
                 autoplay = true;
+                tick_frequency = 1000 / 60;
             }
             else
             {
-                if (autoplaySpeed > 1)
+                tick_frequency /= 2;
+                if (tick_frequency < 1)
                 {
-                    autoplaySpeed /= 2;
-                    if (autoplaySpeed < 1)
-                    {
-                        autoplaySpeed = 1;
-                    }
-                }
-                else
-                {
-                    autoplaySpeed = 0;
+                    tick_frequency = 0;
                 }
             }
-            printf("Delay %lums between frames\n", autoplaySpeed);
+            printf("Tick every %.2f ms\n", tick_frequency);
             break;
 
         case SDLK_DOWN:
             if (!autoplay)
             {
-                autoplaySpeed = 1000;
                 autoplay = true;
+                tick_frequency = 1000 / 60;
             }
             else
             {
-                if (autoplaySpeed == 0)
+                if (tick_frequency == 0)
                 {
-                    autoplaySpeed = 1;
+                    tick_frequency = 1.041666627;
                 }
                 else
                 {
-                    autoplaySpeed *= 2;
-                    if (autoplaySpeed > 1000)
-                    {
-                        autoplaySpeed = 1000;
-                    }
+                    tick_frequency *= 2;
                 }
             }
-            printf("Delay %lums between frames\n", autoplaySpeed);
-            break;
-
-        case SDLK_RIGHT:
-            frameToRender *= 2;
-            printf("Rendering every %d tick(s)\n", frameToRender);
-            break;
-
-        case SDLK_LEFT:
-            frameToRender /= 2;
-            if (frameToRender < 1)
-            {
-                frameToRender = 1;
-            }
-            printf("Rendering every %d tick(s)\n", frameToRender);
+            printf("Tick every %.2f ms\n", tick_frequency);
             break;
 
         case SDLK_SPACE:
@@ -97,7 +72,7 @@ void BoardWindow::EventHandler(SDL_Event &e)
             if (!autoplay)
             {
                 autoplay = true;
-                autoplaySpeed = 0;
+                tick_frequency = 0;
                 break;
             }
 
@@ -116,7 +91,7 @@ void BoardWindow::EventHandler(SDL_Event &e)
         x /= scalefactor;
         y /= scalefactor;
         Organism *clickedOrganism = this->myBoard->cells[y][x]->myOrganism;
-        if(clickedOrganism != nullptr)
+        if (clickedOrganism != nullptr)
         {
             this->myWS->Add(new OrganismWindow(clickedOrganism));
         }
@@ -125,15 +100,27 @@ void BoardWindow::EventHandler(SDL_Event &e)
 
 void BoardWindow::Tick()
 {
-    if (this->autoplay)
+    size_t micros = 0;
+    if (this->tick_frequency > 0)
     {
-        this->myBoard->Tick();
-        if (this->myBoard->tickCount % 50 == 0)
-        {
-            this->myBoard->Stats();
-        }
+        auto now = std::chrono::high_resolution_clock::now();
+        auto diff = now - lastFrame;
+        micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
     }
-    this->Draw();
+    if (this->tick_frequency == 0 || micros > (this->tick_frequency * 1000))
+    {
+        if (this->autoplay)
+        {
+            this->myBoard->Tick();
+            if (this->myBoard->tickCount % 50 == 0)
+            {
+                this->myBoard->Stats();
+            }
+        }
+        this->Draw();
+        this->Render();
+        this->lastFrame = std::chrono::high_resolution_clock::now();
+    }
 }
 
 void BoardWindow::Draw()

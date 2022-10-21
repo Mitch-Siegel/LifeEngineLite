@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
 #include <string>
 #include <map>
+#include <chrono>
+
 
 extern int scalefactor;
 
@@ -24,7 +26,7 @@ public:
     virtual void Tick() = 0;
     virtual void Draw() = 0;
 
-private:
+private:   
     uint32_t id_;
     std::string title;
 
@@ -34,6 +36,9 @@ private:
     int width, height;
     bool focused;
     virtual void EventHandler(SDL_Event &e) = 0;
+
+    float tick_frequency;
+    std::chrono::high_resolution_clock::time_point lastFrame;
 
 public:
     const decltype(id_) &id() const { return id_; }

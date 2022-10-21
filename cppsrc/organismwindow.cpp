@@ -56,7 +56,15 @@ void OrganismWindow::EventHandler(SDL_Event &e)
 
 void OrganismWindow::Tick()
 {
-    this->Draw();
+    auto now = std::chrono::high_resolution_clock::now();
+    auto diff = now - lastFrame;
+    size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
+    if(micros > this->tick_frequency)
+    {
+        this->Draw();
+        this->Render();
+    }
+    this->lastFrame = std::chrono::high_resolution_clock::now();
 }
 
 void OrganismWindow::Draw()

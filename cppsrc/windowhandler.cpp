@@ -8,6 +8,8 @@ GameWindow::GameWindow()
     this->w = nullptr;
     this->focused = false;
     this->myWS = nullptr;
+    this->lastFrame = std::chrono::high_resolution_clock::now();
+    this->tick_frequency = 1000.0 / 60.0;
 }
 
 GameWindow::~GameWindow()
@@ -73,6 +75,6 @@ void WindowingSystem::Tick()
     for (auto w : this->activeWindows)
     {
         w.second->Tick();
-        w.second->Render();
+        // w.second->Render();
     }
 }

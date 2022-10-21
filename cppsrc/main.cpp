@@ -4,7 +4,6 @@
 #include <vector>
 
 #include <SDL2/SDL.h>
-#include <chrono>
 
 #include "windowhandler.h"
 #include "boardwindow.h"
@@ -12,7 +11,7 @@
 #include "board.h"
 #include "rng.h"
 
-int scalefactor = 5;
+int scalefactor = 7;
 static volatile int running = 1;
 Board *board = nullptr;
 void intHandler(int dummy)
@@ -108,13 +107,8 @@ void RenderBoard(GameWindow *gw)
 	SDL_RenderPresent(gw->renderer());
 }
 
-#define BOARD_X 512
-#define BOARD_Y 256
-
-void ShowOrganism(Organism *o)
-{
-	printf("showorganism %p\n", o);
-}
+#define BOARD_X 384
+#define BOARD_Y 192
 
 int main(int argc, char *argv[])
 {
