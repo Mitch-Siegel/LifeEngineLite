@@ -78,24 +78,23 @@ class Organism;
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .8
 
-// #define REPRODUCTION_COOLDOWN_MULTIPLIER 2.75
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 1
+#define REPRODUCTION_COOLDOWN 100
 
 #define LIFESPAN_MULTIPLIER 35
 #define ENERGY_DENSITY_MULTIPLIER 8
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define FOOD_MULTIPLIER 2 * ENERGY_DENSITY_MULTIPLIER
+#define FOOD_MULTIPLIER 2.25 * ENERGY_DENSITY_MULTIPLIER
 
 #define LEAF_FOOD_ENERGY 1
 #define FLOWER_FOOD_ENERGY 2
 #define FRUIT_FOOD_ENERGY 8
 
-#define SPOILTIME_BASE 100
-#define PLANTMASS_SPOIL_TIME_MULTIPLIER 14 * SPOILTIME_BASE
-#define BIOMASS_SPOIL_TIME_MULTIPLIER 5 * SPOILTIME_BASE
+#define SPOILTIME_BASE 10
+#define PLANTMASS_SPOIL_TIME_MULTIPLIER 50 * SPOILTIME_BASE
+#define BIOMASS_SPOIL_TIME_MULTIPLIER 30 * SPOILTIME_BASE
 
-#define FRUIT_SPOIL_TIME 0.5 * SPOILTIME_BASE
+#define FRUIT_SPOIL_TIME 5 * SPOILTIME_BASE
 
 // must roll this 2x
 #define FRUIT_GROW_PERCENT 5
@@ -105,6 +104,7 @@ class Organism;
 #define BIOMASS_FOOD_ENERGY 5 * PLANTMASS_FOOD_ENERGY
 
 #define FLOWER_COST 2 * ENERGY_DENSITY_MULTIPLIER
+#define LEAF_FLOWERING_COOLDOWN 50
 
 // whether or not a leaf is able to flower, rolled at creation
 #define LEAF_FLOWERING_ABILITY_PERCENT 40
@@ -115,9 +115,10 @@ class Organism;
 
 #define BARK_GROW_COOLDOWN 30
 #define BARK_PLANT_VS_THORN 95
-#define BARK_GROW_COST 3 * ENERGY_DENSITY_MULTIPLIER
-#define BARK_MAX_INTEGRITY 25
-#define BARK_REGENERATE_INTEGRITY_COST 1 * ENERGY_DENSITY_MULTIPLIER
+#define BARK_GROW_COST 2 * ENERGY_DENSITY_MULTIPLIER
+#define BARK_MAX_INTEGRITY 3
+
+// max integrity for leaves which are next to a bark
 
 #define FLOWER_BLOOM_COOLDOWN 75
 #define FLOWER_WILT_CHANCE 30
@@ -126,11 +127,11 @@ class Organism;
 
 #define TOUCH_SENSE_COOLDOWN 2
 
-#define KILLER_DAMAGE_COST 0.5 * ENERGY_DENSITY_MULTIPLIER
+#define KILLER_DAMAGE_COST 2 * ENERGY_DENSITY_MULTIPLIER
 
 #define ARMOR_HEALTH_BONUS 4 * MAX_HEALTH_MULTIPLIER
 
-
+class Organism;
 
 class Cell
 {
@@ -199,9 +200,12 @@ class Cell_Flower;
 
 class Cell_Leaf : public Cell
 {
-	friend class Cell_Flower;
+	friend class Cell_Herbivore;
+	friend class Cell_Bark;
 	friend class Board;
+	int flowerCooldown;
 	bool flowering;
+
 
 public:
 	~Cell_Leaf() override;
@@ -355,6 +359,7 @@ public:
 
 class Cell_Touch : public Cell
 {
+	friend class Organism;
 	friend class Board;
 	int senseInterval;
 	int senseCooldown;

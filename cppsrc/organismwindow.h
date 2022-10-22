@@ -7,6 +7,7 @@ class OrganismWindow : public GameWindow
 
 public:
     OrganismWindow(Organism *o);
+    ~OrganismWindow();
     
     void EventHandler(SDL_Event &e);
     

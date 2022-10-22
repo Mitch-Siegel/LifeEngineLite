@@ -18,7 +18,7 @@ class GameWindow
 
 public:
     GameWindow();
-    ~GameWindow();
+    virtual ~GameWindow() = 0;
     void Init(int width, int height, std::string &title, float scale);
     void Focus();
     void Render();
@@ -27,6 +27,8 @@ public:
     virtual void Draw() = 0;
 
 private:   
+    bool open;
+
     uint32_t id_;
     std::string title;
 
@@ -49,6 +51,7 @@ public:
 
 class WindowingSystem
 {
+    friend class GameWindow;
 public:
     WindowingSystem();
     ~WindowingSystem();
@@ -61,5 +64,6 @@ public:
 
 private:
     std::map<int, GameWindow *> activeWindows;
+    std::map<SDL_Renderer *, int> renderReferenceCounts;
     // std::vector<GameWindow *> windowList;
 };

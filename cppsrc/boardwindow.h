@@ -6,6 +6,7 @@ class BoardWindow : public GameWindow
 
 public:
     BoardWindow(int width, int height, std::string &title, float scale);
+    ~BoardWindow();
     
     void SetBoard(Board *b);
     

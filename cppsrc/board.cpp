@@ -99,8 +99,8 @@ void Board::Tick()
 					grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
 					grownFruit->Heal(grownFruit->GetMaxHealth());
 
-					int newReproductioncooldown = (grownFruit->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER;
-					grownFruit->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
+					// int newReproductioncooldown = (grownFruit->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER;
+					grownFruit->reproductionCooldown = 0;
 				}
 				else
 				{

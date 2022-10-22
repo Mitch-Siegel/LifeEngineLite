@@ -8,6 +8,12 @@ BoardWindow::BoardWindow(int width, int height, std::string &title, float scale)
     this->Init(width, height, title, scale);
 }
 
+BoardWindow::~BoardWindow()
+{
+    printf("~BoardWindow()\n");
+
+}
+
 void BoardWindow::SetBoard(Board *b)
 {
     this->myBoard = b;
@@ -15,8 +21,9 @@ void BoardWindow::SetBoard(Board *b)
 
 void BoardWindow::EventHandler(SDL_Event &e)
 {
-    if (e.type == SDL_QUIT)
+    if (e.type == SDL_QUIT || (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE))
     {
+        this->open = false;
     }
     if (e.type == SDL_KEYDOWN)
     {

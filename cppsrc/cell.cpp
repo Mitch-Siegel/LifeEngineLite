@@ -10,7 +10,7 @@ int CellEnergyDensities[cell_null] = {
 	0,	 // pcell_bark
 	0,	 // biomass
 	1,	 // leaf
-	6,	 // bark
+	8,	 // bark
 	2,	 // flower
 	0,	 // fruit
 	75,	 // herbivore
@@ -23,7 +23,6 @@ int CellEnergyDensities[cell_null] = {
 
 Cell *GenerateRandomCell()
 {
-
 	switch (randInt(0, 7))
 	{
 	case 0:
@@ -100,7 +99,7 @@ Cell_Plantmass::Cell_Plantmass()
 
 Cell_Plantmass::Cell_Plantmass(int _ticksUntilSpoil) : Cell_Plantmass()
 {
-	this->ticksUntilSpoil = PLANTMASS_SPOIL_TIME_MULTIPLIER;
+	this->ticksUntilSpoil = _ticksUntilSpoil;
 }
 
 void Cell_Plantmass::Tick()
@@ -131,7 +130,7 @@ Cell_Biomass::Cell_Biomass()
 
 Cell_Biomass::Cell_Biomass(int _ticksUntilSpoil) : Cell_Biomass()
 {
-	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME_MULTIPLIER;
+	this->ticksUntilSpoil = _ticksUntilSpoil;
 }
 
 void Cell_Biomass::Tick()
@@ -169,7 +168,17 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 
 void Cell_Leaf::Tick()
 {
-	if ((this->flowering) &&
+	/*if (this->integrity < 1)
+	{
+		this->myOrganism->RemoveCell(this);
+		return;
+	}*/
+	if (this->flowerCooldown > 0)
+	{
+		this->flowerCooldown--;
+	}
+	if (this->flowering &&
+		this->flowerCooldown == 0 &&
 		this->myOrganism->GetEnergy() > (FLOWER_COST + 1) &&
 		randPercent(PLANT_GROW_PERCENT))
 	{
@@ -196,6 +205,7 @@ void Cell_Leaf::Tick()
 				this->myOrganism->ExpendEnergy(FLOWER_COST);
 				Cell_Flower *newFlower = new Cell_Flower();
 				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, newFlower);
+				this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
 				return;
 			}
 		}
@@ -228,12 +238,12 @@ void Cell_Bark::Tick()
 		return;
 	}
 
-	if (this->integrity < 1)
+	/*if (this->integrity < 1)
 	{
 		this->myOrganism->RemoveCell(this);
 		board->replaceCell(this, new Cell_Empty());
 		return;
-	}
+	}*/
 
 	int bonusEnergy = 0;
 	bool canGrow = true;
@@ -247,7 +257,7 @@ void Cell_Bark::Tick()
 		{
 			if (randPercent(BARK_PLANT_VS_THORN))
 			{
-				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(75));
+				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(90));
 			}
 			else
 			{
@@ -264,7 +274,7 @@ void Cell_Bark::Tick()
 	}
 
 	// any leaves attached to bark generate a bonus energy every few ticks
-	if (this->myOrganism->age % 5 == 0)
+	if (this->myOrganism->age % 3 == 0)
 	{
 		this->myOrganism->AddEnergy(bonusEnergy);
 	}
@@ -437,6 +447,7 @@ void Cell_Herbivore::Tick()
 			potentiallyEaten->type == cell_bark)
 		{
 			Organism *eatenParent = potentiallyEaten->myOrganism;
+			bool removeEaten = true;
 			if (eatenParent != this->myOrganism)
 			{
 				switch (potentiallyEaten->type)
@@ -444,6 +455,7 @@ void Cell_Herbivore::Tick()
 				case cell_leaf:
 					gainedEnergy = LEAF_FOOD_ENERGY;
 					this->digestCooldown = 0;
+
 					break;
 
 				case cell_flower:
@@ -462,23 +474,32 @@ void Cell_Herbivore::Tick()
 					break;
 
 				case cell_bark:
+				{
 					gainedEnergy = 0;
-					((Cell_Bark *)potentiallyEaten)->integrity--;
+					Cell_Bark *chompedBark = static_cast<Cell_Bark *>(potentiallyEaten);
+					if (--chompedBark->integrity > 0)
+					{
+						removeEaten = false;
+					}
 					this->digestCooldown = 1;
-					break;
+				}
+				break;
 
 				default:
 					std::cerr << "Impossible case for herbivore cell to eat something it shouldn't!" << std::endl;
 					exit(1);
 				}
-				if (potentiallyEaten->myOrganism != nullptr)
+				if (removeEaten)
 				{
-					potentiallyEaten->myOrganism->RemoveCell(potentiallyEaten);
-					board->replaceCell(potentiallyEaten, new Cell_Empty());
-				}
-				else
-				{
-					board->replaceCell(potentiallyEaten, new Cell_Empty());
+					if (potentiallyEaten->myOrganism != nullptr)
+					{
+						potentiallyEaten->myOrganism->RemoveCell(potentiallyEaten);
+						board->replaceCell(potentiallyEaten, new Cell_Empty());
+					}
+					else
+					{
+						board->replaceCell(potentiallyEaten, new Cell_Empty());
+					}
 				}
 				couldEat = true;
 			}
@@ -637,7 +658,7 @@ void Cell_Killer::Tick()
 	}
 	// base cost of 1 every few ticks
 	// then some addl cost to actually hurt stuff
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 4 == 0));
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 10 == 0));
 
 	int adjacentLeaves = 0;
 	int adjacentBark = 0;
@@ -730,7 +751,7 @@ Cell_Touch::Cell_Touch()
 	this->type = cell_touch;
 	this->myOrganism = nullptr;
 	this->senseCooldown = 0;
-	this->senseInterval = randInt(0, 20);
+	this->senseInterval = randInt(0, 15);
 }
 
 void Cell_Touch::Tick()
@@ -782,14 +803,5 @@ void Cell_Touch::Tick()
 
 Cell_Touch *Cell_Touch::Clone()
 {
-	Cell_Touch *cloned = new Cell_Touch(*this);
-	if (randPercent(this->myOrganism->mutability))
-	{
-		cloned->senseInterval += randPercent(50) ? 1 : -1;
-		if (cloned->senseInterval < 0)
-		{
-			cloned->senseInterval = 0;
-		}
-	}
-	return cloned;
+	return new Cell_Touch(*this);
 }

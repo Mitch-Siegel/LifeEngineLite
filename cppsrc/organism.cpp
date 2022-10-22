@@ -49,18 +49,18 @@ void Organism::Die()
 		case cell_leaf:
 		case cell_flower:
 		case cell_bark:
-			replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
+			replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 
 		case cell_armor:
 		case cell_killer:
 			if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_bark]) >= this->myCells.size() * 0.25)
 			{
-				replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
+				replacedWith = new Cell_Plantmass(ceil(sqrt(this->myCells.size())) * PLANTMASS_SPOIL_TIME_MULTIPLIER);
 			}
 			else
 			{
-				replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * BIOMASS_SPOIL_TIME_MULTIPLIER);
+				replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * BIOMASS_SPOIL_TIME_MULTIPLIER);
 			}
 
 			break;
@@ -69,7 +69,7 @@ void Organism::Die()
 		case cell_herbivore_mouth:
 		case cell_carnivore_mouth:
 		case cell_touch:
-			replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * sqrt(this->maxEnergy) * BIOMASS_SPOIL_TIME_MULTIPLIER);
+			replacedWith = new Cell_Biomass(ceil(sqrt(this->myCells.size())) * BIOMASS_SPOIL_TIME_MULTIPLIER);
 			break;
 		}
 		board->replaceCell(thisCell, replacedWith);
@@ -473,7 +473,8 @@ void Organism::Rotate(bool clockwise)
 		board->DeltaCells[b->y][b->x] = true;
 	}
 
-	int rotateCost = ceil(sqrt(pow(2, .3 * this->myCells.size()) + 2)) - 2;
+	int rotateCost = floor(this->myCells.size() * 0.5) * (this->cellCounts[cell_leaf] + 1);
+
 	this->ExpendEnergy(rotateCost);
 	this->brain.RotateSuccess(clockwise);
 }
@@ -580,7 +581,8 @@ bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 
 Organism *Organism::Reproduce()
 {
-	this->reproductionCooldown = ceil(this->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER);
+	// this->reproductionCooldown = ceil(sqrt(this->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER);
+	this->reproductionCooldown = REPRODUCTION_COOLDOWN;
 
 	int dirIndex = randInt(0, 7);
 	for (int i = 0; i < 8; i++)
@@ -656,6 +658,15 @@ Organism *Organism::Reproduce()
 					{
 						replicated->mutability = 100;
 					}
+					
+					for(Cell *c : this->myCells)
+					{
+						if(c->type == cell_touch)
+						{
+							static_cast<Cell_Touch *>(c)->senseInterval += randInt(-1, 1);
+
+						}
+					}
 				}
 				if (randPercent(this->mutability))
 				{
@@ -663,8 +674,8 @@ Organism *Organism::Reproduce()
 				}
 
 				// this->brain.Reward();
-				int newReproductioncooldown = ceil(replicated->myCells.size() * REPRODUCTION_COOLDOWN_MULTIPLIER);
-				replicated->reproductionCooldown = newReproductioncooldown + randInt(0, newReproductioncooldown);
+				// int newReproductioncooldown = ceil(sqrt(replicated->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN + randInt(0, REPRODUCTION_COOLDOWN);
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->GetMaxHealth());
 				replicated->brain = this->brain.Clone();

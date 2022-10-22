@@ -36,12 +36,22 @@ OrganismWindow::OrganismWindow(Organism *o) : GameWindow()
     this->Init(this->width * 32, this->height * 32, name, 32);
 }
 
+OrganismWindow::~OrganismWindow()
+{
+    printf("~OrganismWindow()\n");
+    SDL_DestroyWindow(this->w);
+    // SDL_DestroyRenderer(this->r);
+}
+
 void OrganismWindow::EventHandler(SDL_Event &e)
 {
-    if (e.type == SDL_QUIT)
+    if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE)
     {
+        this->open = false;
+        // this->myWS->CloseWindow(this);
+        return;
     }
-    if (e.type == SDL_KEYDOWN)
+    if (e.type == SDL_KEYDOWN && this->focused)
     {
         switch (e.key.keysym.sym)
         {
@@ -49,7 +59,7 @@ void OrganismWindow::EventHandler(SDL_Event &e)
             break;
         }
     }
-    else if (e.type == SDL_MOUSEBUTTONDOWN)
+    else if (e.type == SDL_MOUSEBUTTONDOWN && this->focused)
     {
     }
 }
@@ -59,7 +69,7 @@ void OrganismWindow::Tick()
     auto now = std::chrono::high_resolution_clock::now();
     auto diff = now - lastFrame;
     size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
-    if(micros > this->tick_frequency)
+    if (micros > this->tick_frequency)
     {
         this->Draw();
         this->Render();
@@ -76,7 +86,7 @@ void OrganismWindow::Draw()
     // draw to board buffer instead of backbuffer
     SDL_SetRenderTarget(r, winBuf);
 
-    for(Cell *c : this->myOrganism->myCells)
+    for (Cell *c : this->myOrganism->myCells)
     {
         int x_rel = c->x - this->myOrganism->x;
         int y_rel = c->y - this->myOrganism->y;
