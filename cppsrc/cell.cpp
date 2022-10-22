@@ -13,12 +13,12 @@ int CellEnergyDensities[cell_null] = {
 	8,	 // bark
 	2,	 // flower
 	0,	 // fruit
-	75,	 // herbivore
-	200, // carnivore
-	100, // mover
+	40,	 // herbivore
+	100, // carnivore
+	50, // mover
 	0,	 // killer
 	-10, // armor
-	40,	 // touch sensor
+	5,	 // touch sensor
 };
 
 Cell *GenerateRandomCell()

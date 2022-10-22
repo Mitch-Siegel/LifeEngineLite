@@ -649,7 +649,7 @@ Organism *Organism::Reproduce()
 
 				if (randPercent(this->mutability))
 				{
-					replicated->mutability += randInt(-1, 1);
+					replicated->mutability += randInt(-2, 3);
 					if (replicated->mutability < 1)
 					{
 						replicated->mutability = 1;
