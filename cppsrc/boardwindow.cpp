@@ -21,9 +21,13 @@ void BoardWindow::SetBoard(Board *b)
 
 void BoardWindow::EventHandler(SDL_Event &e)
 {
-    if (e.type == SDL_QUIT || (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE))
+    if (e.type == SDL_QUIT)
     {
         this->open = false;
+    }
+    else if(e.type == SDL_WINDOWEVENT)
+    {
+        this->HandleWindowEvent(e);
     }
     if (e.type == SDL_KEYDOWN)
     {
@@ -100,6 +104,7 @@ void BoardWindow::EventHandler(SDL_Event &e)
         Organism *clickedOrganism = this->myBoard->cells[y][x]->myOrganism;
         if (clickedOrganism != nullptr)
         {
+            this->focused = false;
             this->myWS->Add(new OrganismWindow(clickedOrganism));
         }
     }

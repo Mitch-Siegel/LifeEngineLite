@@ -42,6 +42,8 @@ private:
     float tick_frequency;
     std::chrono::high_resolution_clock::time_point lastFrame;
 
+    void HandleWindowEvent(SDL_Event &e);
+
 public:
     const decltype(id_) &id() const { return id_; }
     const decltype(w) &window() const { return w; }
@@ -65,5 +67,6 @@ public:
 private:
     std::map<int, GameWindow *> activeWindows;
     std::map<SDL_Renderer *, int> renderReferenceCounts;
+    uint32_t focusedWindow;
     // std::vector<GameWindow *> windowList;
 };

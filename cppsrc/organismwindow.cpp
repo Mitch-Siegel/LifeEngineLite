@@ -38,18 +38,15 @@ OrganismWindow::OrganismWindow(Organism *o) : GameWindow()
 
 OrganismWindow::~OrganismWindow()
 {
-    printf("~OrganismWindow()\n");
     SDL_DestroyWindow(this->w);
     // SDL_DestroyRenderer(this->r);
 }
 
 void OrganismWindow::EventHandler(SDL_Event &e)
 {
-    if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE)
+    if (e.type == SDL_WINDOWEVENT)
     {
-        this->open = false;
-        // this->myWS->CloseWindow(this);
-        return;
+        this->HandleWindowEvent(e);
     }
     if (e.type == SDL_KEYDOWN && this->focused)
     {

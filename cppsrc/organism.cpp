@@ -675,7 +675,7 @@ Organism *Organism::Reproduce()
 
 				// this->brain.Reward();
 				// int newReproductioncooldown = ceil(sqrt(replicated->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER);
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN + randInt(0, REPRODUCTION_COOLDOWN);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN;// + randInt(0, REPRODUCTION_COOLDOWN);
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->GetMaxHealth());
 				replicated->brain = this->brain.Clone();

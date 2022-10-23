@@ -17,7 +17,7 @@ int CellEnergyDensities[cell_null] = {
 	100, // carnivore
 	50, // mover
 	0,	 // killer
-	-10, // armor
+	-5, // armor
 	5,	 // touch sensor
 };
 
@@ -274,7 +274,7 @@ void Cell_Bark::Tick()
 	}
 
 	// any leaves attached to bark generate a bonus energy every few ticks
-	if (this->myOrganism->age % 3 == 0)
+	if (this->myOrganism->age % 5 == 0)
 	{
 		this->myOrganism->AddEnergy(bonusEnergy);
 	}
@@ -455,7 +455,6 @@ void Cell_Herbivore::Tick()
 				case cell_leaf:
 					gainedEnergy = LEAF_FOOD_ENERGY;
 					this->digestCooldown = 0;
-
 					break;
 
 				case cell_flower:
@@ -690,7 +689,7 @@ void Cell_Killer::Tick()
 	}
 	if (adjacentBark || (this->myOrganism->cellCounts[cell_leaf] < this->myOrganism->myCells.size() * 0.5))
 	{
-		if (adjacentBark + adjacentLeaves > 2)
+		if ((adjacentBark + adjacentLeaves > 2) || (adjacentBark >= 2))
 		{
 			this->myOrganism->ReplaceCell(this, new Cell_Bark());
 		}

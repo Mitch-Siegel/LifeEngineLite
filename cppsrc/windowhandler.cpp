@@ -8,7 +8,8 @@ GameWindow::GameWindow()
     this->r = nullptr;
     this->lastFrame = std::chrono::high_resolution_clock::now();
     this->tick_frequency = 1000.0 / 60.0;
-    this->open = true;
+    this->open = false;
+    this->focused = false;
 }
 
 GameWindow::~GameWindow()
@@ -33,6 +34,7 @@ void GameWindow::Init(int width, int height, std::string &title, float scale)
             exit(1);
         }
         this->focused = true;
+        this->open = true;
         SDL_RenderSetScale(r, scale, scale);
         SDL_SetRenderDrawColor(this->r, 0, 0, 0, 0);
     }
@@ -54,8 +56,74 @@ void GameWindow::Render()
     SDL_RenderPresent(r);
 }
 
+void GameWindow::HandleWindowEvent(SDL_Event &e)
+{
+    switch(e.window.event)
+    {
+        case SDL_WINDOWEVENT_CLOSE:
+            if(this->myWS->focusedWindow == this->id_)
+            {
+                this->open = false;
+            }
+            break;
+
+        case SDL_WINDOWEVENT_ENTER:
+            this->myWS->focusedWindow = this->id_;
+            break;
+
+        /*case SDL_WINDOWEVENT_ENTER:
+            printf("window %d got focus\n", this->id_);
+            this->focused = true;
+            break;
+
+        case SDL_WINDOWEVENT_LEAVE:
+            printf("window %d lost focus\n", this->id_);
+            this->focused = false;
+            break;*/
+        
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+            this->myWS->focusedWindow = this->id_;
+            break;
+
+        case SDL_WINDOWEVENT_FOCUS_LOST:
+            // printf("window %d lost focus\n", this->id_);
+            // this->focused = false;
+            break;
+
+        case SDL_WINDOWEVENT_HIDDEN:
+            // printf("window %d lost focus\n", this->id_);
+            // this->focused = false;
+            break;
+
+        // case SDL_WINDOWEVENT_SHOWN:
+            // printf("window %d got focus\n", this->id_);
+            // this->focused = true;
+            // break;
+
+        case SDL_WINDOWEVENT_EXPOSED:
+        this->myWS->focusedWindow = this->id_;
+            // printf("window %d got focus\n", this->id_);
+            // this->focused = true;
+            break;
+
+        case SDL_WINDOWEVENT_RESIZED:
+            break;
+        case SDL_WINDOWEVENT_SIZE_CHANGED:
+            break;
+
+
+        case SDL_WINDOWEVENT_MOVED:
+            break;
+
+        default:
+            break;
+        
+    }
+}
+
 WindowingSystem::WindowingSystem()
 {
+    focusedWindow = 0;
 }
 
 WindowingSystem::~WindowingSystem()
