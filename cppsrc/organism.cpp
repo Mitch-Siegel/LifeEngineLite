@@ -14,6 +14,7 @@ Organism::Organism(int center_x, int center_y)
 {
 	this->x = center_x;
 	this->y = center_y;
+	this->species = 0;
 	this->myCells = std::vector<Cell *>();
 	this->maxHealth = 0;
 	this->currentHealth = this->maxHealth;
@@ -32,6 +33,7 @@ Organism::Organism(int center_x, int center_y)
 
 void Organism::Die()
 {
+	board->RemoveSpeciesMember(this->species);
 	for (size_t i = 0; i < this->myCells.size(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
@@ -220,15 +222,15 @@ void Organism::RecalculateStats()
 // return true if invalid
 bool Organism::CheckValidity()
 {
-	if(board->boundCheckPos(this->x, this->y))
+	if (board->boundCheckPos(this->x, this->y))
 	{
 		return true;
 	}
-	if(board->cells[this->y][this->x]->myOrganism != this)
+	if (board->cells[this->y][this->x]->myOrganism != this)
 	{
 		return true;
 	}
-	
+
 	std::unordered_map<Cell *, bool> cellValidity;
 	// conduct a search on cells, only keep ones directly attached to the organism
 	std::vector<Cell *> searchQueue;
@@ -625,6 +627,17 @@ Organism *Organism::Reproduce()
 					case cell_fruit:
 						break;
 
+					case cell_bark:
+					{
+						int this_rel_x = thisCell->x - this->x;
+						int this_rel_y = thisCell->y - this->y;
+						Cell_Bark *replicatedCell = static_cast<Cell_Bark *>(thisCell->Clone());
+						replicatedCell->myOrganism = replicated;
+						replicatedCell->integrity = BARK_MAX_INTEGRITY;
+						replicated->AddCell(this_rel_x, this_rel_y, replicatedCell);
+					}
+					break;
+
 					default:
 						int this_rel_x = thisCell->x - this->x;
 						int this_rel_y = thisCell->y - this->y;
@@ -635,17 +648,28 @@ Organism *Organism::Reproduce()
 					}
 				}
 
+				bool newSpecies = false;
 				if (randPercent(this->mutability))
 				{
-					replicated->Mutate();
+					newSpecies = replicated->Mutate();
 				}
 
 				if (replicated->CheckValidity() || replicated->maxEnergy == 0)
 				{
-
 					replicated->Remove();
 					return replicated;
 				}
+
+				if (newSpecies)
+				{
+					replicated->species = board->GetNextSpecies();
+					board->evolvedFrom[replicated->species] = this->species;
+				}
+				else
+				{
+					replicated->species = this->species;
+				}
+				board->AddSpeciesMember(replicated->species);
 
 				if (randPercent(this->mutability))
 				{
@@ -658,13 +682,12 @@ Organism *Organism::Reproduce()
 					{
 						replicated->mutability = 100;
 					}
-					
-					for(Cell *c : this->myCells)
+
+					for (Cell *c : this->myCells)
 					{
-						if(c->type == cell_touch)
+						if (c->type == cell_touch)
 						{
 							static_cast<Cell_Touch *>(c)->senseInterval += randInt(-1, 1);
-
 						}
 					}
 				}
@@ -675,7 +698,7 @@ Organism *Organism::Reproduce()
 
 				// this->brain.Reward();
 				// int newReproductioncooldown = ceil(sqrt(replicated->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER);
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN;// + randInt(0, REPRODUCTION_COOLDOWN);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN; // + randInt(0, REPRODUCTION_COOLDOWN);
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->GetMaxHealth());
 				replicated->brain = this->brain.Clone();
@@ -702,9 +725,7 @@ Organism *Organism::Reproduce()
 	return nullptr;
 }
 
-// random generation using this method is super janky:
-// TODO: improve this
-void Organism::Mutate()
+bool Organism::Mutate()
 {
 	// change existing cell
 	if (this->myCells.size() > 1 && randPercent(30))
@@ -717,8 +738,11 @@ void Organism::Mutate()
 		Cell *replacedWith = GenerateRandomCell();
 		replacedWith->myOrganism = this;
 
+		bool actuallyMutated = (replacedWith->type != toReplace->type);
+
 		board->replaceCell(toReplace, replacedWith);
 		this->myCells.push_back(replacedWith);
+		return actuallyMutated;
 		// int cellIndex = (rand() >> 5) % this->myCells.size();
 		// this->myCells[cellIndex].type = (enum CellTypes)((rand() >> 5) % (int)cell_mouth);
 	}
@@ -731,6 +755,7 @@ void Organism::Mutate()
 			Cell *toRemove = this->myCells[randInt(0, this->myCells.size() - 1)];
 			this->myCells.erase(std::find(this->myCells.begin(), this->myCells.end(), toRemove));
 			board->replaceCell(toRemove, new Cell_Empty());
+			return true;
 		}
 		// add a cell
 		else
@@ -738,13 +763,6 @@ void Organism::Mutate()
 			int x_rel;
 			int y_rel;
 			bool canAdd = false;
-
-			// int numCells = this->myCells.size();
-			// int cellIndex = 0;
-			// if (numCells > 1)
-			// {
-			// cellIndex = randInt(0, numCells - 1);
-			// }
 
 			int dirIndex = randInt(0, 7);
 			for (int i = 0; i < 8 && !canAdd; i++)
@@ -781,58 +799,14 @@ void Organism::Mutate()
 				}
 			}
 
-			/*
-			// preferentially mutate directly adjacent to an existing cell
-			for (int i = 0; (i < numCells) && !couldAdd; i++)
-			{
-				Cell *thisAttempt = this->myCells[(cellIndex + randInt(0, numCells - 1)) % numCells];
-				int thisDirectionIndex = randInt(0, 3);
-
-				// prefer to mutate directly next to an existing cell
-				for (int j = 0; j < 4; j++)
-				{
-					int *thisDirection = directions[(thisDirectionIndex + j) % 4];
-					int x_abs = thisAttempt->x + thisDirection[0];
-					int y_abs = thisAttempt->y + thisDirection[1];
-					if (board->isCellOfType(x_abs, y_abs, cell_empty))
-					{
-						x_rel = x_abs - this->x;
-						y_rel = y_abs - this->y;
-						couldAdd = true;
-						break;
-					}
-				}
-			}
-
-			// if not possible, then check diagonals
-			for (int i = 0; (i < numCells) && !couldAdd; i++)
-			{
-				Cell *thisAttempt = this->myCells[(cellIndex + randInt(0, numCells - 1)) % numCells];
-				int thisDirectionIndex = randInt(0, 3);
-
-				// prefer to mutate directly next to an existing cell
-				for (int j = 0; j < 4; j++)
-				{
-					int *thisDirection = directions[((thisDirectionIndex + j) % 4) + 4];
-					int x_abs = thisAttempt->x + thisDirection[0];
-					int y_abs = thisAttempt->y + thisDirection[1];
-					if (board->isCellOfType(x_abs, y_abs, cell_empty))
-					{
-						x_rel = x_abs - this->x;
-						y_rel = y_abs - this->y;
-						couldAdd = true;
-						break;
-					}
-				}
-			}
-			*/
 			if (canAdd)
 			{
-
 				this->AddCell(x_rel, y_rel, allLeaves ? new Cell_Leaf : GenerateRandomCell());
+				return true;
 			}
 		}
 	}
+	return false;
 }
 
 void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)

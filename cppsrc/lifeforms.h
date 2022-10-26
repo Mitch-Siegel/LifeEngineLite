@@ -17,6 +17,7 @@ private:
 public:
 	int x = -1;
 	int y = -1;
+	unsigned int species;
 	std::size_t age;
 	int mutability;
 	bool alive;
@@ -68,7 +69,7 @@ public:
 
 	Organism *Reproduce();
 
-	void Mutate();
+	bool Mutate();
 };
 
 class Organism;
@@ -225,6 +226,7 @@ public:
 
 class Cell_Bark : public Cell
 {
+	friend class Organism;
 	friend class Cell_Herbivore;
 	int actionCooldown;
 	int integrity;

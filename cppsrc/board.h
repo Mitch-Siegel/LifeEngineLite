@@ -1,4 +1,5 @@
 #include <vector>
+#include <unordered_map>
 
 #include "config.h"
 #include "lifeforms.h"
@@ -11,7 +12,15 @@ class Cell;
 
 class Board
 {
+private:
+    unsigned int nextSpecies;
+    std::unordered_map<unsigned int, unsigned int> speciesCounts;
 public:
+    std::unordered_map<unsigned int, unsigned int> evolvedFrom;
+    std::unordered_map<unsigned int, unsigned int> peakSpeciesCounts;
+
+    std::vector<unsigned int> activeSpecies;
+
     std::size_t tickCount;
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
@@ -41,5 +50,10 @@ public:
 
     Organism *createOrganism(const int _x, const int _y);
 
-};
+    unsigned int GetNextSpecies();
 
+    void AddSpeciesMember(unsigned int species);
+
+    void RemoveSpeciesMember(unsigned int species);
+
+};

@@ -11,7 +11,7 @@
 #include "board.h"
 #include "rng.h"
 
-int scalefactor = 7;
+int scalefactor = 5;
 static volatile int running = 1;
 Board *board = nullptr;
 void intHandler(int dummy)
@@ -107,7 +107,7 @@ void RenderBoard(GameWindow *gw)
 	SDL_RenderPresent(gw->renderer());
 }
 
-#define BOARD_X 384
+#define BOARD_X 192
 #define BOARD_Y 192
 
 int main(int argc, char *argv[])
@@ -137,6 +137,8 @@ int main(int argc, char *argv[])
 	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
 	firstOrganism->Heal(100);
 	firstOrganism->reproductionCooldown = 10;
+	firstOrganism->species = board->GetNextSpecies();
+	board->AddSpeciesMember(firstOrganism->species);
 
 	SDL_Event e;
 	while (running /* && board->tickCount < 100*/)
@@ -148,6 +150,43 @@ int main(int argc, char *argv[])
 		ws.Tick();
 	}
 
+	unsigned int finalSpeciesCount = board->GetNextSpecies();
+	printf("\n");
+	printf("%u species have ever lived\n", finalSpeciesCount);
+
+	unsigned int largestSpecies = 0, largestSpeciesPopulation = 0;
+	double totalMaxSpeciesSize = 0;
+	int speciesSizeCounts[16] = {0};
+	for(unsigned int i = 1; i < finalSpeciesCount; i++)
+	{
+		if(board->peakSpeciesCounts[i] > largestSpeciesPopulation)
+		{
+			largestSpecies = i;
+			largestSpeciesPopulation = board->peakSpeciesCounts[i];
+		}
+		totalMaxSpeciesSize += board->peakSpeciesCounts[i];
+		int index = 0;
+		int count = board->peakSpeciesCounts[i];
+		while(count > 1)
+		{
+			index++;
+			count /= 2;
+		}
+		speciesSizeCounts[index]++;
+	}
+	totalMaxSpeciesSize /= finalSpeciesCount;
+	printf("The largest species ever (%u) had %u concurrent living members\n", largestSpecies, largestSpeciesPopulation);
+	printf("The average species peaked at %.2f members\n", totalMaxSpeciesSize);
+	printf("Species size breakdown:\n");
+	for(int i = 0; i < 16; i++)
+	{
+		int len = printf("\t%d..%d", (int)pow(2, i), (int)(pow(2, i + 1) - 1));
+		while(len++ < 15)
+		{
+			printf(" ");
+		}
+		printf(":%2.2f%% (%d)\n", 100.0 * (speciesSizeCounts[i] / (double)finalSpeciesCount), speciesSizeCounts[i]);
+	}
 	// SDL_DestroyWindow(window);
 	// SDL_DestroyRenderer(renderer);
 

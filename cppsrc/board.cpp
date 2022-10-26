@@ -2,7 +2,6 @@
 #include "lifeforms.h"
 #include "rng.h"
 
-
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <algorithm>
@@ -13,6 +12,7 @@ extern Board *board;
 Board::Board(const int _dim_x, const int _dim_y)
 {
 	this->tickCount = 0;
+	this->nextSpecies = 1;
 	this->dim_x = _dim_x;
 	this->dim_y = _dim_y;
 	this->Organisms = std::vector<Organism *>();
@@ -70,9 +70,9 @@ void Board::Tick()
 			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
 			{
 				// if we roll grow percent, create a new random organism
-				Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
 				if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
 				{
+					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
 					grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
 					board->replaceCell(this->FoodCells[i], new Cell_Empty());
 					grownFruit->AddCell(0, 0, GenerateRandomCell());
@@ -94,13 +94,22 @@ void Board::Tick()
 						delete secondRandomCell;
 					}
 
-					grownFruit->RecalculateStats();
-					grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
-					grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
-					grownFruit->Heal(grownFruit->GetMaxHealth());
+					if (!grownFruit->CheckValidity())
+					{
+						grownFruit->species = this->GetNextSpecies();
+						board->AddSpeciesMember(grownFruit->species);
+						grownFruit->RecalculateStats();
+						grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
+						grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
+						grownFruit->Heal(grownFruit->GetMaxHealth());
 
-					// int newReproductioncooldown = (grownFruit->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER;
-					grownFruit->reproductionCooldown = 0;
+						// int newReproductioncooldown = (grownFruit->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER;
+						grownFruit->reproductionCooldown = 0;
+					}
+					else
+					{
+						grownFruit->Remove();
+					}
 				}
 				else
 				{
@@ -169,7 +178,7 @@ void Board::Stats()
 	auto now = std::chrono::high_resolution_clock::now();
 	auto diff = now - lastFrame;
 	size_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
-	printf("\nTICK %lu (%.2f t/s) (%lu organisms)\n", this->tickCount, (28000.0 / (float)millis), this->Organisms.size());
+	printf("\nTICK %lu (%.2f t/s) (%lu organisms in %lu species)\n", this->tickCount, (28000.0 / (float)millis), this->Organisms.size(), this->activeSpecies.size());
 	lastFrame = now;
 	for (Organism *o : this->Organisms)
 	{
@@ -376,3 +385,34 @@ Organism *Board::createOrganism(const int _x, const int _y)
 	return newOrganism;
 }
 
+unsigned int Board::GetNextSpecies()
+{
+	return this->nextSpecies++;
+}
+
+void Board::AddSpeciesMember(unsigned int species)
+{
+	if(this->speciesCounts[species] == 0)
+	{
+		this->activeSpecies.push_back(species);
+	}
+	this->speciesCounts[species]++;
+	if(this->speciesCounts[species] > this->peakSpeciesCounts[species])
+	{
+		this->peakSpeciesCounts[species] = this->speciesCounts[species];
+	}
+}
+
+void Board::RemoveSpeciesMember(unsigned int species)
+{
+	this->speciesCounts[species]--;
+	if(this->speciesCounts[species] == 0)
+	{
+		auto i = this->activeSpecies.begin();
+		while(*i != species)
+		{
+			i++;
+		}
+		this->activeSpecies.erase(i);
+	}
+}
