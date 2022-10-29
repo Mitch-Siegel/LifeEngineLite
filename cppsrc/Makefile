@@ -1,42 +1,60 @@
 CC = g++
-CFLAGS = -g -Werror -Wall -O2
-BACKEND = ./imgui-1.88/backends/imgui_impl_sdl.cpp ./imgui-1.88/backends/imgui_impl_sdlrenderer.cpp
+OBJDIR = builddir
+
+IMGUI_VERSION = imgui-1.88
+IMGUI_SRCS = $(basename $(wildcard $(IMGUI_VERSION)/*.cpp))
+IMGUI_OBJS = $(IMGUI_SRCS:$(IMGUI_VERSION)/%=%.o)
+
+BACKEND = $(IMGUI_VERSION)/backends/imgui_impl_sdl.cpp $(IMGUI_VERSION)/backends/imgui_impl_sdlrenderer.cpp
+BACKEND_SRCS = $(basename $(BACKEND))
+BACKEND_OBJS = $(BACKEND_SRCS:$(IMGUI_VERSION)/backends/%=%.o)
+
+CFLAGS_NOWARNINGS = -g -O0
+CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall
 programs: lel
 
 #c++ `sdl2-config --cflags` -I .. -I ../.. main.cpp 
 # ../../backends/imgui_impl_sdl.cpp ../../backends/imgui_impl_sdlrenderer.cpp 
 # ../../imgui*.cpp `sdl2-config --libs` -lGL
-lel: main.o windowhandler.o boardwindow.o organismwindow.o organism.o cell.o board.o rng.o brain.o
-	$(CC) $(CFLAGS) `sdl2-config --cflags` -o $@ $^ `sdl2-config --libs`
+lel: $(IMGUI_OBJS) $(BACKEND_OBJS) windowhandler.o boardwindow.o organismwindow.o organism.o cell.o board.o rng.o brain.o
+	$(CC) $(CFLAGS_WARNINGS) -I./imgui-1.88 main.cpp `sdl2-config --cflags` -o $@ $(addprefix $(OBJDIR)/, $^) `sdl2-config --libs` 
 
+%.o: $(IMGUI_VERSION)/backends/%.cpp
+	$(CC) -c $(CFLAGS_NOWARNINGS) -I./imgui-1.88 -I/usr/include/SDL2 -o $(OBJDIR)/$@ $< 
 
-main.o: main.cpp 
-	$(CC) -c $(CFLAGS) main.cpp $(BACKEND)
+%.o: $(IMGUI_VERSION)/%.cpp
+	$(CC) -c $(CFLAGS_NOWARNINGS) -o $(OBJDIR)/$@ $<
 
 windowhandler.o: windowhandler.cpp
-	$(CC) -c $(CFLAGS) windowhandler.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
 
 boardwindow.o: boardwindow.cpp
-	$(CC) -c $(CFLAGS) boardwindow.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
 
 organismwindow.o: organismwindow.cpp
-	$(CC) -c $(CFLAGS) organismwindow.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
 
 board.o: board.cpp
-	$(CC) -c $(CFLAGS) board.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
 
 cell.o: cell.cpp
-	$(CC) -c $(CFLAGS) cell.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
 
 organism.o: organism.cpp
-	$(CC) -c $(CFLAGS) organism.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
 
 brain.o: brain.cpp
-	$(CC) -c $(CFLAGS) brain.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
 
 rng.o: rng.cpp
-	$(CC) -c $(CFLAGS) rng.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
 
 clean:
-	rm *.o
+	rm $(OBJDIR)/*.o
 	rm ./lel
+
+test:
+	$(info OBJS="$(IMGUI_OBJS)")
+	$(info SRCS="$(IMGUI_SRCS)")
+	$(info BACKEND_OBJS="$(BACKEND_OBJS)")
+	$(info BACKEND_SRCS="$(BACKEND_SRCS)")
