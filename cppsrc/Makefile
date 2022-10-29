@@ -11,43 +11,29 @@ BACKEND_OBJS = $(BACKEND_SRCS:$(IMGUI_VERSION)/backends/%=%.o)
 
 CFLAGS_NOWARNINGS = -g -O0
 CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall
+
+OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) windowhandler.o boardwindow.o organismwindow.o organism.o cell.o board.o rng.o brain.o
+
+OBJS_IN_OBJDIR = $(addprefix $(OBJDIR)/,$(OBJS))
 programs: lel
 
 #c++ `sdl2-config --cflags` -I .. -I ../.. main.cpp 
 # ../../backends/imgui_impl_sdl.cpp ../../backends/imgui_impl_sdlrenderer.cpp 
 # ../../imgui*.cpp `sdl2-config --libs` -lGL
-lel: $(IMGUI_OBJS) $(BACKEND_OBJS) windowhandler.o boardwindow.o organismwindow.o organism.o cell.o board.o rng.o brain.o
-	$(CC) $(CFLAGS_WARNINGS) -I./imgui-1.88 main.cpp `sdl2-config --cflags` -o $@ $(addprefix $(OBJDIR)/, $^) `sdl2-config --libs` 
+lel: $(OBJS_IN_OBJDIR)
+	$(CC) $(CFLAGS_WARNINGS) -I./imgui-1.88 main.cpp `sdl2-config --cflags` -o $@ $^ `sdl2-config --libs` 
 
-%.o: $(IMGUI_VERSION)/backends/%.cpp
-	$(CC) -c $(CFLAGS_NOWARNINGS) -I./imgui-1.88 -I/usr/include/SDL2 -o $(OBJDIR)/$@ $< 
+$(OBJDIR)/%.o: $(IMGUI_VERSION)/backends/%.cpp
+	@echo ImGui backend file
+	$(CC) -c $(CFLAGS_NOWARNINGS) -I./imgui-1.88 -I/usr/include/SDL2 -o $@ $< 
 
-%.o: $(IMGUI_VERSION)/%.cpp
-	$(CC) -c $(CFLAGS_NOWARNINGS) -o $(OBJDIR)/$@ $<
+$(OBJDIR)/%.o: $(IMGUI_VERSION)/%.cpp
+	@echo ImGui library file
+	$(CC) -c $(CFLAGS_NOWARNINGS) -o $@ $<
 
-windowhandler.o: windowhandler.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
-
-boardwindow.o: boardwindow.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
-
-organismwindow.o: organismwindow.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
-
-board.o: board.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
-
-cell.o: cell.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
-
-organism.o: organism.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
-
-brain.o: brain.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
-
-rng.o: rng.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $(OBJDIR)/$@ $<
+$(OBJDIR)/%.o: %.cpp
+	@echo game file
+	$(CC) -c $(CFLAGS_WARNINGS) -o $@ $<
 
 clean:
 	rm $(OBJDIR)/*.o
@@ -58,3 +44,5 @@ test:
 	$(info SRCS="$(IMGUI_SRCS)")
 	$(info BACKEND_OBJS="$(BACKEND_OBJS)")
 	$(info BACKEND_SRCS="$(BACKEND_SRCS)")
+	$(info OBJS="$(OBJS)")
+	$(info OBJS_IN_OBJDIR="$(OBJS_IN_OBJDIR)")
