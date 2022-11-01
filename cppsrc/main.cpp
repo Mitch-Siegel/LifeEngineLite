@@ -26,6 +26,50 @@ int x_off = 0;
 int y_off = 0;
 int winX, winY;
 
+class FrameratePID
+{
+	float target = 55.0;
+	float previous_error = 0.0;
+	float integral = 0.0;
+
+	float Kp = 0.01;
+	float Ki = 0.000001;
+	float Kd = 10.0;
+
+public:
+	float Tick(float instantaneousFramerate)
+	{
+		if (instantaneousFramerate == 0.0)
+		{
+			instantaneousFramerate = 0.000001;
+		}
+		printf("Current instanteneous framerate: %f\n", instantaneousFramerate);
+		float error = instantaneousFramerate - target;
+		float dt = 1000.0 / instantaneousFramerate;
+		printf("DT is %f, error is %f\n", dt, error);
+		integral = integral + (error * dt);
+		printf("Error * dt is %f\n", error * dt);
+		float derivative = (error - previous_error) / dt;
+		float delta = Kp * error + Ki * integral + Kd * derivative;
+		printf("P:%f I:%f D:%f\n", error * Kp, integral * Ki, derivative * Kd);
+		printf("PID Delta returned: %f\n\n", delta);
+		previous_error = error;
+		return delta;
+	}
+};
+/*
+previous_error = 0
+integral = 0
+Start:
+error = setpoint – input
+integral = integral + error*dt
+derivative = (error – previous error)/dt
+output = Kp*error + Ki*integral + Kd*derivative
+previous_error = error
+wait (dt)
+Goto Start
+*/
+
 bool forceRedraw = false;
 void RenderBoard(SDL_Renderer *r)
 {
@@ -132,8 +176,10 @@ int main(int argc, char *argv[])
 {
 	bool autoplay = false;
 	bool maxSpeed = false;
+	float targetTPSDelta = 0.0;
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, intHandler);
+	FrameratePID frameratePid;
 	// Setup SDL
 	// (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
 	// depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to the latest version of SDL is recommended!)
@@ -220,9 +266,6 @@ int main(int argc, char *argv[])
 
 	int mouse_x = 0;
 	int mouse_y = 0;
-#define FRAMERATE_AVERAGING_INTERVAL 10
-	float frames[FRAMERATE_AVERAGING_INTERVAL] = {0.0};
-	int frameP = 0;
 
 	SDL_GetWindowSize(window, &winX, &winY);
 	// Main loop
@@ -231,45 +274,13 @@ int main(int argc, char *argv[])
 	while (!done)
 	{
 
-		frames[frameP] = ImGui::GetIO().Framerate;
-		++frameP %= FRAMERATE_AVERAGING_INTERVAL;
-		float avgFrameRate = 0.0;
-		for (int i = 0; i < FRAMERATE_AVERAGING_INTERVAL; i++)
+		if (autoplay && maxSpeed)
 		{
-			avgFrameRate += frames[i];
-		}
-		avgFrameRate /= (float)FRAMERATE_AVERAGING_INTERVAL;
-		if (avgFrameRate < 55.0)
-		{
-			static int waitTime = 0;
-			if (ticksPerFrame > 1.0)
+			targetTPSDelta = frameratePid.Tick(ImGui::GetIO().Framerate);
+			ticksPerFrame += targetTPSDelta;
+			if (ticksPerFrame < 0.1)
 			{
-				if (waitTime == 0)
-				{
-					waitTime = FRAMERATE_AVERAGING_INTERVAL / 2;
-					ticksPerFrame --;
-					if (ticksPerFrame < 1.0)
-					{
-						ticksPerFrame = 1.0;
-					}
-				}
-				else
-				{
-					waitTime--;
-				}
-			}
-		}
-		else if (maxSpeed && autoplay && avgFrameRate > 58.0)
-		{
-			static int waitTime = 0;
-			if (waitTime == 0)
-			{
-				waitTime = FRAMERATE_AVERAGING_INTERVAL;
-				ticksPerFrame++;
-			}
-			else
-			{
-				waitTime--;
+				ticksPerFrame = 0.1;
 			}
 		}
 		// Poll and handle events (inputs, window resize, etc.)
@@ -403,15 +414,16 @@ int main(int argc, char *argv[])
 			ImGui::Checkbox("Test Window", &testWinShown); // Edit bools storing our window open/close state
 														   // ImGui::Checkbox("Another Window", &show_another_window);
 														   // renderer and other code before this point
-			ImGui::Text("Framerate: %f", avgFrameRate);
-			ImGui::Text("Tickrate: %f", avgFrameRate * ticksPerFrame);
+			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
+			ImGui::Text("Tickrate: %f", ImGui::GetIO().Framerate * ticksPerFrame);
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
+			ImGui::Text("TPS PID Delta: %f", targetTPSDelta);
 			ImGui::Checkbox("Maximize tick speed:", &maxSpeed);
 			ImGui::SliderFloat("Target tick count per frame", &ticksPerFrame, 0.1, 100, ticksPerFrame > 1.0 ? "%.0f" : "%.1f");
-			if (ticksPerFrame > 1.0)
-			{
-				ticksPerFrame = floor(ticksPerFrame);
-			}
+			// if (ticksPerFrame > 1.0)
+			// {
+				// ticksPerFrame = floor(ticksPerFrame);
+			// }
 			// maxFrameRate = 0;
 			// printf("%d\n", maxFrameRate);
 
