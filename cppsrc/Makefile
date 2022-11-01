@@ -12,28 +12,32 @@ BACKEND_OBJS = $(BACKEND_SRCS:$(IMGUI_VERSION)/backends/%=%.o)
 CFLAGS_NOWARNINGS = -g -O0
 CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall
 
-OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) windowhandler.o boardwindow.o organismwindow.o organism.o cell.o board.o rng.o brain.o
+OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) main.o windowhandler.o boardwindow.o organismwindow.o organism.o cell.o board.o rng.o brain.o
 
-OBJS_IN_OBJDIR = $(addprefix $(OBJDIR)/,$(OBJS))
 programs: lel
 
 #c++ `sdl2-config --cflags` -I .. -I ../.. main.cpp 
 # ../../backends/imgui_impl_sdl.cpp ../../backends/imgui_impl_sdlrenderer.cpp 
 # ../../imgui*.cpp `sdl2-config --libs` -lGL
-lel: $(OBJS_IN_OBJDIR)
-	$(CC) $(CFLAGS_WARNINGS) -I./imgui-1.88 main.cpp `sdl2-config --cflags` -o $@ $^ `sdl2-config --libs` 
+lel: $(addprefix $(OBJDIR)/,$(OBJS))
+	@echo Final executable:
+	$(CC) $(CFLAGS_WARNINGS)  `sdl2-config --cflags` -o $@ $^ `sdl2-config --libs` 
 
 $(OBJDIR)/%.o: $(IMGUI_VERSION)/backends/%.cpp
-	@echo ImGui backend file
+	@echo ImGui backend file:
 	$(CC) -c $(CFLAGS_NOWARNINGS) -I./imgui-1.88 -I/usr/include/SDL2 -o $@ $< 
 
 $(OBJDIR)/%.o: $(IMGUI_VERSION)/%.cpp
-	@echo ImGui library file
+	@echo ImGui library file:
 	$(CC) -c $(CFLAGS_NOWARNINGS) -o $@ $<
 
 $(OBJDIR)/%.o: %.cpp
-	@echo game file
+	@echo game file:
 	$(CC) -c $(CFLAGS_WARNINGS) -o $@ $<
+
+$(OBJDIR)/main.o: main.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88  -o $@ $<
+
 
 clean:
 	rm $(OBJDIR)/*.o
@@ -45,4 +49,3 @@ test:
 	$(info BACKEND_OBJS="$(BACKEND_OBJS)")
 	$(info BACKEND_SRCS="$(BACKEND_SRCS)")
 	$(info OBJS="$(OBJS)")
-	$(info OBJS_IN_OBJDIR="$(OBJS_IN_OBJDIR)")
