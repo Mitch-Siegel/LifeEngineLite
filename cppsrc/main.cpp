@@ -21,7 +21,7 @@ void intHandler(int dummy)
 	running = 0;
 }
 
-int scaleFactor = 4;
+float scaleFactor = 4.0;
 int x_off = 0;
 int y_off = 0;
 int winX, winY;
@@ -181,7 +181,7 @@ void RenderMain()
 	}
 
 	auto lastFrame = std::chrono::high_resolution_clock::now();
-	
+
 	long int leftoverMicros = 0;
 	while (running)
 	{
@@ -195,18 +195,14 @@ void RenderMain()
 			if (targetTickrate < 1000)
 			{
 				leftoverMicros += static_cast<int>((1000000.0 / targetTickrate) - micros);
-				if (leftoverMicros > 1000)
+				if (leftoverMicros > 5000)
 				{
-					printf("Need additional delay\n");
 					long int delayDuration = (leftoverMicros / 1000) * 1000;
 					boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration / 1000));
-					// SDL_Delay(delayDuration / 1000);
-					// SDL_Delay(delayMillis);
 					leftoverMicros %= 1000;
 					auto delayEnd = std::chrono::high_resolution_clock::now();
 					auto delayDiff = delayEnd - frameEnd;
 					size_t actualDelayMicros = std::chrono::duration_cast<std::chrono::microseconds>(delayDiff).count();
-					// printf("Additional delay leftover is %ld\n", static_cast<long int>(actualDelayMicros) - delayDuration);
 					leftoverMicros -= delayDuration - static_cast<int>(actualDelayMicros);
 					lastFrame = delayEnd;
 				}
@@ -219,11 +215,9 @@ void RenderMain()
 			{
 				lastFrame = frameEnd;
 			}
-			// printf("leftover: %ld\n", leftoverMicros);
 		}
 		else
 		{
-			// SDL_Delay(100);
 			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 		}
 	}
@@ -231,7 +225,7 @@ void RenderMain()
 
 #define BOARD_X 192
 #define BOARD_Y 192
-#define FRAMERATE_TRACKING_INTERVAL 1000
+#define FRAMERATE_TRACKING_INTERVAL 500
 
 int main(int argc, char *argv[])
 {
@@ -249,7 +243,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	board = new Board(512, 512);
+	board = new Board(1024, 512);
 	// boardWindow->SetBoard(board);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 	// srand(0);
@@ -339,7 +333,7 @@ int main(int argc, char *argv[])
 		++frameP %= FRAMERATE_TRACKING_INTERVAL;
 		// if (autoplay && maxSpeed)
 		// {
-			// targetTPSDelta = frameratePid.Tick(ImGui::GetIO().Framerate);
+		// targetTPSDelta = frameratePid.Tick(ImGui::GetIO().Framerate);
 		// }
 
 		// Poll and handle events (inputs, window resize, etc.)
@@ -364,11 +358,12 @@ int main(int argc, char *argv[])
 			}
 			else if (event.type == SDL_MOUSEWHEEL)
 			{
+				SDL_GetMouseState(&mouse_x, &mouse_y);
 				// scroll up
 				if (event.wheel.y > 0)
 				{
 					forceRedraw = true;
-					scaleFactor++;
+					scaleFactor += 0.5;
 				}
 				// scroll down
 				else if (event.wheel.y < 0)
@@ -376,7 +371,7 @@ int main(int argc, char *argv[])
 					if (scaleFactor > 1)
 					{
 						forceRedraw = true;
-						scaleFactor--;
+						scaleFactor -= 0.5;
 					}
 				}
 			}
@@ -456,7 +451,8 @@ int main(int argc, char *argv[])
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("Hello, world!");				   // Create a window called "Hello, world!" and append into it.
+			ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
+			// ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, {800.f,600.f });
 			ImGui::Text("This is some useful text.");	   // Display some text (you can use a format strings too)
 			ImGui::Checkbox("Test Window", &testWinShown); // Edit bools storing our window open/close state
 														   // ImGui::Checkbox("Another Window", &show_another_window);
@@ -471,7 +467,7 @@ int main(int argc, char *argv[])
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
 			ImGui::SliderInt("Target tick count per frame", &targetTickrate, 1, 1000);
 			static int lastSecondTickrate = 0;
-			if(frameCount >= (lastSecondFrameCount + ceil(ImGui::GetIO().Framerate)))
+			if (frameCount >= (lastSecondFrameCount + ceil(ImGui::GetIO().Framerate)))
 			{
 				lastSecondTickrate = ticksThisSecond;
 				ticksThisSecond = 0;
