@@ -21,7 +21,7 @@ void intHandler(int dummy)
 }
 
 int scaleFactor = 4;
-int targetFramerate = 1000;
+float ticksPerFrame = 1.0;
 int x_off = 0;
 int y_off = 0;
 int winX, winY;
@@ -131,6 +131,7 @@ void RenderBoard(SDL_Renderer *r)
 int main(int argc, char *argv[])
 {
 	bool autoplay = false;
+	bool maxSpeed = false;
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, intHandler);
 	// Setup SDL
@@ -169,7 +170,7 @@ int main(int argc, char *argv[])
 	SDL_Window *window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
 
 	// Setup SDL_Renderer instance
-	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 	if (renderer == NULL)
 	{
 		SDL_Log("Error creating SDL_Renderer!");
@@ -219,17 +220,17 @@ int main(int argc, char *argv[])
 
 	int mouse_x = 0;
 	int mouse_y = 0;
-	#define FRAMERATE_AVERAGING_INTERVAL 5
+#define FRAMERATE_AVERAGING_INTERVAL 10
 	float frames[FRAMERATE_AVERAGING_INTERVAL] = {0.0};
 	int frameP = 0;
 
 	SDL_GetWindowSize(window, &winX, &winY);
 	// Main loop
 	bool done = false;
-	int leftoverMicros = 0;
-	auto lastFrame = std::chrono::high_resolution_clock::now();
+	static size_t frameCount = 0;
 	while (!done)
 	{
+
 		frames[frameP] = ImGui::GetIO().Framerate;
 		++frameP %= FRAMERATE_AVERAGING_INTERVAL;
 		float avgFrameRate = 0.0;
@@ -238,6 +239,39 @@ int main(int argc, char *argv[])
 			avgFrameRate += frames[i];
 		}
 		avgFrameRate /= (float)FRAMERATE_AVERAGING_INTERVAL;
+		if (avgFrameRate < 55.0)
+		{
+			static int waitTime = 0;
+			if (ticksPerFrame > 1.0)
+			{
+				if (waitTime == 0)
+				{
+					waitTime = FRAMERATE_AVERAGING_INTERVAL / 2;
+					ticksPerFrame --;
+					if (ticksPerFrame < 1.0)
+					{
+						ticksPerFrame = 1.0;
+					}
+				}
+				else
+				{
+					waitTime--;
+				}
+			}
+		}
+		else if (maxSpeed && autoplay && avgFrameRate > 58.0)
+		{
+			static int waitTime = 0;
+			if (waitTime == 0)
+			{
+				waitTime = FRAMERATE_AVERAGING_INTERVAL;
+				ticksPerFrame++;
+			}
+			else
+			{
+				waitTime--;
+			}
+		}
 		// Poll and handle events (inputs, window resize, etc.)
 		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
@@ -342,7 +376,20 @@ int main(int argc, char *argv[])
 
 		if (autoplay)
 		{
-			board->Tick();
+			if (ticksPerFrame >= 1.0)
+			{
+				for (float i = 0; i < ticksPerFrame; i++)
+				{
+					board->Tick();
+				}
+			}
+			else
+			{
+				if (frameCount % (int)(1.0 / ticksPerFrame) == 0)
+				{
+					board->Tick();
+				}
+			}
 		}
 
 		// Start the Dear ImGui frame
@@ -357,8 +404,14 @@ int main(int argc, char *argv[])
 														   // ImGui::Checkbox("Another Window", &show_another_window);
 														   // renderer and other code before this point
 			ImGui::Text("Framerate: %f", avgFrameRate);
+			ImGui::Text("Tickrate: %f", avgFrameRate * ticksPerFrame);
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
-			ImGui::SliderInt("Target Tickrate", &targetFramerate, 1, 100);
+			ImGui::Checkbox("Maximize tick speed:", &maxSpeed);
+			ImGui::SliderFloat("Target tick count per frame", &ticksPerFrame, 0.1, 100, ticksPerFrame > 1.0 ? "%.0f" : "%.1f");
+			if (ticksPerFrame > 1.0)
+			{
+				ticksPerFrame = floor(ticksPerFrame);
+			}
 			// maxFrameRate = 0;
 			// printf("%d\n", maxFrameRate);
 
@@ -397,25 +450,26 @@ int main(int argc, char *argv[])
 
 		SDL_RenderPresent(renderer);
 
-		auto frameEnd = std::chrono::high_resolution_clock::now();
+		/*auto frameEnd = std::chrono::high_resolution_clock::now();
 		auto frameTime = (frameEnd - lastFrame);
 		size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(frameTime).count();
-		
-		if(micros < (size_t)(1000000 / targetFramerate))
+
+		if (micros < (size_t)(1000000 / targetFramerate))
 		{
 			leftoverMicros += (int)(1000000 / targetFramerate) - micros;
 		}
 		// else
 		// {
-			// leftoverMicros -= micros - (int)(1000000 / targetFramerate);
+		// leftoverMicros -= micros - (int)(1000000 / targetFramerate);
 		// }
-		if(leftoverMicros > 10000)
+		if (leftoverMicros > 10000)
 		{
 			// SDL_Delay(1000);
 			SDL_Delay(leftoverMicros / 1000);
 			leftoverMicros = leftoverMicros % 1000;
 		}
-		lastFrame = frameEnd;
+		lastFrame = frameEnd;*/
+		frameCount++;
 	}
 
 	unsigned int finalSpeciesCount = board->GetNextSpecies();
