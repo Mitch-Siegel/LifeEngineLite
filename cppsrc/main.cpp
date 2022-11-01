@@ -8,13 +8,10 @@
 #include "imgui-1.88/backends/imgui_impl_sdl.h"
 #include "imgui-1.88/backends/imgui_impl_sdlrenderer.h"
 
-#include "windowhandler.h"
-#include "boardwindow.h"
 #include "lifeforms.h"
 #include "board.h"
 #include "rng.h"
 
-int scalefactor = 5;
 static volatile int running = 1;
 Board *board = nullptr;
 void intHandler(int dummy)
@@ -22,7 +19,7 @@ void intHandler(int dummy)
 	running = 0;
 }
 
-float scaleFactor = 4.0;
+int scaleFactor = 4;
 int x_off = 0;
 int y_off = 0;
 
@@ -31,13 +28,13 @@ void RenderBoard(SDL_Renderer *r)
 	SDL_RenderSetScale(r, scaleFactor, scaleFactor);
 	for (int y = 0; y < board->dim_y; y++)
 	{
-		if (y + y_off < 0)
+		if (y + (y_off / scaleFactor) < 0)
 		{
 			continue;
 		}
 		for (int x = 0; x < board->dim_x; x++)
 		{
-			if (x + x_off < 0)
+			if (x + (x_off / scaleFactor) < 0)
 			{
 				continue;
 			}
@@ -99,7 +96,7 @@ void RenderBoard(SDL_Renderer *r)
 			case cell_null:
 				break;
 			}
-			SDL_RenderDrawPoint(r, x + (x_off / scalefactor), y + (y_off / scalefactor));
+			SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
 		}
 	}
 	SDL_RenderSetScale(r, 1.0, 1.0);
@@ -197,11 +194,28 @@ int main(int argc, char *argv[])
 	bool testWinShown = true;
 
 	int mouse_x, mouse_y;
+	#define FRAMERATE_AVERAGING_INTERVAL 100
+	float frames[FRAMERATE_AVERAGING_INTERVAL] = {0.0};
+	int frameP = 0;
 
+	int winX, winY;
+	SDL_GetWindowSize(window, &winX, &winY);
 	// Main loop
 	bool done = false;
 	while (!done)
 	{
+		frames[frameP] = ImGui::GetIO().Framerate;
+		++frameP %= FRAMERATE_AVERAGING_INTERVAL;
+		float avgFrameTime = 0.0;
+		for (int i = 0; i < FRAMERATE_AVERAGING_INTERVAL; i++)
+		{
+			avgFrameTime += frames[i];
+		}
+		avgFrameTime /= (float)FRAMERATE_AVERAGING_INTERVAL;
+		if (frameP == 0)
+		{
+			printf("average frame time is %f\n", avgFrameTime);
+		}
 		// Poll and handle events (inputs, window resize, etc.)
 		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
@@ -226,7 +240,7 @@ int main(int argc, char *argv[])
 				// scroll down
 				else if (event.wheel.y < 0)
 				{
-					if (scaleFactor > 1.0)
+					if (scaleFactor > 1)
 					{
 						scaleFactor--;
 					}
@@ -255,25 +269,25 @@ int main(int argc, char *argv[])
 				int delta_y = mouse_y - event.button.y;
 				x_off -= delta_x;
 				y_off -= delta_y;
-				if (x_off < 0)
+				if ((x_off + (board->dim_x * scaleFactor)) < scaleFactor)
 				{
-					x_off = 0;
+					x_off = -1 * ((board->dim_x - 1) * scaleFactor);
 				}
-				else if (x_off > board->dim_x)
+				else if (x_off > winX - scaleFactor)
 				{
-					x_off = board->dim_x - 1;
+					x_off = winX - scaleFactor;
 				}
-				if (y_off < 0)
+				if ((y_off + (board->dim_y * scaleFactor)) < scaleFactor)
 				{
-					y_off = 0;
+					y_off = -1 * ((board->dim_y - 1) * scaleFactor);
 				}
-				else if (y_off > board->dim_y)
+				else if (y_off > winY - scaleFactor)
 				{
-					y_off = board->dim_y - 1;
+					y_off = winY - scaleFactor;
 				}
 				// printf("Delta on mouse drag: %d, %d\n", delta_x, delta_y);
 				mouse_x = event.button.x;
-					mouse_y = event.button.y;
+				mouse_y = event.button.y;
 			}
 		}
 

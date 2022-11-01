@@ -12,7 +12,7 @@ BACKEND_OBJS = $(BACKEND_SRCS:$(IMGUI_VERSION)/backends/%=%.o)
 CFLAGS_NOWARNINGS = -g -O0
 CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall
 
-OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) main.o windowhandler.o boardwindow.o organismwindow.o organism.o cell.o board.o rng.o brain.o
+OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) main.o organism.o cell.o board.o rng.o brain.o
 
 programs: lel
 
