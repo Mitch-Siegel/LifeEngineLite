@@ -25,7 +25,7 @@ lel: $(addprefix $(OBJDIR)/,$(OBJS))
 
 $(OBJDIR)/%.o: $(IMGUI_VERSION)/backends/%.cpp
 	@echo ImGui backend file:
-	$(CC) -c $(CFLAGS_NOWARNINGS) -I./imgui-1.88 -I/usr/include/SDL2 -o $@ $< 
+	$(CC) -c $(CFLAGS_NOWARNINGS) -I./imgui-1.88 `sdl2-config --cflags` -o $@ $< 
 
 $(OBJDIR)/%.o: $(IMGUI_VERSION)/%.cpp
 	@echo ImGui library file:

@@ -33,7 +33,7 @@ class FrameratePID
 	float integral = 0.0;
 
 	float Kp = 0.01;
-	float Ki = 0.000001;
+	float Ki = 0.00001;
 	float Kd = 10.0;
 
 public:
@@ -171,9 +171,12 @@ void RenderBoard(SDL_Renderer *r)
 
 #define BOARD_X 192
 #define BOARD_Y 192
+#define FRAMERATE_TRACKING_INTERVAL 1000
 
 int main(int argc, char *argv[])
 {
+	int frameP = 0;
+	float frameRates[FRAMERATE_TRACKING_INTERVAL] = {60.0};
 	bool autoplay = false;
 	bool maxSpeed = false;
 	float targetTPSDelta = 0.0;
@@ -273,7 +276,8 @@ int main(int argc, char *argv[])
 	static size_t frameCount = 0;
 	while (!done)
 	{
-
+		frameRates[frameP] = ImGui::GetIO().Framerate;
+		++frameP %= FRAMERATE_TRACKING_INTERVAL;
 		if (autoplay && maxSpeed)
 		{
 			targetTPSDelta = frameratePid.Tick(ImGui::GetIO().Framerate);
@@ -415,6 +419,12 @@ int main(int argc, char *argv[])
 														   // ImGui::Checkbox("Another Window", &show_another_window);
 														   // renderer and other code before this point
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
+			static float realFrameRates[FRAMERATE_TRACKING_INTERVAL];
+			for(int i = 0; i < FRAMERATE_TRACKING_INTERVAL; i++)
+			{
+				realFrameRates[i] = frameRates[(frameP + i) % FRAMERATE_TRACKING_INTERVAL];
+			}
+			ImGui::PlotLines("Frame Times", realFrameRates, FRAMERATE_TRACKING_INTERVAL);
 			ImGui::Text("Tickrate: %f", ImGui::GetIO().Framerate * ticksPerFrame);
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
 			ImGui::Text("TPS PID Delta: %f", targetTPSDelta);
@@ -422,7 +432,7 @@ int main(int argc, char *argv[])
 			ImGui::SliderFloat("Target tick count per frame", &ticksPerFrame, 0.1, 100, ticksPerFrame > 1.0 ? "%.0f" : "%.1f");
 			// if (ticksPerFrame > 1.0)
 			// {
-				// ticksPerFrame = floor(ticksPerFrame);
+			// ticksPerFrame = floor(ticksPerFrame);
 			// }
 			// maxFrameRate = 0;
 			// printf("%d\n", maxFrameRate);
