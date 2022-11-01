@@ -2,6 +2,7 @@
 #include <iostream>
 #include <signal.h>
 #include <vector>
+#include <chrono>
 
 #include <SDL2/SDL.h>
 #include "imgui-1.88/imgui.h"
@@ -20,86 +21,108 @@ void intHandler(int dummy)
 }
 
 int scaleFactor = 4;
+int targetFramerate = 1000;
 int x_off = 0;
 int y_off = 0;
+int winX, winY;
 
+bool forceRedraw = false;
 void RenderBoard(SDL_Renderer *r)
 {
+	// we'll use this texture as our own backbuffer
+	static SDL_Texture *boardBuf = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888,
+													 SDL_TEXTUREACCESS_TARGET, winX, winY);
+
+	// draw to board buffer instead of backbuffer
+	SDL_SetRenderTarget(r, boardBuf);
 	SDL_RenderSetScale(r, scaleFactor, scaleFactor);
+
+	if (forceRedraw)
+	{
+		SDL_RenderClear(r);
+	}
+
 	for (int y = 0; y < board->dim_y; y++)
 	{
-		if (y + (y_off / scaleFactor) < 0)
+		if (y + (y_off / scaleFactor) < 0 || ((y - board->dim_y) * scaleFactor) + y_off > winY)
 		{
 			continue;
 		}
 		for (int x = 0; x < board->dim_x; x++)
 		{
-			if (x + (x_off / scaleFactor) < 0)
+			if (x + (x_off / scaleFactor) < 0 || ((x - board->dim_x) * scaleFactor) + x_off > winX)
 			{
 				continue;
 			}
-			Cell *thisCell = board->cells[y][x];
-			switch (thisCell->type)
+			if (forceRedraw || board->DeltaCells[y][x])
 			{
-			case cell_empty:
-				SDL_SetRenderDrawColor(r, 0, 0, 0, 0);
-				break;
+				board->DeltaCells[y][x] = false;
+				Cell *thisCell = board->cells[y][x];
+				switch (thisCell->type)
+				{
+				case cell_empty:
+					SDL_SetRenderDrawColor(r, 0, 0, 0, 0);
+					break;
 
-			case cell_plantmass:
-				SDL_SetRenderDrawColor(r, 10, 40, 10, 255);
-				break;
+				case cell_plantmass:
+					SDL_SetRenderDrawColor(r, 10, 40, 10, 255);
+					break;
 
-			case cell_biomass:
-				SDL_SetRenderDrawColor(r, 150, 60, 60, 255);
-				break;
+				case cell_biomass:
+					SDL_SetRenderDrawColor(r, 150, 60, 60, 255);
+					break;
 
-			case cell_leaf:
-				SDL_SetRenderDrawColor(r, 30, 120, 30, 255);
-				break;
+				case cell_leaf:
+					SDL_SetRenderDrawColor(r, 30, 120, 30, 255);
+					break;
 
-			case cell_bark:
-				SDL_SetRenderDrawColor(r, 75, 25, 25, 255);
-				break;
+				case cell_bark:
+					SDL_SetRenderDrawColor(r, 75, 25, 25, 255);
+					break;
 
-			case cell_mover:
-				SDL_SetRenderDrawColor(r, 50, 120, 255, 255);
-				break;
+				case cell_mover:
+					SDL_SetRenderDrawColor(r, 50, 120, 255, 255);
+					break;
 
-			case cell_herbivore_mouth:
-				SDL_SetRenderDrawColor(r, 255, 150, 0, 255);
-				break;
+				case cell_herbivore_mouth:
+					SDL_SetRenderDrawColor(r, 255, 150, 0, 255);
+					break;
 
-			case cell_carnivore_mouth:
-				SDL_SetRenderDrawColor(r, 255, 100, 150, 255);
-				break;
+				case cell_carnivore_mouth:
+					SDL_SetRenderDrawColor(r, 255, 100, 150, 255);
+					break;
 
-			case cell_flower:
-				SDL_SetRenderDrawColor(r, 50, 250, 150, 255);
-				break;
+				case cell_flower:
+					SDL_SetRenderDrawColor(r, 50, 250, 150, 255);
+					break;
 
-			case cell_fruit:
-				SDL_SetRenderDrawColor(r, 200, 200, 0, 255);
-				break;
+				case cell_fruit:
+					SDL_SetRenderDrawColor(r, 200, 200, 0, 255);
+					break;
 
-			case cell_killer:
-				SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
-				break;
+				case cell_killer:
+					SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
+					break;
 
-			case cell_armor:
-				SDL_SetRenderDrawColor(r, 175, 0, 255, 255);
-				break;
+				case cell_armor:
+					SDL_SetRenderDrawColor(r, 175, 0, 255, 255);
+					break;
 
-			case cell_touch:
-				SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
-				break;
+				case cell_touch:
+					SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
+					break;
 
-			case cell_null:
-				break;
+				case cell_null:
+					break;
+				}
+				SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
 			}
-			SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
 		}
 	}
 	SDL_RenderSetScale(r, 1.0, 1.0);
+	forceRedraw = false;
+	SDL_SetRenderTarget(r, NULL);
+	SDL_RenderCopy(r, boardBuf, NULL, NULL);
 }
 
 #define BOARD_X 192
@@ -107,6 +130,7 @@ void RenderBoard(SDL_Renderer *r)
 
 int main(int argc, char *argv[])
 {
+	bool autoplay = false;
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, intHandler);
 	// Setup SDL
@@ -118,7 +142,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	board = new Board(256, 256);
+	board = new Board(512, 512);
 	// boardWindow->SetBoard(board);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 	// srand(0);
@@ -145,7 +169,7 @@ int main(int argc, char *argv[])
 	SDL_Window *window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
 
 	// Setup SDL_Renderer instance
-	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	if (renderer == NULL)
 	{
 		SDL_Log("Error creating SDL_Renderer!");
@@ -193,29 +217,27 @@ int main(int argc, char *argv[])
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	bool testWinShown = true;
 
-	int mouse_x, mouse_y;
-	#define FRAMERATE_AVERAGING_INTERVAL 100
+	int mouse_x = 0;
+	int mouse_y = 0;
+	#define FRAMERATE_AVERAGING_INTERVAL 5
 	float frames[FRAMERATE_AVERAGING_INTERVAL] = {0.0};
 	int frameP = 0;
 
-	int winX, winY;
 	SDL_GetWindowSize(window, &winX, &winY);
 	// Main loop
 	bool done = false;
+	int leftoverMicros = 0;
+	auto lastFrame = std::chrono::high_resolution_clock::now();
 	while (!done)
 	{
 		frames[frameP] = ImGui::GetIO().Framerate;
 		++frameP %= FRAMERATE_AVERAGING_INTERVAL;
-		float avgFrameTime = 0.0;
+		float avgFrameRate = 0.0;
 		for (int i = 0; i < FRAMERATE_AVERAGING_INTERVAL; i++)
 		{
-			avgFrameTime += frames[i];
+			avgFrameRate += frames[i];
 		}
-		avgFrameTime /= (float)FRAMERATE_AVERAGING_INTERVAL;
-		if (frameP == 0)
-		{
-			printf("average frame time is %f\n", avgFrameTime);
-		}
+		avgFrameRate /= (float)FRAMERATE_AVERAGING_INTERVAL;
 		// Poll and handle events (inputs, window resize, etc.)
 		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
@@ -235,6 +257,7 @@ int main(int argc, char *argv[])
 				// scroll up
 				if (event.wheel.y > 0)
 				{
+					forceRedraw = true;
 					scaleFactor++;
 				}
 				// scroll down
@@ -242,29 +265,55 @@ int main(int argc, char *argv[])
 				{
 					if (scaleFactor > 1)
 					{
+						forceRedraw = true;
 						scaleFactor--;
 					}
 				}
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN)
 			{
-				if (event.button.button == SDL_BUTTON_LEFT)
+				if (!io.WantCaptureMouse)
 				{
-					mouse1Held = true;
-					mouse_x = event.button.x;
-					mouse_y = event.button.y;
+					if (event.button.button == SDL_BUTTON_LEFT)
+					{
+						mouse1Held = true;
+						mouse_x = event.button.x;
+						mouse_y = event.button.y;
+					}
 				}
 			}
 			else if (event.type == SDL_MOUSEBUTTONUP)
 			{
-				if (event.button.button == SDL_BUTTON_LEFT)
+				if (!io.WantCaptureMouse)
 				{
-					mouse1Held = false;
+					if (event.button.button == SDL_BUTTON_LEFT)
+					{
+						mouse1Held = false;
+					}
+				}
+			}
+			else if (event.type == SDL_KEYDOWN)
+			{
+				if (!io.WantCaptureMouse)
+				{
+					switch (event.key.keysym.sym)
+					{
+					case SDLK_SPACE:
+						autoplay = true;
+						break;
+
+					case SDLK_RETURN:
+						if (!autoplay)
+						{
+							board->Tick();
+						}
+					}
 				}
 			}
 
 			if (mouse1Held)
 			{
+				forceRedraw = true;
 				int delta_x = mouse_x - event.button.x;
 				int delta_y = mouse_y - event.button.y;
 				x_off -= delta_x;
@@ -291,6 +340,11 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		if (autoplay)
+		{
+			board->Tick();
+		}
+
 		// Start the Dear ImGui frame
 		ImGui_ImplSDLRenderer_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
@@ -301,6 +355,13 @@ int main(int argc, char *argv[])
 			ImGui::Text("This is some useful text.");	   // Display some text (you can use a format strings too)
 			ImGui::Checkbox("Test Window", &testWinShown); // Edit bools storing our window open/close state
 														   // ImGui::Checkbox("Another Window", &show_another_window);
+														   // renderer and other code before this point
+			ImGui::Text("Framerate: %f", avgFrameRate);
+			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
+			ImGui::SliderInt("Target Tickrate", &targetFramerate, 1, 100);
+			// maxFrameRate = 0;
+			// printf("%d\n", maxFrameRate);
+
 			ImGui::End();
 		}
 
@@ -335,6 +396,26 @@ int main(int argc, char *argv[])
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 
 		SDL_RenderPresent(renderer);
+
+		auto frameEnd = std::chrono::high_resolution_clock::now();
+		auto frameTime = (frameEnd - lastFrame);
+		size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(frameTime).count();
+		
+		if(micros < (size_t)(1000000 / targetFramerate))
+		{
+			leftoverMicros += (int)(1000000 / targetFramerate) - micros;
+		}
+		// else
+		// {
+			// leftoverMicros -= micros - (int)(1000000 / targetFramerate);
+		// }
+		if(leftoverMicros > 10000)
+		{
+			// SDL_Delay(1000);
+			SDL_Delay(leftoverMicros / 1000);
+			leftoverMicros = leftoverMicros % 1000;
+		}
+		lastFrame = frameEnd;
 	}
 
 	unsigned int finalSpeciesCount = board->GetNextSpecies();
