@@ -10,7 +10,7 @@ BACKEND_SRCS = $(basename $(BACKEND))
 BACKEND_OBJS = $(BACKEND_SRCS:$(IMGUI_VERSION)/backends/%=%.o)
 
 CFLAGS_NOWARNINGS = -g -O2
-CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall
+CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall -lboost_thread
 
 OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) main.o organism.o cell.o board.o rng.o brain.o
 

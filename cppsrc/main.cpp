@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <vector>
 #include <chrono>
+#include <boost/thread.hpp>
 
 #include <SDL2/SDL.h>
 #include "imgui-1.88/imgui.h"
@@ -21,7 +22,6 @@ void intHandler(int dummy)
 }
 
 int scaleFactor = 4;
-float ticksPerFrame = 1.0;
 int x_off = 0;
 int y_off = 0;
 int winX, winY;
@@ -169,6 +169,66 @@ void RenderBoard(SDL_Renderer *r)
 	SDL_RenderCopy(r, boardBuf, NULL, NULL);
 }
 
+bool autoplay = false;
+int targetTickrate = 10;
+int ticksThisSecond = 0;
+void RenderMain()
+{
+	if (board == nullptr)
+	{
+		printf("RenderMain called with null board!\nBoard must be instantiated first!\n");
+		return;
+	}
+
+	auto lastFrame = std::chrono::high_resolution_clock::now();
+	
+	long int leftoverMicros = 0;
+	while (running)
+	{
+		if (autoplay)
+		{
+			board->Tick();
+			ticksThisSecond++;
+			auto frameEnd = std::chrono::high_resolution_clock::now();
+			auto diff = frameEnd - lastFrame;
+			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
+			if (targetTickrate < 1000)
+			{
+				leftoverMicros += static_cast<int>((1000000.0 / targetTickrate) - micros);
+				if (leftoverMicros > 1000)
+				{
+					printf("Need additional delay\n");
+					long int delayDuration = (leftoverMicros / 1000) * 1000;
+					boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration / 1000));
+					// SDL_Delay(delayDuration / 1000);
+					// SDL_Delay(delayMillis);
+					leftoverMicros %= 1000;
+					auto delayEnd = std::chrono::high_resolution_clock::now();
+					auto delayDiff = delayEnd - frameEnd;
+					size_t actualDelayMicros = std::chrono::duration_cast<std::chrono::microseconds>(delayDiff).count();
+					// printf("Additional delay leftover is %ld\n", static_cast<long int>(actualDelayMicros) - delayDuration);
+					leftoverMicros -= delayDuration - static_cast<int>(actualDelayMicros);
+					lastFrame = delayEnd;
+				}
+				else
+				{
+					lastFrame = frameEnd;
+				}
+			}
+			else
+			{
+				lastFrame = frameEnd;
+			}
+			// printf("leftover: %ld\n", leftoverMicros);
+		}
+		else
+		{
+			// SDL_Delay(100);
+			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+		}
+	}
+}
+
 #define BOARD_X 192
 #define BOARD_Y 192
 #define FRAMERATE_TRACKING_INTERVAL 1000
@@ -177,9 +237,6 @@ int main(int argc, char *argv[])
 {
 	int frameP = 0;
 	float frameRates[FRAMERATE_TRACKING_INTERVAL] = {60.0};
-	bool autoplay = false;
-	bool maxSpeed = false;
-	float targetTPSDelta = 0.0;
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, intHandler);
 	FrameratePID frameratePid;
@@ -270,23 +327,21 @@ int main(int argc, char *argv[])
 	int mouse_x = 0;
 	int mouse_y = 0;
 
+	boost::thread renderThread{RenderMain};
 	SDL_GetWindowSize(window, &winX, &winY);
 	// Main loop
 	bool done = false;
 	static size_t frameCount = 0;
+	static size_t lastSecondFrameCount = frameCount;
 	while (!done)
 	{
 		frameRates[frameP] = ImGui::GetIO().Framerate;
 		++frameP %= FRAMERATE_TRACKING_INTERVAL;
-		if (autoplay && maxSpeed)
-		{
-			targetTPSDelta = frameratePid.Tick(ImGui::GetIO().Framerate);
-			ticksPerFrame += targetTPSDelta;
-			if (ticksPerFrame < 0.1)
-			{
-				ticksPerFrame = 0.1;
-			}
-		}
+		// if (autoplay && maxSpeed)
+		// {
+			// targetTPSDelta = frameratePid.Tick(ImGui::GetIO().Framerate);
+		// }
+
 		// Poll and handle events (inputs, window resize, etc.)
 		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
@@ -298,9 +353,15 @@ int main(int argc, char *argv[])
 			static bool mouse1Held = false;
 			ImGui_ImplSDL2_ProcessEvent(&event);
 			if (event.type == SDL_QUIT)
+			{
 				done = true;
+				running = false;
+			}
 			else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
+			{
 				done = true;
+				running = false;
+			}
 			else if (event.type == SDL_MOUSEWHEEL)
 			{
 				// scroll up
@@ -389,24 +450,6 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if (autoplay)
-		{
-			if (ticksPerFrame >= 1.0)
-			{
-				for (float i = 0; i < ticksPerFrame; i++)
-				{
-					board->Tick();
-				}
-			}
-			else
-			{
-				if (frameCount % (int)(1.0 / ticksPerFrame) == 0)
-				{
-					board->Tick();
-				}
-			}
-		}
-
 		// Start the Dear ImGui frame
 		ImGui_ImplSDLRenderer_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
@@ -420,23 +463,21 @@ int main(int argc, char *argv[])
 														   // renderer and other code before this point
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			static float realFrameRates[FRAMERATE_TRACKING_INTERVAL];
-			for(int i = 0; i < FRAMERATE_TRACKING_INTERVAL; i++)
+			for (int i = 0; i < FRAMERATE_TRACKING_INTERVAL; i++)
 			{
 				realFrameRates[i] = frameRates[(frameP + i) % FRAMERATE_TRACKING_INTERVAL];
 			}
 			ImGui::PlotLines("Frame Times", realFrameRates, FRAMERATE_TRACKING_INTERVAL);
-			ImGui::Text("Tickrate: %f", ImGui::GetIO().Framerate * ticksPerFrame);
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
-			ImGui::Text("TPS PID Delta: %f", targetTPSDelta);
-			ImGui::Checkbox("Maximize tick speed:", &maxSpeed);
-			ImGui::SliderFloat("Target tick count per frame", &ticksPerFrame, 0.1, 100, ticksPerFrame > 1.0 ? "%.0f" : "%.1f");
-			// if (ticksPerFrame > 1.0)
-			// {
-			// ticksPerFrame = floor(ticksPerFrame);
-			// }
-			// maxFrameRate = 0;
-			// printf("%d\n", maxFrameRate);
-
+			ImGui::SliderInt("Target tick count per frame", &targetTickrate, 1, 1000);
+			static int lastSecondTickrate = 0;
+			if(frameCount >= (lastSecondFrameCount + ceil(ImGui::GetIO().Framerate)))
+			{
+				lastSecondTickrate = ticksThisSecond;
+				ticksThisSecond = 0;
+				lastSecondFrameCount = frameCount;
+			}
+			ImGui::Text("%d ticks per second", lastSecondTickrate);
 			ImGui::End();
 		}
 
@@ -472,28 +513,10 @@ int main(int argc, char *argv[])
 
 		SDL_RenderPresent(renderer);
 
-		/*auto frameEnd = std::chrono::high_resolution_clock::now();
-		auto frameTime = (frameEnd - lastFrame);
-		size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(frameTime).count();
-
-		if (micros < (size_t)(1000000 / targetFramerate))
-		{
-			leftoverMicros += (int)(1000000 / targetFramerate) - micros;
-		}
-		// else
-		// {
-		// leftoverMicros -= micros - (int)(1000000 / targetFramerate);
-		// }
-		if (leftoverMicros > 10000)
-		{
-			// SDL_Delay(1000);
-			SDL_Delay(leftoverMicros / 1000);
-			leftoverMicros = leftoverMicros % 1000;
-		}
-		lastFrame = frameEnd;*/
 		frameCount++;
 	}
 
+	renderThread.join();
 	unsigned int finalSpeciesCount = board->GetNextSpecies();
 	printf("\n");
 	printf("%u species have ever lived\n", finalSpeciesCount);
