@@ -70,6 +70,8 @@ public:
 	Organism *Reproduce();
 
 	bool Mutate();
+
+	enum OrganismClassifications Classify();
 };
 
 class Organism;
@@ -374,4 +376,6 @@ public:
 	void Tick() override;
 
 	Cell_Touch *Clone() override;
+
+	int getSenseInterval() {return this->senseInterval;};
 };

@@ -669,7 +669,7 @@ Organism *Organism::Reproduce()
 				{
 					replicated->species = this->species;
 				}
-				board->AddSpeciesMember(replicated->species);
+				board->AddSpeciesMember(replicated);
 
 				if (randPercent(this->mutability))
 				{
@@ -849,4 +849,33 @@ void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 	board->replaceCell(_myCell, _newCell);
 	this->RecalculateStats();
 	// this->AddCell(x_rel, y_rel, _newCell);
+}
+
+enum OrganismClassifications Organism::Classify()
+{
+	int plantCells = this->cellCounts[cell_leaf] +
+					 this->cellCounts[cell_bark] +
+					 this->cellCounts[cell_flower];
+	// if at least 1/3 plant or can't move, it's a plant
+	if (static_cast<size_t>(plantCells * 3) >= this->myCells.size() || !this->cellCounts[cell_mover])
+	{
+		return class_plant;
+	}
+
+	// otherwise classify by mouth
+	if (this->cellCounts[cell_herbivore_mouth] && this->cellCounts[cell_carnivore_mouth])
+	{
+		return class_omnivore;
+	}
+	else if (this->cellCounts[cell_herbivore_mouth])
+	{
+		return class_herbivore;
+	}
+	else if (this->cellCounts[cell_carnivore_mouth])
+	{
+		return class_carnivore;
+	}
+
+	// if no mouths but not substantially plant, just classify as plant anyways
+	return class_plant;
 }

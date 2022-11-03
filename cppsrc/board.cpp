@@ -97,7 +97,7 @@ void Board::Tick()
 					if (!grownFruit->CheckValidity())
 					{
 						grownFruit->species = this->GetNextSpecies();
-						board->AddSpeciesMember(grownFruit->species);
+						board->AddSpeciesMember(grownFruit);
 						grownFruit->RecalculateStats();
 						grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
 						grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
@@ -187,6 +187,7 @@ void Board::Stats()
 			moverStats[count_cells] += o->myCells.size();
 			moverStats[count_energy] += o->GetEnergy();
 			moverStats[count_maxenergy] += o->GetMaxEnergy();
+
 			moverStats[count_age] += o->age;
 			moverStats[count_lifespan] += o->lifespan;
 			moverStats[count_mutability] += o->mutability;
@@ -390,14 +391,16 @@ unsigned int Board::GetNextSpecies()
 	return this->nextSpecies++;
 }
 
-void Board::AddSpeciesMember(unsigned int species)
+void Board::AddSpeciesMember(Organism *o)
 {
-	if(this->speciesCounts[species] == 0)
+	int species = o->species;
+	if (this->speciesCounts[species] == 0)
 	{
 		this->activeSpecies.push_back(species);
+		speciesClassifications[species] = o->Classify();
 	}
 	this->speciesCounts[species]++;
-	if(this->speciesCounts[species] > this->peakSpeciesCounts[species])
+	if (this->speciesCounts[species] > this->peakSpeciesCounts[species])
 	{
 		this->peakSpeciesCounts[species] = this->speciesCounts[species];
 	}
@@ -406,10 +409,10 @@ void Board::AddSpeciesMember(unsigned int species)
 void Board::RemoveSpeciesMember(unsigned int species)
 {
 	this->speciesCounts[species]--;
-	if(this->speciesCounts[species] == 0)
+	if (this->speciesCounts[species] == 0)
 	{
 		auto i = this->activeSpecies.begin();
-		while(*i != species)
+		while (*i != species)
 		{
 			i++;
 		}

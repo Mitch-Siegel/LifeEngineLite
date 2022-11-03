@@ -15,7 +15,10 @@ class Board
 private:
     unsigned int nextSpecies;
     std::unordered_map<unsigned int, unsigned int> speciesCounts;
+
 public:
+    std::unordered_map<unsigned int, enum OrganismClassifications> speciesClassifications;
+
     std::unordered_map<unsigned int, unsigned int> evolvedFrom;
     std::unordered_map<unsigned int, unsigned int> peakSpeciesCounts;
 
@@ -52,8 +55,7 @@ public:
 
     unsigned int GetNextSpecies();
 
-    void AddSpeciesMember(unsigned int species);
+    void AddSpeciesMember(Organism *o);
 
     void RemoveSpeciesMember(unsigned int species);
-
 };

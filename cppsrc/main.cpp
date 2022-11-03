@@ -223,10 +223,186 @@ void RenderMain()
 	}
 }
 
+void displayStats()
+{
+	enum Counts
+	{
+		count_cells,
+		count_energy,
+		count_maxenergy,
+		count_age,
+		count_lifespan,
+		count_mutability,
+		count_maxconviction,
+		count_rotatevschange,
+		count_turnwhenrotate,
+		count_raw,
+		count_null
+	};
+
+	double organismStats[class_null][count_null] = {{0.0}};
+	int classCounts[class_null] = {0};
+	double organismCellCounts[class_null][cell_null] = {{0.0}};
+	double touchSensorHaverCounts[class_null] = {0.0};
+	double touchSensorIntervals[class_null] = {0.0};
+	double cellSentiments[class_null][cell_null] = {{0.0}};
+	for (Organism *o : board->Organisms)
+	{
+		enum OrganismClassifications thisClass = board->speciesClassifications[o->species];
+		classCounts[thisClass]++;
+
+		organismStats[thisClass][count_cells] += o->myCells.size();
+		organismStats[thisClass][count_energy] += o->GetEnergy();
+		organismStats[thisClass][count_maxenergy] += o->GetMaxEnergy();
+
+		organismStats[thisClass][count_age] += o->age;
+		organismStats[thisClass][count_lifespan] += o->lifespan;
+		organismStats[thisClass][count_mutability] += o->mutability;
+		organismStats[thisClass][count_maxconviction] += o->brain.maxConviction;
+		organismStats[thisClass][count_rotatevschange] += o->brain.rotatevschange;
+		organismStats[thisClass][count_turnwhenrotate] += o->brain.turnwhenrotate;
+		organismStats[thisClass][count_raw]++;
+		for (int i = 0; i < cell_null; i++)
+		{
+			organismCellCounts[thisClass][i] += o->cellCounts[i];
+		}
+		if (o->cellCounts[cell_touch] > 0)
+		{
+			touchSensorHaverCounts[thisClass]++;
+			for (int i = 0; i < cell_null; i++)
+			{
+				cellSentiments[thisClass][i] += o->brain.cellSentiments[i];
+			}
+			for (Cell *c : o->myCells)
+			{
+				if (c->type == cell_touch)
+				{
+					Cell_Touch *t = (Cell_Touch *)c;
+					touchSensorIntervals[thisClass] += t->getSenseInterval();
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < class_null; i++)
+	{
+		int thisClassSize = classCounts[i];
+		for (int j = 0; j < count_null; j++)
+		{
+			organismStats[i][j] /= thisClassSize;
+		}
+	}
+
+	const char *classNames[class_null] = {"Plant", "Herbivore", "Carnivore", "Omnivore"};
+	const char *rowNames[count_null] = {"Class:", "Count", "Cells", "Energy%", "Max Energy", "Age", "Lifespan", "Mutability", "Max Conviction", "Rotate vs. change"};
+	if (ImGui::BeginTable("OrganismStats", class_null + 1))
+	{
+		int row = 0;
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%s", classNames[i]);
+		}
+		row++;
+		
+		// organism counts
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%d", classCounts[i]);
+		}
+		row++;
+
+		// cell counts
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%.1f", organismStats[i][count_cells]);
+		}
+		row++;
+
+		// energy %
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%.0f%%", 100.0 * (organismStats[i][count_energy] / organismStats[i][count_maxenergy]));
+		}
+		row++;
+
+		// max energy
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%.0f", organismStats[i][count_maxenergy]);
+		}
+		row++;
+
+		/*
+		for(; row < count_null; row++)
+		{
+			ImGui::TableNextRow();
+			for (int column = 0; column < class_null; column++)
+			{
+				ImGui::TableSetColumnIndex(column);
+				ImGui::Text("Row %d Column %d", row, column);
+			}
+		}*/
+		ImGui::EndTable();
+	}
+
+	/*printf("%5.0f Plants - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f/%.0f lifespan, %.1f%% mutability\n",
+		   plantStats[count_raw],
+		   plantStats[count_cells],
+		   plantStats[count_energy] / plantStats[count_maxenergy] * 100,
+		   (plantStats[count_energy] / plantStats[count_maxenergy]) * plantStats[count_energy],
+		   plantStats[count_age],
+		   plantStats[count_lifespan],
+		   plantStats[count_mutability]);*/
+
+	/*printf("%5.0f Movers - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f/%.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotate vs change, %.1f turn when rotate\n",
+		   moverStats[count_raw],
+		   moverStats[count_cells],
+		   moverStats[count_energy] / moverStats[count_maxenergy] * 100,
+		   (moverStats[count_energy] / moverStats[count_maxenergy]) * moverStats[count_energy],
+		   moverStats[count_age],
+		   moverStats[count_lifespan],
+		   moverStats[count_mutability],
+		   moverStats[count_maxconviction],
+		   moverStats[count_rotatevschange],
+		   moverStats[count_turnwhenrotate]);*/
+	// printf("Plants/Movers ratio: %2.2f/1\n", plantStats[count_raw] / moverStats[count_raw]);
+
+	/*printf("%lu (%.2f%%) movers have touch sensors (avg sense interval %2.2f)\n", touchSensorHaverCount, 100 * (float)touchSensorHaverCount / moverStats[count_raw], touchSensorInterval);
+	char cellShortNames[cell_null][5] = {"EMPT", "PMAS", "BMAS", "LEAF", "BARK", "FLWR", "FRUT", "HERB", "CARN", "MOVR", "KILR", "ARMR", "TUCH"};
+	printf("CELL:APLNTC|AMOVRC|ASSENT\n");
+	for (int i = cell_empty; i < cell_null; i++)
+	{
+		printf("%4s: %2.2f | %2.2f | %02.2f\n",
+			   cellShortNames[i],
+			   plantCellCounts[i],
+			   moverCellCounts[i],
+			   moverCellSentiments[i]);
+	}*/
+}
+
 #define BOARD_X 192
 #define BOARD_Y 192
 #define FRAMERATE_TRACKING_INTERVAL 500
-
 int main(int argc, char *argv[])
 {
 	int frameP = 0;
@@ -264,7 +440,7 @@ int main(int argc, char *argv[])
 	firstOrganism->Heal(100);
 	firstOrganism->reproductionCooldown = 10;
 	firstOrganism->species = board->GetNextSpecies();
-	board->AddSpeciesMember(firstOrganism->species);
+	board->AddSpeciesMember(firstOrganism);
 	// Setup window
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	SDL_Window *window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
@@ -363,7 +539,7 @@ int main(int argc, char *argv[])
 				if (event.wheel.y > 0)
 				{
 					forceRedraw = true;
-					scaleFactor ++;
+					scaleFactor++;
 				}
 				// scroll down
 				else if (event.wheel.y < 0)
@@ -371,7 +547,7 @@ int main(int argc, char *argv[])
 					if (scaleFactor > 1)
 					{
 						forceRedraw = true;
-						scaleFactor --;
+						scaleFactor--;
 					}
 				}
 			}
@@ -474,6 +650,9 @@ int main(int argc, char *argv[])
 				lastSecondFrameCount = frameCount;
 			}
 			ImGui::Text("%d ticks per second", lastSecondTickrate);
+
+			ImGui::Text("%lu organisms in %lu species", board->Organisms.size(), board->activeSpecies.size());
+			displayStats();
 			ImGui::End();
 		}
 

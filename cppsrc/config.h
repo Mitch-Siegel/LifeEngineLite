@@ -18,5 +18,14 @@ enum CellTypes
 	cell_null,
 };
 
+enum OrganismClassifications
+{
+	class_plant,
+	class_herbivore,
+	class_carnivore,
+	class_omnivore,
+	class_null,
+};
+
 extern int CellEnergyDensities[cell_null];
 
