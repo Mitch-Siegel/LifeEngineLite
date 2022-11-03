@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
 				if (event.wheel.y > 0)
 				{
 					forceRedraw = true;
-					scaleFactor += 0.5;
+					scaleFactor ++;
 				}
 				// scroll down
 				else if (event.wheel.y < 0)
@@ -371,7 +371,7 @@ int main(int argc, char *argv[])
 					if (scaleFactor > 1)
 					{
 						forceRedraw = true;
-						scaleFactor -= 0.5;
+						scaleFactor --;
 					}
 				}
 			}

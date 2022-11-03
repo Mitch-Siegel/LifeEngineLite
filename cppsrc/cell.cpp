@@ -469,7 +469,7 @@ void Cell_Herbivore::Tick()
 
 				case cell_plantmass:
 					gainedEnergy = PLANTMASS_FOOD_ENERGY;
-					this->digestCooldown = 1;
+					this->digestCooldown = 0;
 					break;
 
 				case cell_bark:
@@ -642,7 +642,7 @@ void Cell_Killer::Tick()
 			Cell *adjacent = board->cells[abs_y][abs_x];
 			if (adjacent->myOrganism != nullptr)
 			{
-				if (adjacent->myOrganism != this->myOrganism)
+				if (adjacent->myOrganism != this->myOrganism && adjacent->myOrganism->species != this->myOrganism->species)
 				{
 					// still expend the energy to try and hit armor
 					// but if directly contacting armor, do no damage
