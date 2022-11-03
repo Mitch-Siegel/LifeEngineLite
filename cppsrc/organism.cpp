@@ -370,8 +370,8 @@ void Organism::Move()
 			// calculate the new x and y position we are moving to
 			int newX = movedCell->x + moveDir[0];
 			int newY = movedCell->y + moveDir[1];
-			board->DeltaCells[movedCell->y][movedCell->x] = true;
-			board->DeltaCells[newY][newX] = true;
+			board->DeltaCells.insert(std::pair<int, int>(movedCell->x, movedCell->y));
+			board->DeltaCells.insert(std::pair<int, int>(newX, newY));
 
 			movedCell->x = newX;
 			movedCell->y = newY;
@@ -467,12 +467,12 @@ void Organism::Rotate(bool clockwise)
 		a->x = b->x;
 		a->y = b->y;
 		board->cells[a->y][a->x] = a;
-		board->DeltaCells[a->y][a->x] = true;
+		board->DeltaCells.insert(std::pair<int, int>(a->x, a->y));
 
 		b->x = oldX;
 		b->y = oldY;
 		board->cells[b->y][b->x] = b;
-		board->DeltaCells[b->y][b->x] = true;
+		board->DeltaCells.insert(std::pair<int, int>(b->x, b->y));
 	}
 
 	int rotateCost = floor(this->myCells.size() * 0.5) * (this->cellCounts[cell_leaf] + 1);

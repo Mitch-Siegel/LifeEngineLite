@@ -20,11 +20,9 @@ Board::Board(const int _dim_x, const int _dim_y)
 	for (int y = 0; y < _dim_y; y++)
 	{
 		this->cells.push_back(std::vector<Cell *>());
-		this->DeltaCells.push_back(std::vector<bool>());
 		for (int x = 0; x < _dim_x; x++)
 		{
 			this->cells[y].push_back(new Cell_Empty());
-			this->DeltaCells[y].push_back(false);
 			this->cells[y][x]->x = x;
 			this->cells[y][x]->y = y;
 		}
@@ -44,6 +42,7 @@ Board::~Board()
 
 void Board::Tick()
 {
+	this->GetMutex();
 	this->tickCount++;
 	for (size_t i = 0; i < this->FoodCells.size(); i++)
 	{
@@ -147,6 +146,8 @@ void Board::Tick()
 			}
 		}
 	}
+
+	this->ReleaseMutex();
 }
 
 void Board::Stats()
@@ -349,7 +350,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		break;
 	}
 	this->cells[_y][_x] = _cell;
-	this->DeltaCells[_y][_x] = true;
+	this->DeltaCells.insert(std::pair<int, int>(_x, _y));
 }
 
 void Board::replaceCell(Cell *_replaced, Cell *_newCell)
@@ -375,8 +376,8 @@ void Board::swapCellAtIndex(int _x, int _y, Cell *a)
 	a->x = _x;
 	a->y = _y;
 
-	this->DeltaCells[_y][_x] = true;
-	this->DeltaCells[a_oldy][a_oldx] = true;
+	this->DeltaCells.insert(std::pair<int, int>(_x, _y));
+	this->DeltaCells.insert(std::pair<int, int>(a_oldx, a_oldy));
 }
 
 Organism *Board::createOrganism(const int _x, const int _y)

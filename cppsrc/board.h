@@ -1,5 +1,7 @@
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
+#include <boost/thread/mutex.hpp>
 
 #include "config.h"
 #include "lifeforms.h"
@@ -10,9 +12,22 @@ class GameWindow;
 extern int directions[8][2];
 class Cell;
 
+namespace std
+{
+    template <>
+    struct hash<std::pair<int, int>>
+    {
+        auto operator()(const std::pair<int, int> &p) const -> size_t
+        {
+            return static_cast<std::size_t>(p.first) + (static_cast<std::size_t>(p.second) << 32);
+        }
+    };
+} // namespace std
+
 class Board
 {
 private:
+    boost::mutex mutex;
     unsigned int nextSpecies;
     std::unordered_map<unsigned int, unsigned int> speciesCounts;
 
@@ -27,7 +42,8 @@ public:
     std::size_t tickCount;
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
-    std::vector<std::vector<bool>> DeltaCells;
+
+    std::unordered_set<std::pair<int, int>> DeltaCells;
 
     std::vector<Cell *> FoodCells;
 
@@ -36,6 +52,12 @@ public:
     Board(const int _dim_x, const int _dim_y);
 
     ~Board();
+
+    inline void GetMutex() {this->mutex.lock();}
+    
+    inline bool TryGetMutex() {return this->mutex.try_lock();}
+    
+    inline void ReleaseMutex() {this->mutex.unlock();}
 
     void Tick();
 

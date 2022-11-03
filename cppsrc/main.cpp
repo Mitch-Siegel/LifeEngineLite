@@ -14,6 +14,7 @@
 #include "board.h"
 #include "rng.h"
 
+#define MIN_EXTRA_MICROS 100
 static volatile int running = 1;
 Board *board = nullptr;
 void intHandler(int dummy)
@@ -25,27 +26,28 @@ float scaleFactor = 4.0;
 int x_off = 0;
 int y_off = 0;
 int winX, winY;
+int targetTickrate = 10;
 
-class FrameratePID
+class TickratePID
 {
-	float target = 55.0;
+	float target = 1.0;
 	float previous_error = 0.0;
 	float integral = 0.0;
 
-	float Kp = 0.01;
-	float Ki = 0.00001;
-	float Kd = 10.0;
+	float Kp = 0.0001;
+	float Ki = 0.00000001;
+	float Kd = 0.00000000001;
 
 public:
-	float Tick(float instantaneousFramerate)
+	float Tick(float instanteneousMeasurement)
 	{
-		if (instantaneousFramerate == 0.0)
+		if (instanteneousMeasurement == 0.0)
 		{
-			instantaneousFramerate = 0.000001;
+			instanteneousMeasurement = 1.0;
 		}
-		printf("Current instanteneous framerate: %f\n", instantaneousFramerate);
-		float error = instantaneousFramerate - target;
-		float dt = 1000.0 / instantaneousFramerate;
+		printf("Current instanteneous framerate: %f\n", instanteneousMeasurement);
+		float error = instanteneousMeasurement;
+		float dt = 1.0 / targetTickrate;
 		printf("DT is %f, error is %f\n", dt, error);
 		integral = integral + (error * dt);
 		printf("Error * dt is %f\n", error * dt);
@@ -70,12 +72,95 @@ wait (dt)
 Goto Start
 */
 
+inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
+{
+	switch (c->type)
+	{
+	case cell_empty:
+		SDL_SetRenderDrawColor(r, 0, 0, 0, 0);
+		break;
+
+	case cell_plantmass:
+		SDL_SetRenderDrawColor(r, 10, 40, 10, 255);
+		break;
+
+	case cell_biomass:
+		SDL_SetRenderDrawColor(r, 150, 60, 60, 255);
+		break;
+
+	case cell_leaf:
+		SDL_SetRenderDrawColor(r, 30, 120, 30, 255);
+		break;
+
+	case cell_bark:
+		SDL_SetRenderDrawColor(r, 75, 25, 25, 255);
+		break;
+
+	case cell_mover:
+		SDL_SetRenderDrawColor(r, 50, 120, 255, 255);
+		break;
+
+	case cell_herbivore_mouth:
+		SDL_SetRenderDrawColor(r, 255, 150, 0, 255);
+		break;
+
+	case cell_carnivore_mouth:
+		SDL_SetRenderDrawColor(r, 255, 100, 150, 255);
+		break;
+
+	case cell_flower:
+		SDL_SetRenderDrawColor(r, 50, 250, 150, 255);
+		break;
+
+	case cell_fruit:
+		SDL_SetRenderDrawColor(r, 200, 200, 0, 255);
+		break;
+
+	case cell_killer:
+		SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
+		break;
+
+	case cell_armor:
+		SDL_SetRenderDrawColor(r, 175, 0, 255, 255);
+		break;
+
+	case cell_touch:
+		SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
+		break;
+
+	case cell_null:
+		break;
+	}
+	SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
+}
+
 bool forceRedraw = false;
+long int leftoverMicros = 0;
 void RenderBoard(SDL_Renderer *r)
 {
-	// we'll use this texture as our own backbuffer
+	// we'll use this texture as a seperate backbuffer
 	static SDL_Texture *boardBuf = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888,
 													 SDL_TEXTUREACCESS_TARGET, winX, winY);
+
+	if ((board->DeltaCells.size() == 0 && !forceRedraw) || leftoverMicros < 0)
+	{
+		SDL_RenderCopy(r, boardBuf, NULL, NULL);
+		return;
+	}
+
+	// if (forceMutex)
+	// {
+	board->GetMutex();
+	// }
+	// else
+	// {
+	// if (!board->TryGetMutex())
+	// {
+	// printf("Couldn't get board mutex :(\n");
+	// SDL_RenderCopy(r, boardBuf, NULL, NULL);
+	// return;
+	// }
+	// }
 
 	// draw to board buffer instead of backbuffer
 	SDL_SetRenderTarget(r, boardBuf);
@@ -84,85 +169,36 @@ void RenderBoard(SDL_Renderer *r)
 	if (forceRedraw)
 	{
 		SDL_RenderClear(r);
-	}
-
-	for (int y = 0; y < board->dim_y; y++)
-	{
-		if (y + (y_off / scaleFactor) < 0 || ((y - board->dim_y) * scaleFactor) + y_off > winY)
+		for (int y = 0; y < board->dim_y; y++)
 		{
-			continue;
-		}
-		for (int x = 0; x < board->dim_x; x++)
-		{
-			if (x + (x_off / scaleFactor) < 0 || ((x - board->dim_x) * scaleFactor) + x_off > winX)
+			if (y + (y_off / scaleFactor) < 0 || ((y - board->dim_y) * scaleFactor) + y_off > winY)
 			{
 				continue;
 			}
-			if (forceRedraw || board->DeltaCells[y][x])
+			for (int x = 0; x < board->dim_x; x++)
 			{
-				board->DeltaCells[y][x] = false;
-				Cell *thisCell = board->cells[y][x];
-				switch (thisCell->type)
+				if (x + (x_off / scaleFactor) < 0 || ((x - board->dim_x) * scaleFactor) + x_off > winX)
 				{
-				case cell_empty:
-					SDL_SetRenderDrawColor(r, 0, 0, 0, 0);
-					break;
-
-				case cell_plantmass:
-					SDL_SetRenderDrawColor(r, 10, 40, 10, 255);
-					break;
-
-				case cell_biomass:
-					SDL_SetRenderDrawColor(r, 150, 60, 60, 255);
-					break;
-
-				case cell_leaf:
-					SDL_SetRenderDrawColor(r, 30, 120, 30, 255);
-					break;
-
-				case cell_bark:
-					SDL_SetRenderDrawColor(r, 75, 25, 25, 255);
-					break;
-
-				case cell_mover:
-					SDL_SetRenderDrawColor(r, 50, 120, 255, 255);
-					break;
-
-				case cell_herbivore_mouth:
-					SDL_SetRenderDrawColor(r, 255, 150, 0, 255);
-					break;
-
-				case cell_carnivore_mouth:
-					SDL_SetRenderDrawColor(r, 255, 100, 150, 255);
-					break;
-
-				case cell_flower:
-					SDL_SetRenderDrawColor(r, 50, 250, 150, 255);
-					break;
-
-				case cell_fruit:
-					SDL_SetRenderDrawColor(r, 200, 200, 0, 255);
-					break;
-
-				case cell_killer:
-					SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
-					break;
-
-				case cell_armor:
-					SDL_SetRenderDrawColor(r, 175, 0, 255, 255);
-					break;
-
-				case cell_touch:
-					SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
-					break;
-
-				case cell_null:
-					break;
+					continue;
 				}
-				SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
+				Cell *thisCell = board->cells[y][x];
+				DrawCell(r, thisCell, x, y);
 			}
 		}
 	}
+	else
+	{
+		for (std::pair<int, int> coordinate : board->DeltaCells)
+		{
+			int x = coordinate.first;
+			int y = coordinate.second;
+			DrawCell(r, board->cells[y][x], x, y);
+		}
+		board->DeltaCells.clear();
+	}
+
+	board->ReleaseMutex();
+
 	SDL_RenderSetScale(r, 1.0, 1.0);
 	forceRedraw = false;
 	SDL_SetRenderTarget(r, NULL);
@@ -170,19 +206,18 @@ void RenderBoard(SDL_Renderer *r)
 }
 
 bool autoplay = false;
-int targetTickrate = 10;
+bool maxSpeed = false;
 int ticksThisSecond = 0;
-void RenderMain()
+void TickMain()
 {
 	if (board == nullptr)
 	{
-		printf("RenderMain called with null board!\nBoard must be instantiated first!\n");
+		printf("TickMain called with null board!\nBoard must be instantiated first!\n");
 		return;
 	}
 
 	auto lastFrame = std::chrono::high_resolution_clock::now();
-
-	long int leftoverMicros = 0;
+	TickratePID pidController;
 	while (running)
 	{
 		if (autoplay)
@@ -192,29 +227,89 @@ void RenderMain()
 			auto frameEnd = std::chrono::high_resolution_clock::now();
 			auto diff = frameEnd - lastFrame;
 			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
-			if (targetTickrate < 1000)
+			int leftoverThisStep = static_cast<int>((1000000.0 / targetTickrate) - micros);
+			leftoverMicros += leftoverThisStep;
+			// if (!maxSpeed)
+			// {
+
+			if (!maxSpeed && (leftoverMicros > 10000))
 			{
-				leftoverMicros += static_cast<int>((1000000.0 / targetTickrate) - micros);
-				if (leftoverMicros > 5000)
-				{
-					long int delayDuration = (leftoverMicros / 1000) * 1000;
-					boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration / 1000));
-					leftoverMicros %= 1000;
-					auto delayEnd = std::chrono::high_resolution_clock::now();
-					auto delayDiff = delayEnd - frameEnd;
-					size_t actualDelayMicros = std::chrono::duration_cast<std::chrono::microseconds>(delayDiff).count();
-					leftoverMicros -= delayDuration - static_cast<int>(actualDelayMicros);
-					lastFrame = delayEnd;
-				}
-				else
-				{
-					lastFrame = frameEnd;
-				}
+				int delayDuration = leftoverMicros / 1000;
+				printf("Running %d ms behind!\n", delayDuration);
+				boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration));
+				leftoverMicros -= delayDuration * 1000;
+				auto delayEnd = std::chrono::high_resolution_clock::now();
+				auto delayDiff = delayEnd - frameEnd;
+				size_t actualDelayMicros = std::chrono::duration_cast<std::chrono::microseconds>(delayDiff).count();
+				leftoverMicros -= (delayDuration * 1000) - static_cast<int>(actualDelayMicros);
+				lastFrame = delayEnd;
 			}
 			else
 			{
-				lastFrame = frameEnd;
+				if (!maxSpeed && (leftoverMicros < -10 * (1000000.0 / targetTickrate)))
+				{
+					 targetTickrate += pidController.Tick(leftoverThisStep);
+					 if (targetTickrate < 1)
+					 {
+						 targetTickrate = 1;
+					 }
+					 while (leftoverMicros < -10 * (1000000.0 / targetTickrate))
+					 {
+						 board->Tick();
+						 leftoverMicros += (1000000.0 / targetTickrate);
+
+						 // if (targetTickrate > 1)
+						 // {
+						 // targetTickrate -= 2;
+						 // }
+					 }
+				}
+				else
+				{
+					if (maxSpeed)
+					{
+						targetTickrate += pidController.Tick(leftoverThisStep);
+						if (targetTickrate < 1)
+					 {
+						 targetTickrate = 1;
+					 }
+					}
+				}
+				// if (leftoverMicros < -100000 && targetTickrate > 1)
+				// {
+				// targetTickrate += (1000000.0 / targetTickrate) * leftoverMicros;
+				// targetTickrate /= 2;
+				// leftoverMicros = 0;
+				// }
+				// else
+				// {
+				// targetTickrate++;
+				// }
+				// if running more than 10ms behind
+				// kick out to the scheduler to give the other thread some time to breathe
+				// if (leftoverMicros < 10000)
+				// {
+				// boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+				// leftoverMicros = 0;
+				// lastFrame = std::chrono::high_resolution_clock::now();
+				// }
+				// else
+				// {
+				// }
+				lastFrame = std::chrono::high_resolution_clock::now();
 			}
+			// printf("%ld leftover\n", leftoverMicros);
+			// }
+			// else
+			// {
+			// targetTickrate += pidController.Tick(leftoverMicros);
+
+			// if (board->tickCount % 100 == 0)
+			// {
+			// boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+			// }
+			// lastFrame = frameEnd;
+			// }
 		}
 		else
 		{
@@ -240,12 +335,35 @@ void displayStats()
 		count_null
 	};
 
-	double organismStats[class_null][count_null] = {{0.0}};
-	int classCounts[class_null] = {0};
-	double organismCellCounts[class_null][cell_null] = {{0.0}};
-	double touchSensorHaverCounts[class_null] = {0.0};
-	double touchSensorIntervals[class_null] = {0.0};
-	double cellSentiments[class_null][cell_null] = {{0.0}};
+	static double organismStats[class_null][count_null] = {{0.0}};
+	static int classCounts[class_null] = {0};
+	static double organismCellCounts[class_null][cell_null] = {{0.0}};
+	static double touchSensorHaverCounts[class_null] = {0.0};
+	static double touchSensorIntervals[class_null] = {0.0};
+	static double cellSentiments[class_null][cell_null] = {{0.0}};
+
+	// if (!maxSpeed && leftoverMicros >= MIN_EXTRA_MICROS)
+	// {
+	board->GetMutex();
+	for (int i = 0; i < class_null; i++)
+	{
+		for (int j = 0; j < count_null; j++)
+		{
+			organismStats[i][j] = 0.0;
+		}
+		classCounts[i] = 0;
+		for (int j = 0; j < class_null; j++)
+		{
+			organismCellCounts[i][j] = 0.0;
+		}
+
+		touchSensorIntervals[i] = 0.0;
+
+		for (int j = 0; j < cell_null; j++)
+		{
+			cellSentiments[i][j] = 0.0;
+		}
+	}
 	for (Organism *o : board->Organisms)
 	{
 		enum OrganismClassifications thisClass = board->speciesClassifications[o->species];
@@ -283,6 +401,7 @@ void displayStats()
 			}
 		}
 	}
+	board->ReleaseMutex();
 
 	for (int i = 0; i < class_null; i++)
 	{
@@ -307,7 +426,7 @@ void displayStats()
 			ImGui::Text("%s", classNames[i]);
 		}
 		row++;
-		
+
 		// organism counts
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
@@ -351,6 +470,56 @@ void displayStats()
 			ImGui::Text("%.0f", organismStats[i][count_maxenergy]);
 		}
 		row++;
+
+		// age
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%.0f", 100.0 * (organismStats[i][count_age] / organismStats[i][count_lifespan]));
+		}
+		row++;
+
+		// lifespan
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%.0f", organismStats[i][count_lifespan]);
+		}
+		row++;
+
+		// mutability
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%.1f", organismStats[i][count_mutability]);
+		}
+		row++;
+
+		/*
+
+		enum Counts
+	{
+		count_cells,
+		count_energy,
+		count_maxenergy,
+		count_age,
+		count_lifespan,
+		count_mutability,
+		count_maxconviction,
+		count_rotatevschange,
+		count_turnwhenrotate,
+		count_raw,
+		count_null
+	};*/
 
 		/*
 		for(; row < count_null; row++)
@@ -409,7 +578,7 @@ int main(int argc, char *argv[])
 	float frameRates[FRAMERATE_TRACKING_INTERVAL] = {60.0};
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, intHandler);
-	FrameratePID frameratePid;
+	// FrameratePID frameratePid;
 	// Setup SDL
 	// (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
 	// depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to the latest version of SDL is recommended!)
@@ -419,7 +588,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	board = new Board(1024, 512);
+	board = new Board(512, 512);
 	// boardWindow->SetBoard(board);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 	// srand(0);
@@ -497,7 +666,7 @@ int main(int argc, char *argv[])
 	int mouse_x = 0;
 	int mouse_y = 0;
 
-	boost::thread renderThread{RenderMain};
+	boost::thread renderThread{TickMain};
 	SDL_GetWindowSize(window, &winX, &winY);
 	// Main loop
 	bool done = false;
@@ -505,12 +674,9 @@ int main(int argc, char *argv[])
 	static size_t lastSecondFrameCount = frameCount;
 	while (!done)
 	{
+		printf("Frame %lu\n", frameCount);
 		frameRates[frameP] = ImGui::GetIO().Framerate;
 		++frameP %= FRAMERATE_TRACKING_INTERVAL;
-		// if (autoplay && maxSpeed)
-		// {
-		// targetTPSDelta = frameratePid.Tick(ImGui::GetIO().Framerate);
-		// }
 
 		// Poll and handle events (inputs, window resize, etc.)
 		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -642,6 +808,7 @@ int main(int argc, char *argv[])
 			ImGui::PlotLines("Frame Times", realFrameRates, FRAMERATE_TRACKING_INTERVAL);
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
 			ImGui::SliderInt("Target tick count per frame", &targetTickrate, 1, 1000);
+			ImGui::Checkbox("Max speed (disables rendering)", &maxSpeed);
 			static int lastSecondTickrate = 0;
 			if (frameCount >= (lastSecondFrameCount + ceil(ImGui::GetIO().Framerate)))
 			{
@@ -650,6 +817,7 @@ int main(int argc, char *argv[])
 				lastSecondFrameCount = frameCount;
 			}
 			ImGui::Text("%d ticks per second", lastSecondTickrate);
+			ImGui::Text("%ld leftover microseconds", leftoverMicros);
 
 			ImGui::Text("%lu organisms in %lu species", board->Organisms.size(), board->activeSpecies.size());
 			displayStats();
@@ -683,6 +851,8 @@ int main(int argc, char *argv[])
 		ImGui::Render();
 		SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
 		SDL_RenderClear(renderer);
+
+		// only force mutex acquisition if not running at max speed
 		RenderBoard(renderer);
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 
