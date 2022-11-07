@@ -44,85 +44,96 @@ void Board::Tick()
 {
 	this->GetMutex();
 	this->tickCount++;
-	for (size_t i = 0; i < this->FoodCells.size(); i++)
+	std::map<size_t, Board::Food_Slot *> newFoodCells;
+	for (std::map<size_t, Board::Food_Slot *>::iterator sloti = this->FoodCells.begin(); sloti != this->FoodCells.end(); ++sloti)
 	{
-		this->FoodCells[i]->Tick();
-		switch (this->FoodCells[i]->type)
+		if (sloti->first == 0)
 		{
-		case cell_biomass:
-			if (((Cell_Biomass *)this->FoodCells[i])->ticksUntilSpoil == 0)
+			Food_Slot *thisSlot = sloti->second;
+			// don't drive the iterator because the replacecell() calls for each food cell will delete the elements
+			// an overridden version of the replacecell specifying whether or not to do the delete would save the std::find's worth of time
+			for (std::vector<Spoilable_Cell *>::iterator c = thisSlot->begin(); c != thisSlot->end(); )
 			{
-				board->replaceCell(this->FoodCells[i], new Cell_Empty());
-				i--;
-			}
-			break;
-
-		case cell_plantmass:
-			if (((Cell_Plantmass *)this->FoodCells[i])->ticksUntilSpoil == 0)
-			{
-				board->replaceCell(this->FoodCells[i], new Cell_Empty());
-				i--;
-			}
-			break;
-
-		case cell_fruit:
-			if (((Cell_Fruit *)this->FoodCells[i])->ticksUntilSpoil == 0)
-			{
-				// if we roll grow percent, create a new random organism
-				if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
+				Spoilable_Cell *expiringFood = *c;
+				switch (expiringFood->type)
 				{
-					Organism *grownFruit = this->createOrganism(this->FoodCells[i]->x, this->FoodCells[i]->y);
-					grownFruit->mutability = ((Cell_Fruit *)this->FoodCells[i])->parentMutability;
-					board->replaceCell(this->FoodCells[i], new Cell_Empty());
-					grownFruit->AddCell(0, 0, GenerateRandomCell());
-					Cell *secondRandomCell = GenerateRandomCell();
-					bool couldAddSecond = false;
-					int dirIndex = randInt(0, 7);
-					for (int j = 0; j < 8; j++)
+				case cell_biomass:
+				case cell_plantmass:
+					this->replaceCell(expiringFood, new Cell_Empty());
+					break;
+
+				case cell_fruit:
+					// if we roll grow percent, create a new random organism
+					if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
 					{
-						int *thisDirection = directions[(j + dirIndex) % 8];
-						if (board->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
+						Organism *grownFruit = this->createOrganism(expiringFood->x, expiringFood->y);
+						grownFruit->mutability = ((Cell_Fruit *)expiringFood)->parentMutability;
+						this->replaceCell(expiringFood, new Cell_Empty());
+						grownFruit->AddCell(0, 0, GenerateRandomCell());
+						Cell *secondRandomCell = GenerateRandomCell();
+						bool couldAddSecond = false;
+						int dirIndex = randInt(0, 7);
+						for (int j = 0; j < 8; j++)
 						{
-							grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell);
-							couldAddSecond = true;
-							break;
+							int *thisDirection = directions[(j + dirIndex) % 8];
+							if (this->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
+							{
+								grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell);
+								couldAddSecond = true;
+								break;
+							}
 						}
-					}
-					if (!couldAddSecond)
-					{
-						delete secondRandomCell;
-					}
+						if (!couldAddSecond)
+						{
+							delete secondRandomCell;
+						}
 
-					if (!grownFruit->CheckValidity())
-					{
-						grownFruit->species = this->GetNextSpecies();
-						board->AddSpeciesMember(grownFruit);
-						grownFruit->RecalculateStats();
-						grownFruit->lifespan = grownFruit->myCells.size() * LIFESPAN_MULTIPLIER;
-						grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
-						grownFruit->Heal(grownFruit->GetMaxHealth());
+						if (!grownFruit->CheckValidity())
+						{
+							grownFruit->species = this->GetNextSpecies();
+							this->AddSpeciesMember(grownFruit);
+							grownFruit->RecalculateStats();
+							grownFruit->lifespan = grownFruit->nCells() * LIFESPAN_MULTIPLIER;
+							grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
+							grownFruit->Heal(grownFruit->GetMaxHealth());
 
-						// int newReproductioncooldown = (grownFruit->myCells.size()) * REPRODUCTION_COOLDOWN_MULTIPLIER;
-						grownFruit->reproductionCooldown = 0;
+							grownFruit->reproductionCooldown = 0;
+						}
+						else
+						{
+							grownFruit->Remove();
+						}
 					}
 					else
 					{
-						grownFruit->Remove();
+						this->replaceCellAt(expiringFood->x, expiringFood->y, new Cell_Plantmass(FRUIT_SPOIL_TIME));
 					}
-				}
-				else
-				{
-					board->replaceCellAt(this->FoodCells[i]->x, this->FoodCells[i]->y, new Cell_Plantmass(FRUIT_SPOIL_TIME));
-				}
-				i--;
-			}
-			break;
+					break;
 
-		default:
-			std::cerr << "Impossible case for food cell to be something it shouldn't!" << std::endl;
-			exit(1);
+				default:
+					std::cerr << "Impossible case for food cell to be something it shouldn't!" << std::endl;
+					exit(1);
+				}
+			}
+			delete sloti->second;
 		}
+		else
+		{
+			sloti->second->ticksUntilSpoil--;
+			newFoodCells[sloti->first - 1] = sloti->second;
+		}
+		// this->FoodCells[foodVectorI.first] = nullptr;
+
+		// printf("%lu\n", foodVectorI.first);
 	}
+	this->FoodCells = newFoodCells;
+	/*
+	for (size_t i = 0; i < this->FoodCells.size(); i++)
+	{
+		this->FoodCells[i]->Tick();
+
+	}
+	*/
 
 	for (size_t i = 0; i < this->Organisms.size(); i++)
 	{
@@ -135,9 +146,6 @@ void Board::Tick()
 		}
 		else
 		{
-
-			// printf("%d %d: %lu/%lu energy, %lu cells (%lu ticks old, %d lifespan), repcd %d\n",
-			//  Organisms[i]->x, Organisms[i]->y, Organisms[i]->GetEnergy(), Organisms[i]->GetMaxEnergy(), Organisms[i]->myCells.size(), Organisms[i]->age, Organisms[i]->lifespan, Organisms[i]->reproductionCooldown);
 			Organism *replicated = this->Organisms[i]->Tick();
 
 			if (replicated != nullptr)
@@ -185,7 +193,7 @@ void Board::Stats()
 	{
 		if (o->cellCounts[cell_mover] && !o->cellCounts[cell_leaf])
 		{
-			moverStats[count_cells] += o->myCells.size();
+			moverStats[count_cells] += o->nCells();
 			moverStats[count_energy] += o->GetEnergy();
 			moverStats[count_maxenergy] += o->GetMaxEnergy();
 
@@ -219,7 +227,7 @@ void Board::Stats()
 		}
 		else
 		{
-			plantStats[count_cells] += o->myCells.size();
+			plantStats[count_cells] += o->nCells();
 			plantStats[count_energy] += o->GetEnergy();
 			plantStats[count_maxenergy] += o->GetMaxEnergy();
 			plantStats[count_age] += o->age;
@@ -323,18 +331,24 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		exit(1);
 	}
 
-	switch (this->cells[_y][_x]->type)
+	Cell *erased = this->cells[_y][_x];
+	switch (erased->type)
 	{
 	case cell_plantmass:
 	case cell_biomass:
 	case cell_fruit:
-		this->FoodCells.erase(std::find(this->FoodCells.begin(), this->FoodCells.end(), this->cells[_y][_x]));
-		break;
+	{
+		Spoilable_Cell *s = static_cast<Spoilable_Cell *>(erased);
+		int ticksUntilSpoil = s->TicksUntilSpoil();
+		Board::Food_Slot *thisSlot = this->FoodCells[ticksUntilSpoil];
+		thisSlot->erase(std::find(thisSlot->begin(), thisSlot->end(), s));
+	}
+	break;
 
 	default:
 		break;
 	}
-	delete this->cells[_y][_x];
+	delete erased;
 
 	_cell->x = _x;
 	_cell->y = _y;
@@ -343,8 +357,23 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 	case cell_plantmass:
 	case cell_biomass:
 	case cell_fruit:
-		this->FoodCells.push_back(_cell);
-		break;
+	{
+		Spoilable_Cell *s = static_cast<Spoilable_Cell *>(_cell);
+		Board::Food_Slot *thisFoodSlot;
+		if (!this->FoodCells.count(s->TicksUntilSpoil()))
+		{
+			thisFoodSlot = new Board::Food_Slot(s->TicksUntilSpoil());
+			this->FoodCells[s->TicksUntilSpoil()] = thisFoodSlot;
+		}
+		else
+		{
+			thisFoodSlot = this->FoodCells[s->TicksUntilSpoil()];
+		}
+		s->attachTicksUntilSpoil(&thisFoodSlot->ticksUntilSpoil);
+		thisFoodSlot->push_back(s);
+	}
+
+	break;
 
 	default:
 		break;

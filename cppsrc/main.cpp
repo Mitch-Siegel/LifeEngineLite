@@ -26,17 +26,18 @@ float scaleFactor = 4.0;
 int x_off = 0;
 int y_off = 0;
 int winX, winY;
-int targetTickrate = 10;
+float targetTickrate = 10;
+long int leftoverMicros = 0;
+bool autoplay = false;
+bool maxSpeed = false;
+int ticksThisSecond = 0;
 
 class TickratePID
 {
-	float target = 1.0;
 	float previous_error = 0.0;
-	float integral = 0.0;
-
-	float Kp = 0.0001;
-	float Ki = 0.00000001;
-	float Kd = 0.00000000001;
+	float Kp = 0.00024;
+	float Ki = 0.00002;
+	float Kd = 0.0000001;
 
 public:
 	float Tick(float instanteneousMeasurement)
@@ -45,20 +46,27 @@ public:
 		{
 			instanteneousMeasurement = 1.0;
 		}
-		printf("Current instanteneous framerate: %f\n", instanteneousMeasurement);
-		float error = instanteneousMeasurement;
+		// printf("Current instanteneous framerate: %f\n", instanteneousMeasurement);
+		float framerate = ImGui::GetIO().Framerate;
+		float error = ((1000000.0 / targetTickrate) - instanteneousMeasurement);
+		if (maxSpeed)
+		{
+			error -= (5000.0 * (59.99 - framerate));
+		}
 		float dt = 1.0 / targetTickrate;
-		printf("DT is %f, error is %f\n", dt, error);
-		integral = integral + (error * dt);
-		printf("Error * dt is %f\n", error * dt);
+		// printf("DT is % .8f, error is % .8f\n", dt, error);
+		// printf("Error * dt is %f\n", error * dt);
 		float derivative = (error - previous_error) / dt;
-		float delta = Kp * error + Ki * integral + Kd * derivative;
-		printf("P:%f I:%f D:%f\n", error * Kp, integral * Ki, derivative * Kd);
-		printf("PID Delta returned: %f\n\n", delta);
+		float delta = Kp * error + Ki * leftoverMicros + Kd * derivative;
+		// printf("P:% .8f I:% .8f D:% .8f\n", error * Kp, leftoverMicros * Ki, derivative * Kd);
+		// printf("PID Delta returned: % .8f\n\n", delta);
 		previous_error = error;
 		return delta;
 	}
 };
+
+TickratePID pidController;
+
 /*
 previous_error = 0
 integral = 0
@@ -135,17 +143,18 @@ inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 }
 
 bool forceRedraw = false;
-long int leftoverMicros = 0;
-void RenderBoard(SDL_Renderer *r)
+float RenderBoard(SDL_Renderer *r, size_t frameNum)
 {
 	// we'll use this texture as a seperate backbuffer
 	static SDL_Texture *boardBuf = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888,
 													 SDL_TEXTUREACCESS_TARGET, winX, winY);
 
-	if ((board->DeltaCells.size() == 0 && !forceRedraw) || leftoverMicros < 0)
+	if ((board->DeltaCells.size() == 0 && !forceRedraw) ||
+		(leftoverMicros < 0) ||
+		(maxSpeed && (frameNum % 60)))
 	{
 		SDL_RenderCopy(r, boardBuf, NULL, NULL);
-		return;
+		return -1.0;
 	}
 
 	// if (forceMutex)
@@ -166,6 +175,8 @@ void RenderBoard(SDL_Renderer *r)
 	SDL_SetRenderTarget(r, boardBuf);
 	SDL_RenderSetScale(r, scaleFactor, scaleFactor);
 
+	size_t cellsModified = 0;
+
 	if (forceRedraw)
 	{
 		SDL_RenderClear(r);
@@ -185,9 +196,11 @@ void RenderBoard(SDL_Renderer *r)
 				DrawCell(r, thisCell, x, y);
 			}
 		}
+		cellsModified = -1;
 	}
 	else
 	{
+		cellsModified = board->DeltaCells.size();
 		for (std::pair<int, int> coordinate : board->DeltaCells)
 		{
 			int x = coordinate.first;
@@ -203,11 +216,9 @@ void RenderBoard(SDL_Renderer *r)
 	forceRedraw = false;
 	SDL_SetRenderTarget(r, NULL);
 	SDL_RenderCopy(r, boardBuf, NULL, NULL);
+	return static_cast<float>(cellsModified) / (board->dim_x * board->dim_y);
 }
 
-bool autoplay = false;
-bool maxSpeed = false;
-int ticksThisSecond = 0;
 void TickMain()
 {
 	if (board == nullptr)
@@ -217,7 +228,6 @@ void TickMain()
 	}
 
 	auto lastFrame = std::chrono::high_resolution_clock::now();
-	TickratePID pidController;
 	while (running)
 	{
 		if (autoplay)
@@ -229,13 +239,14 @@ void TickMain()
 			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
 			int leftoverThisStep = static_cast<int>((1000000.0 / targetTickrate) - micros);
 			leftoverMicros += leftoverThisStep;
-			// if (!maxSpeed)
-			// {
-
-			if (!maxSpeed && (leftoverMicros > 10000))
+			// lastFrame = frameEnd;
+			if (leftoverMicros > 25000)
 			{
+				if (maxSpeed)
+				{
+					targetTickrate += pidController.Tick(micros);
+				}
 				int delayDuration = leftoverMicros / 1000;
-				printf("Running %d ms behind!\n", delayDuration);
 				boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration));
 				leftoverMicros -= delayDuration * 1000;
 				auto delayEnd = std::chrono::high_resolution_clock::now();
@@ -246,70 +257,16 @@ void TickMain()
 			}
 			else
 			{
-				if (!maxSpeed && (leftoverMicros < -10 * (1000000.0 / targetTickrate)))
+				if ((leftoverMicros < -10 * (1000000.0 / targetTickrate)) || maxSpeed)
 				{
-					 targetTickrate += pidController.Tick(leftoverThisStep);
-					 if (targetTickrate < 1)
-					 {
-						 targetTickrate = 1;
-					 }
-					 while (leftoverMicros < -10 * (1000000.0 / targetTickrate))
-					 {
-						 board->Tick();
-						 leftoverMicros += (1000000.0 / targetTickrate);
-
-						 // if (targetTickrate > 1)
-						 // {
-						 // targetTickrate -= 2;
-						 // }
-					 }
-				}
-				else
-				{
-					if (maxSpeed)
+					targetTickrate += pidController.Tick(micros);
+					if (targetTickrate < 1.0)
 					{
-						targetTickrate += pidController.Tick(leftoverThisStep);
-						if (targetTickrate < 1)
-					 {
-						 targetTickrate = 1;
-					 }
+						targetTickrate = 1.0;
 					}
 				}
-				// if (leftoverMicros < -100000 && targetTickrate > 1)
-				// {
-				// targetTickrate += (1000000.0 / targetTickrate) * leftoverMicros;
-				// targetTickrate /= 2;
-				// leftoverMicros = 0;
-				// }
-				// else
-				// {
-				// targetTickrate++;
-				// }
-				// if running more than 10ms behind
-				// kick out to the scheduler to give the other thread some time to breathe
-				// if (leftoverMicros < 10000)
-				// {
-				// boost::this_thread::sleep(boost::posix_time::milliseconds(50));
-				// leftoverMicros = 0;
-				// lastFrame = std::chrono::high_resolution_clock::now();
-				// }
-				// else
-				// {
-				// }
-				lastFrame = std::chrono::high_resolution_clock::now();
+				lastFrame = frameEnd;
 			}
-			// printf("%ld leftover\n", leftoverMicros);
-			// }
-			// else
-			// {
-			// targetTickrate += pidController.Tick(leftoverMicros);
-
-			// if (board->tickCount % 100 == 0)
-			// {
-			// boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-			// }
-			// lastFrame = frameEnd;
-			// }
 		}
 		else
 		{
@@ -339,7 +296,7 @@ void displayStats()
 	static int classCounts[class_null] = {0};
 	static double organismCellCounts[class_null][cell_null] = {{0.0}};
 	static double touchSensorHaverCounts[class_null] = {0.0};
-	static double touchSensorIntervals[class_null] = {0.0};
+	// static double touchSensorIntervals[class_null] = {0.0};
 	static double cellSentiments[class_null][cell_null] = {{0.0}};
 
 	// if (!maxSpeed && leftoverMicros >= MIN_EXTRA_MICROS)
@@ -357,7 +314,7 @@ void displayStats()
 			organismCellCounts[i][j] = 0.0;
 		}
 
-		touchSensorIntervals[i] = 0.0;
+		// touchSensorIntervals[i] = 0.0;
 
 		for (int j = 0; j < cell_null; j++)
 		{
@@ -369,7 +326,7 @@ void displayStats()
 		enum OrganismClassifications thisClass = board->speciesClassifications[o->species];
 		classCounts[thisClass]++;
 
-		organismStats[thisClass][count_cells] += o->myCells.size();
+		organismStats[thisClass][count_cells] += o->nCells();
 		organismStats[thisClass][count_energy] += o->GetEnergy();
 		organismStats[thisClass][count_maxenergy] += o->GetMaxEnergy();
 
@@ -391,6 +348,7 @@ void displayStats()
 			{
 				cellSentiments[thisClass][i] += o->brain.cellSentiments[i];
 			}
+			/*
 			for (Cell *c : o->myCells)
 			{
 				if (c->type == cell_touch)
@@ -399,6 +357,7 @@ void displayStats()
 					touchSensorIntervals[thisClass] += t->getSenseInterval();
 				}
 			}
+			*/
 		}
 	}
 	board->ReleaseMutex();
@@ -575,7 +534,9 @@ void displayStats()
 int main(int argc, char *argv[])
 {
 	int frameP = 0;
+	int cellModP = 0;
 	float frameRates[FRAMERATE_TRACKING_INTERVAL] = {60.0};
+	float cellsModifieds[FRAMERATE_TRACKING_INTERVAL] = {0.0};
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, intHandler);
 	// FrameratePID frameratePid;
@@ -674,7 +635,6 @@ int main(int argc, char *argv[])
 	static size_t lastSecondFrameCount = frameCount;
 	while (!done)
 	{
-		printf("Frame %lu\n", frameCount);
 		frameRates[frameP] = ImGui::GetIO().Framerate;
 		++frameP %= FRAMERATE_TRACKING_INTERVAL;
 
@@ -801,14 +761,18 @@ int main(int argc, char *argv[])
 														   // renderer and other code before this point
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			static float realFrameRates[FRAMERATE_TRACKING_INTERVAL];
+			static float realCellMods[FRAMERATE_TRACKING_INTERVAL];
 			for (int i = 0; i < FRAMERATE_TRACKING_INTERVAL; i++)
 			{
 				realFrameRates[i] = frameRates[(frameP + i) % FRAMERATE_TRACKING_INTERVAL];
+				realCellMods[i] = cellsModifieds[(cellModP + i) % FRAMERATE_TRACKING_INTERVAL];
 			}
+
 			ImGui::PlotLines("Frame Times", realFrameRates, FRAMERATE_TRACKING_INTERVAL);
+			ImGui::PlotLines("Proportion of cells modified per render call", realCellMods, FRAMERATE_TRACKING_INTERVAL);
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
-			ImGui::SliderInt("Target tick count per frame", &targetTickrate, 1, 1000);
-			ImGui::Checkbox("Max speed (disables rendering)", &maxSpeed);
+			ImGui::SliderFloat("Target tick count per frame", &targetTickrate, 1.0, 100.0, "%.0f");
+			ImGui::Checkbox("Max speed (reduces render rate)", &maxSpeed);
 			static int lastSecondTickrate = 0;
 			if (frameCount >= (lastSecondFrameCount + ceil(ImGui::GetIO().Framerate)))
 			{
@@ -853,7 +817,12 @@ int main(int argc, char *argv[])
 		SDL_RenderClear(renderer);
 
 		// only force mutex acquisition if not running at max speed
-		RenderBoard(renderer);
+		float cellsModified = RenderBoard(renderer, frameCount);
+		if (cellsModified >= 0.0)
+		{
+			cellsModifieds[cellModP] = cellsModified;
+			++cellModP %= FRAMERATE_TRACKING_INTERVAL;
+		}
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 
 		SDL_RenderPresent(renderer);
@@ -887,7 +856,7 @@ int main(int argc, char *argv[])
 		speciesSizeCounts[index]++;
 	}
 	totalMaxSpeciesSize /= finalSpeciesCount;
-	printf("The largest species ever (%u) had %u concurrent living members\n", largestSpecies, largestSpeciesPopulation);
+	printf("The largest species ever (%u) had %u concurrent living members at its peak\n", largestSpecies, largestSpeciesPopulation);
 	printf("The average species peaked at %.2f members\n", totalMaxSpeciesSize);
 	printf("Species size breakdown:\n");
 	for (int i = 0; i < 16; i++)
@@ -897,7 +866,7 @@ int main(int argc, char *argv[])
 		{
 			printf(" ");
 		}
-		printf(":%2.2f%% (%d)\n", 100.0 * (speciesSizeCounts[i] / (double)finalSpeciesCount), speciesSizeCounts[i]);
+		printf(":%2.4f%% or (%d)\n", 100.0 * (speciesSizeCounts[i] / (double)finalSpeciesCount), speciesSizeCounts[i]);
 	}
 
 	// Cleanup

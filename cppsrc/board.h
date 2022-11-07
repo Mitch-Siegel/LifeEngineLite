@@ -1,4 +1,5 @@
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 #include <boost/thread/mutex.hpp>
@@ -31,8 +32,30 @@ private:
     unsigned int nextSpecies;
     std::unordered_map<unsigned int, unsigned int> speciesCounts;
 
+    class Food_Slot
+    {
+    private:
+        std::vector<Spoilable_Cell *> cells;
+
+    public:
+        int ticksUntilSpoil;
+
+        explicit Food_Slot(int _ticksUntilSpoil) { this->ticksUntilSpoil = _ticksUntilSpoil; }
+
+        void push_back(Spoilable_Cell *c) { this->cells.push_back(c); };
+
+        std::vector<Spoilable_Cell *>::iterator erase(std::vector<Spoilable_Cell *>::iterator element) { return this->cells.erase(element); }
+
+        std::vector<Spoilable_Cell *>::iterator begin() { return this->cells.begin(); }
+
+        std::vector<Spoilable_Cell *>::iterator end() { return this->cells.end(); }
+    };
+
+    std::map<size_t, Food_Slot *> FoodCells;
+
 public:
-    std::unordered_map<unsigned int, enum OrganismClassifications> speciesClassifications;
+    std::unordered_map<unsigned int, enum OrganismClassifications>
+        speciesClassifications;
 
     std::unordered_map<unsigned int, unsigned int> evolvedFrom;
     std::unordered_map<unsigned int, unsigned int> peakSpeciesCounts;
@@ -45,19 +68,17 @@ public:
 
     std::unordered_set<std::pair<int, int>> DeltaCells;
 
-    std::vector<Cell *> FoodCells;
-
     std::vector<Organism *> Organisms;
 
     Board(const int _dim_x, const int _dim_y);
 
     ~Board();
 
-    inline void GetMutex() {this->mutex.lock();}
-    
-    inline bool TryGetMutex() {return this->mutex.try_lock();}
-    
-    inline void ReleaseMutex() {this->mutex.unlock();}
+    inline void GetMutex() { this->mutex.lock(); }
+
+    inline bool TryGetMutex() { return this->mutex.try_lock(); }
+
+    inline void ReleaseMutex() { this->mutex.unlock(); }
 
     void Tick();
 

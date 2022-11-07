@@ -10,9 +10,13 @@ class Cell;
 
 class Organism
 {
+	friend class Board;
+
 private:
 	std::size_t currentHealth, maxHealth;
 	std::size_t currentEnergy, maxEnergy;
+	std::vector<Cell *> myCells;
+	std::size_t nCells_;
 
 public:
 	int x = -1;
@@ -21,11 +25,12 @@ public:
 	std::size_t age;
 	int mutability;
 	bool alive;
-	std::vector<Cell *> myCells;
 	int reproductionCooldown;
 	std::size_t lifespan;
 	Brain brain;
 	std::size_t cellCounts[cell_null];
+
+	const std::size_t &nCells() const { return this->nCells_; }
 
 	Organism(int center_x, int center_y);
 
@@ -64,7 +69,7 @@ public:
 	void AddEnergy(std::size_t n);
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
-	
+
 	bool CanMoveToPosition(int _x_abs, int _y_abs);
 
 	Organism *Reproduce();
@@ -127,7 +132,6 @@ class Organism;
 #define FLOWER_WILT_CHANCE 30
 #define FLOWER_BLOOM_COST 3.5 * ENERGY_DENSITY_MULTIPLIER
 
-
 #define TOUCH_SENSE_COOLDOWN 2
 
 #define KILLER_DAMAGE_COST 1 * ENERGY_DENSITY_MULTIPLIER
@@ -153,6 +157,26 @@ public:
 
 Cell *GenerateRandomCell();
 
+class Spoilable_Cell : public Cell
+{
+private:
+	int *ticksUntilSpoil_;
+	int startingTicksUntilSpoil;
+
+public:
+
+	const int &TicksUntilSpoil();
+
+	void attachTicksUntilSpoil(int *slotValue);
+
+	explicit Spoilable_Cell(int _startingTicksUntilSpoil);
+	// virtual ~Spoilable_Cell() = 0;
+
+	// virtual void Tick() = 0;
+
+	// virtual Spoilable_Cell *Clone() = 0;
+};
+
 class Cell_Empty : public Cell
 {
 public:
@@ -165,11 +189,8 @@ public:
 	Cell_Empty *Clone() override;
 };
 
-class Cell_Plantmass : public Cell
+class Cell_Plantmass : public Spoilable_Cell
 {
-public:
-	int ticksUntilSpoil;
-
 public:
 	~Cell_Plantmass() override;
 
@@ -182,11 +203,8 @@ public:
 	Cell_Plantmass *Clone() override;
 };
 
-class Cell_Biomass : public Cell
+class Cell_Biomass : public Spoilable_Cell
 {
-public:
-	int ticksUntilSpoil;
-
 public:
 	~Cell_Biomass() override;
 
@@ -199,8 +217,6 @@ public:
 	Cell_Biomass *Clone() override;
 };
 
-class Cell_Flower;
-
 class Cell_Leaf : public Cell
 {
 	friend class Cell_Herbivore;
@@ -209,13 +225,12 @@ class Cell_Leaf : public Cell
 	int flowerCooldown;
 	bool flowering;
 
-
 public:
 	~Cell_Leaf() override;
 
 	Cell_Leaf();
 
-	Cell_Leaf(int floweringPercent);
+	explicit Cell_Leaf(int floweringPercent);
 
 	explicit Cell_Leaf(Organism *_myOrganism);
 
@@ -263,10 +278,9 @@ public:
 	Cell_Flower *Clone() override;
 };
 
-class Cell_Fruit : public Cell
+class Cell_Fruit : public Spoilable_Cell
 {
 public:
-	int ticksUntilSpoil;
 	int parentMutability;
 
 public:
@@ -377,5 +391,5 @@ public:
 
 	Cell_Touch *Clone() override;
 
-	int getSenseInterval() {return this->senseInterval;};
+	int getSenseInterval() { return this->senseInterval; };
 };

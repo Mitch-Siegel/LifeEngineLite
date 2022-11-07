@@ -15,9 +15,9 @@ int CellEnergyDensities[cell_null] = {
 	0,	 // fruit
 	40,	 // herbivore
 	100, // carnivore
-	50, // mover
+	50,	 // mover
 	0,	 // killer
-	-5, // armor
+	-5,	 // armor
 	5,	 // touch sensor
 };
 
@@ -65,6 +65,29 @@ Cell::~Cell()
 {
 }
 
+const int &Spoilable_Cell::TicksUntilSpoil()
+{
+	if(this->ticksUntilSpoil_ == nullptr)
+	{
+		return this->startingTicksUntilSpoil;
+	}
+	else
+	{
+		return *this->ticksUntilSpoil_;
+	}
+}
+
+void Spoilable_Cell::attachTicksUntilSpoil(int *slotValue)
+{
+	this->ticksUntilSpoil_ = slotValue;
+}
+
+Spoilable_Cell::Spoilable_Cell(int _startingTicksUntilSpoil)
+{
+	this->ticksUntilSpoil_ = nullptr;
+	this->startingTicksUntilSpoil = _startingTicksUntilSpoil;
+}
+
 // empty cell
 Cell_Empty::~Cell_Empty()
 {
@@ -90,25 +113,20 @@ Cell_Plantmass::~Cell_Plantmass()
 {
 }
 
-Cell_Plantmass::Cell_Plantmass()
+Cell_Plantmass::Cell_Plantmass() : Spoilable_Cell(PLANTMASS_SPOIL_TIME_MULTIPLIER)
 {
 	this->type = cell_plantmass;
 	this->myOrganism = nullptr;
-	this->ticksUntilSpoil = PLANTMASS_SPOIL_TIME_MULTIPLIER;
 }
 
-Cell_Plantmass::Cell_Plantmass(int _ticksUntilSpoil) : Cell_Plantmass()
+Cell_Plantmass::Cell_Plantmass(int _ticksUntilSpoil) : Spoilable_Cell(_ticksUntilSpoil)
 {
-	this->ticksUntilSpoil = _ticksUntilSpoil;
+	this->type = cell_plantmass;
+	this->myOrganism = nullptr;
 }
 
 void Cell_Plantmass::Tick()
 {
-	this->ticksUntilSpoil--;
-	if (this->ticksUntilSpoil < 0)
-	{
-		this->ticksUntilSpoil = 0;
-	}
 }
 
 Cell_Plantmass *Cell_Plantmass::Clone()
@@ -121,25 +139,20 @@ Cell_Biomass::~Cell_Biomass()
 {
 }
 
-Cell_Biomass::Cell_Biomass()
+Cell_Biomass::Cell_Biomass() : Spoilable_Cell(BIOMASS_SPOIL_TIME_MULTIPLIER)
 {
 	this->type = cell_biomass;
 	this->myOrganism = nullptr;
-	this->ticksUntilSpoil = BIOMASS_SPOIL_TIME_MULTIPLIER;
 }
 
-Cell_Biomass::Cell_Biomass(int _ticksUntilSpoil) : Cell_Biomass()
+Cell_Biomass::Cell_Biomass(int _ticksUntilSpoil) : Spoilable_Cell(_ticksUntilSpoil)
 {
-	this->ticksUntilSpoil = _ticksUntilSpoil;
+	this->type = cell_biomass;
+	this->myOrganism = nullptr;
 }
 
 void Cell_Biomass::Tick()
 {
-	this->ticksUntilSpoil--;
-	if (this->ticksUntilSpoil < 0)
-	{
-		this->ticksUntilSpoil = 0;
-	}
 }
 
 Cell_Biomass *Cell_Biomass::Clone()
@@ -157,6 +170,7 @@ Cell_Leaf::Cell_Leaf()
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
 	this->flowering = randPercent(LEAF_FLOWERING_ABILITY_PERCENT);
+	this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
 }
 
 Cell_Leaf::Cell_Leaf(int floweringPercent)
@@ -164,49 +178,37 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
 	this->flowering = randPercent(floweringPercent);
+	this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
 }
 
 void Cell_Leaf::Tick()
 {
-	/*if (this->integrity < 1)
-	{
-		this->myOrganism->RemoveCell(this);
-		return;
-	}*/
+
 	if (this->flowerCooldown > 0)
 	{
 		this->flowerCooldown--;
 	}
-	if (this->flowering &&
-		this->flowerCooldown == 0 &&
-		this->myOrganism->GetEnergy() > (FLOWER_COST + 1) &&
-		randPercent(PLANT_GROW_PERCENT))
+	// can flower
+	else
 	{
-		// don't grow a flower if this leaf is already adjacent to a flower
-		/*for (int i = 0; i < 4; i++)
+		if (this->flowering &&
+			this->myOrganism->GetEnergy() > (FLOWER_COST + 1) &&
+			randPercent(PLANT_GROW_PERCENT))
 		{
-			int *thisDirection = directions[i];
-			int x_abs = this->x + thisDirection[0];
-			int y_abs = this->y + thisDirection[1];
-			if (board->isCellOfType(x_abs, y_abs, cell_flower) && board->cells[y_abs][x_abs]->myOrganism == this->myOrganism)
+			int checkDirIndex = randInt(0, 3);
+			for (int i = 0; i < 4; i++)
 			{
-				return;
-			}
-		}*/
-
-		int checkDirIndex = randInt(0, 3);
-		for (int i = 0; i < 4; i++)
-		{
-			int *thisDirection = directions[(checkDirIndex + i) % 4];
-			int x_abs = this->x + thisDirection[0];
-			int y_abs = this->y + thisDirection[1];
-			if (board->isCellOfType(x_abs, y_abs, cell_empty))
-			{
-				this->myOrganism->ExpendEnergy(FLOWER_COST);
-				Cell_Flower *newFlower = new Cell_Flower();
-				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, newFlower);
-				this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
-				return;
+				int *thisDirection = directions[(checkDirIndex + i) % 4];
+				int x_abs = this->x + thisDirection[0];
+				int y_abs = this->y + thisDirection[1];
+				if (board->isCellOfType(x_abs, y_abs, cell_empty))
+				{
+					this->myOrganism->ExpendEnergy(FLOWER_COST);
+					Cell_Flower *newFlower = new Cell_Flower();
+					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, newFlower);
+					this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
+					return;
+				}
 			}
 		}
 	}
@@ -352,29 +354,22 @@ Cell_Fruit::~Cell_Fruit()
 {
 }
 
-Cell_Fruit::Cell_Fruit()
+Cell_Fruit::Cell_Fruit() : Spoilable_Cell(FRUIT_SPOIL_TIME)
 {
 	this->type = cell_fruit;
 	this->myOrganism = nullptr;
-	this->ticksUntilSpoil = FRUIT_SPOIL_TIME;
 	this->parentMutability = 50;
 }
 
-Cell_Fruit::Cell_Fruit(int _parentMutability)
+Cell_Fruit::Cell_Fruit(int _parentMutability) : Spoilable_Cell(FRUIT_SPOIL_TIME)
 {
 	this->type = cell_fruit;
 	this->myOrganism = nullptr;
-	this->ticksUntilSpoil = FRUIT_SPOIL_TIME;
 	this->parentMutability = _parentMutability;
 }
 
 void Cell_Fruit::Tick()
 {
-	this->ticksUntilSpoil--;
-	if (this->ticksUntilSpoil < 0)
-	{
-		this->ticksUntilSpoil = 0;
-	}
 }
 
 Cell_Fruit *Cell_Fruit::Clone()
@@ -395,7 +390,7 @@ Cell_Mover::Cell_Mover()
 
 void Cell_Mover::Tick()
 {
-	this->myOrganism->ExpendEnergy(1 + randPercent(this->myOrganism->myCells.size() * 4));
+	this->myOrganism->ExpendEnergy(1 + randPercent(this->myOrganism->nCells() * 4));
 }
 
 Cell_Mover *Cell_Mover::Clone()
@@ -425,10 +420,7 @@ void Cell_Herbivore::Tick()
 	bool couldEat = false;
 	int gainedEnergy = 0;
 	bool valid = false;
-	// if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
-	// {
-	// this->myOrganism->ExpendEnergy(randInt(1, 2));
-	// }
+
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4 && !couldEat; i++)
 	{
@@ -563,7 +555,7 @@ void Cell_Carnivore::Tick()
 	bool couldEat = false;
 	int gainedEnergy = 0;
 	bool valid = false;
-	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->myCells.size() > 1)
+	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->nCells() > 1)
 	{
 		this->myOrganism->ExpendEnergy(randInt(2 * ENERGY_DENSITY_MULTIPLIER, 4 * ENERGY_DENSITY_MULTIPLIER));
 	}
@@ -687,7 +679,7 @@ void Cell_Killer::Tick()
 			}
 		}
 	}
-	if (adjacentBark || (this->myOrganism->cellCounts[cell_leaf] < this->myOrganism->myCells.size() * 0.5))
+	if (adjacentBark || (this->myOrganism->cellCounts[cell_leaf] < this->myOrganism->nCells() * 0.5))
 	{
 		if ((adjacentBark + adjacentLeaves > 2) || (adjacentBark >= 2))
 		{
