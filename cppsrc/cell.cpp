@@ -276,7 +276,7 @@ void Cell_Bark::Tick()
 	}
 
 	// any leaves attached to bark generate a bonus energy every few ticks
-	if (this->myOrganism->age % 5 == 0)
+	if (this->myOrganism->age % 6 == 0)
 	{
 		this->myOrganism->AddEnergy(bonusEnergy);
 	}

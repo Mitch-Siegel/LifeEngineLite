@@ -139,7 +139,7 @@ Organism *Organism::Tick()
 		}
 	}
 
-	this->AddEnergy(((this->age % 5 == 0) ? this->cellCounts[cell_leaf] : 0) +
+	this->AddEnergy(((this->age % 6 == 0) ? this->cellCounts[cell_leaf] : 0) +
 					(this->cellCounts[cell_leaf] > 0));
 	
 	if (this->reproductionCooldown == 0)

@@ -69,7 +69,7 @@ public:
 
 TickratePID pidController;
 
-template <class T> 
+template <class T>
 class DataTracker
 {
 private:
@@ -87,9 +87,9 @@ public:
 	void Add(T value)
 	{
 		this->data[this->dataP] = value;
-		if(++this->dataP >= (maxSamples * 2))
+		if (++this->dataP >= (maxSamples * 2))
 		{
-			for(int i = 0; i < maxSamples; i++)
+			for (int i = 0; i < maxSamples; i++)
 			{
 				this->data[i] = this->data[i + this->maxSamples];
 			}
@@ -100,7 +100,7 @@ public:
 	T *rawData()
 	{
 		int dataStartP = dataP - maxSamples;
-		if(dataStartP < 0)
+		if (dataStartP < 0)
 		{
 			dataStartP = 0;
 		}
@@ -109,7 +109,7 @@ public:
 
 	size_t size()
 	{
-		if(dataP > maxSamples)
+		if (dataP > maxSamples)
 		{
 			return maxSamples;
 		}
@@ -319,6 +319,12 @@ void TickMain()
 
 void displayStats()
 {
+	static DataTracker<int> tickData(10000);
+	static DataTracker<int> organismCountData(10000);
+	static DataTracker<int> plantCountData(10000);
+	static DataTracker<int> herbCountData(10000);
+	static DataTracker<int> carnCountData(10000);
+	static DataTracker<int> omniCountData(10000);
 	enum Counts
 	{
 		count_cells,
@@ -412,6 +418,13 @@ void displayStats()
 			organismStats[i][j] /= thisClassSize;
 		}
 	}
+
+	tickData.Add(board->tickCount);
+	organismCountData.Add(board->Organisms.size());
+	plantCountData.Add(classCounts[class_plant]);
+	herbCountData.Add(classCounts[class_herbivore]);
+	carnCountData.Add(classCounts[class_carnivore]);
+	omniCountData.Add(classCounts[class_omnivore]);
 
 	const char *classNames[class_null] = {"Plant", "Herbivore", "Carnivore", "Omnivore"};
 	const char *rowNames[count_null] = {"Class:", "Count", "Cells", "Energy%", "Max Energy", "Age", "Lifespan", "Mutability", "Max Conviction", "Rotate vs. change"};
@@ -535,39 +548,18 @@ void displayStats()
 		ImGui::EndTable();
 	}
 
-	/*printf("%5.0f Plants - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f/%.0f lifespan, %.1f%% mutability\n",
-		   plantStats[count_raw],
-		   plantStats[count_cells],
-		   plantStats[count_energy] / plantStats[count_maxenergy] * 100,
-		   (plantStats[count_energy] / plantStats[count_maxenergy]) * plantStats[count_energy],
-		   plantStats[count_age],
-		   plantStats[count_lifespan],
-		   plantStats[count_mutability]);*/
-
-	/*printf("%5.0f Movers - avg %2.2f cells, %2.0f%% (%4.2f) energy, %.0f/%.0f lifespan, %.1f%% mutability\n\t%.3f max conviction, %.1f rotate vs change, %.1f turn when rotate\n",
-		   moverStats[count_raw],
-		   moverStats[count_cells],
-		   moverStats[count_energy] / moverStats[count_maxenergy] * 100,
-		   (moverStats[count_energy] / moverStats[count_maxenergy]) * moverStats[count_energy],
-		   moverStats[count_age],
-		   moverStats[count_lifespan],
-		   moverStats[count_mutability],
-		   moverStats[count_maxconviction],
-		   moverStats[count_rotatevschange],
-		   moverStats[count_turnwhenrotate]);*/
-	// printf("Plants/Movers ratio: %2.2f/1\n", plantStats[count_raw] / moverStats[count_raw]);
-
-	/*printf("%lu (%.2f%%) movers have touch sensors (avg sense interval %2.2f)\n", touchSensorHaverCount, 100 * (float)touchSensorHaverCount / moverStats[count_raw], touchSensorInterval);
-	char cellShortNames[cell_null][5] = {"EMPT", "PMAS", "BMAS", "LEAF", "BARK", "FLWR", "FRUT", "HERB", "CARN", "MOVR", "KILR", "ARMR", "TUCH"};
-	printf("CELL:APLNTC|AMOVRC|ASSENT\n");
-	for (int i = cell_empty; i < cell_null; i++)
+	// ImPlot::SetNextAxesLimits(0, organismCountData.size(), 0, static_cast<double>(maxOrganisms));
+	ImPlot::SetNextAxesToFit();
+	if (ImPlot::BeginPlot("Organism Counts by Classification"))
 	{
-		printf("%4s: %2.2f | %2.2f | %02.2f\n",
-			   cellShortNames[i],
-			   plantCellCounts[i],
-			   moverCellCounts[i],
-			   moverCellSentiments[i]);
-	}*/
+		ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
+		ImPlot::PlotLine("Total Organisms", tickData.rawData(), organismCountData.rawData(), static_cast<int>(organismCountData.size()));
+		ImPlot::PlotLine("Plants", tickData.rawData(), plantCountData.rawData(), static_cast<int>(organismCountData.size()));
+		ImPlot::PlotLine("Herbivores", tickData.rawData(), herbCountData.rawData(), static_cast<int>(organismCountData.size()));
+		ImPlot::PlotLine("Carnivores", tickData.rawData(), carnCountData.rawData(), static_cast<int>(organismCountData.size()));
+		ImPlot::PlotLine("Omnivores", tickData.rawData(), omniCountData.rawData(), static_cast<int>(organismCountData.size()));
+		ImPlot::EndPlot();
+	}
 }
 
 #define BOARD_X 192
