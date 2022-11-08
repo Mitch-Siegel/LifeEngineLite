@@ -770,7 +770,6 @@ void Cell_Touch::Tick()
 			totalSense += thisSentiment;
 		}
 	}
-	// }
 
 	if (totalSense > 0)
 	{

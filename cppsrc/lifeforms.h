@@ -92,7 +92,7 @@ class Organism;
 #define ENERGY_DENSITY_MULTIPLIER 8
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define FOOD_MULTIPLIER 2.25 * ENERGY_DENSITY_MULTIPLIER
+#define FOOD_MULTIPLIER 2.5 * ENERGY_DENSITY_MULTIPLIER
 
 #define LEAF_FOOD_ENERGY 1
 #define FLOWER_FOOD_ENERGY 3
@@ -134,7 +134,7 @@ class Organism;
 
 #define TOUCH_SENSE_COOLDOWN 2
 
-#define KILLER_DAMAGE_COST 1 * ENERGY_DENSITY_MULTIPLIER
+#define KILLER_DAMAGE_COST 1.5 * ENERGY_DENSITY_MULTIPLIER
 
 #define ARMOR_HEALTH_BONUS 4 * MAX_HEALTH_MULTIPLIER
 
@@ -170,11 +170,6 @@ public:
 	void attachTicksUntilSpoil(int *slotValue);
 
 	explicit Spoilable_Cell(int _startingTicksUntilSpoil);
-	// virtual ~Spoilable_Cell() = 0;
-
-	// virtual void Tick() = 0;
-
-	// virtual Spoilable_Cell *Clone() = 0;
 };
 
 class Cell_Empty : public Cell

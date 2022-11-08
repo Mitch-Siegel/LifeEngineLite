@@ -51,7 +51,7 @@ public:
 		float error = ((1000000.0 / targetTickrate) - instanteneousMeasurement);
 		if (maxSpeed)
 		{
-			error -= (5000.0 * (59.99 - framerate));
+			error -= (1000.0 * (59.99 - framerate));
 		}
 		float dt = 1.0 / targetTickrate;
 		// printf("DT is % .8f, error is % .8f\n", dt, error);
@@ -150,26 +150,28 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 													 SDL_TEXTUREACCESS_TARGET, winX, winY);
 
 	if ((board->DeltaCells.size() == 0 && !forceRedraw) ||
-		(leftoverMicros < 0) ||
-		(maxSpeed && (frameNum % 60)))
+		(leftoverMicros < 0))
 	{
 		SDL_RenderCopy(r, boardBuf, NULL, NULL);
 		return -1.0;
 	}
 
-	// if (forceMutex)
-	// {
-	board->GetMutex();
-	// }
-	// else
-	// {
-	// if (!board->TryGetMutex())
-	// {
-	// printf("Couldn't get board mutex :(\n");
-	// SDL_RenderCopy(r, boardBuf, NULL, NULL);
-	// return;
-	// }
-	// }
+	/*
+	 * don't bother waiting around for the mutex if trying to run at max speed
+	 * waiting for the mutex will decrease the frame rate and this kick down the tick speed from the PID controller
+	 */
+	if (!maxSpeed)
+	{
+		board->GetMutex();
+	}
+	else
+	{
+		if(!board->TryGetMutex())
+		{
+			SDL_RenderCopy(r, boardBuf, NULL, NULL);
+			return -1.0;
+		}
+	}
 
 	// draw to board buffer instead of backbuffer
 	SDL_SetRenderTarget(r, boardBuf);
@@ -573,7 +575,7 @@ int main(int argc, char *argv[])
 	board->AddSpeciesMember(firstOrganism);
 	// Setup window
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-	SDL_Window *window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+	SDL_Window *window = SDL_CreateWindow("Mitch's Life Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, window_flags);
 
 	// Setup SDL_Renderer instance
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
