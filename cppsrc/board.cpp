@@ -52,14 +52,14 @@ void Board::Tick()
 			Food_Slot *thisSlot = sloti->second;
 			// don't drive the iterator because the replacecell() calls for each food cell will delete the elements
 			// an overridden version of the replacecell specifying whether or not to do the delete would save the std::find's worth of time
-			for (std::vector<Spoilable_Cell *>::iterator c = thisSlot->begin(); c != thisSlot->end(); )
+			for (std::vector<Spoilable_Cell *>::iterator c = thisSlot->begin(); c != thisSlot->end(); ++c)
 			{
 				Spoilable_Cell *expiringFood = *c;
 				switch (expiringFood->type)
 				{
 				case cell_biomass:
 				case cell_plantmass:
-					this->replaceCell(expiringFood, new Cell_Empty());
+					this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
 					break;
 
 				case cell_fruit:
@@ -68,7 +68,7 @@ void Board::Tick()
 					{
 						Organism *grownFruit = this->createOrganism(expiringFood->x, expiringFood->y);
 						grownFruit->mutability = ((Cell_Fruit *)expiringFood)->parentMutability;
-						this->replaceCell(expiringFood, new Cell_Empty());
+						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
 						grownFruit->AddCell(0, 0, GenerateRandomCell());
 						Cell *secondRandomCell = GenerateRandomCell();
 						bool couldAddSecond = false;
@@ -106,7 +106,7 @@ void Board::Tick()
 					}
 					else
 					{
-						this->replaceCellAt(expiringFood->x, expiringFood->y, new Cell_Plantmass(FRUIT_SPOIL_TIME));
+						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Plantmass(FRUIT_SPOIL_TIME));
 					}
 					break;
 
