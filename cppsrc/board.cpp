@@ -111,7 +111,7 @@ void Board::Tick()
 					break;
 
 				default:
-					std::cerr << "Impossible case for food cell to be something it shouldn't!" << std::endl;
+					printf("Impossible case for food cell to be something it shouldn't (cell_types enum %d)!\n", expiringFood->type);
 					exit(1);
 				}
 			}
@@ -382,10 +382,54 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 	this->DeltaCells.insert(std::pair<int, int>(_x, _y));
 }
 
-void Board::replaceCell(Cell *_replaced, Cell *_newCell)
+
+// replace the cell at a given position with another cell
+// DOES NOT handle removing food from the food list
+// assumed to only be used by Board::Tick() for food slots with 0 remaining time
+void Board::replaceCellAt_NoTrackReplacedFood(const int _x, const int _y, Cell *_cell)
 {
-	this->replaceCellAt(_replaced->x, _replaced->y, _newCell);
+	// if out of bounds, bail
+	if (this->boundCheckPos(_x, _y))
+	{
+		std::cerr << "Replacing cell at out-of-bounds position!";
+		exit(1);
+	}
+
+	Cell *erased = this->cells[_y][_x];
+	delete erased;
+
+	_cell->x = _x;
+	_cell->y = _y;
+	switch (_cell->type)
+	{
+	case cell_plantmass:
+	case cell_biomass:
+	case cell_fruit:
+	{
+		Spoilable_Cell *s = static_cast<Spoilable_Cell *>(_cell);
+		Board::Food_Slot *thisFoodSlot;
+		if (!this->FoodCells.count(s->TicksUntilSpoil()))
+		{
+			thisFoodSlot = new Board::Food_Slot(s->TicksUntilSpoil());
+			this->FoodCells[s->TicksUntilSpoil()] = thisFoodSlot;
+		}
+		else
+		{
+			thisFoodSlot = this->FoodCells[s->TicksUntilSpoil()];
+		}
+		s->attachTicksUntilSpoil(&thisFoodSlot->ticksUntilSpoil);
+		thisFoodSlot->push_back(s);
+	}
+
+	break;
+
+	default:
+		break;
+	}
+	this->cells[_y][_x] = _cell;
+	this->DeltaCells.insert(std::pair<int, int>(_x, _y));
 }
+
 
 void Board::swapCellAtIndex(int _x, int _y, Cell *a)
 {

@@ -90,8 +90,14 @@ public:
 
     void replaceCellAt(const int _x, const int _y, Cell *_cell);
 
-    void replaceCell(Cell *_replaced, Cell *_newCell);
+    void replaceCell(Cell *_replaced, Cell *_newCell) { this->replaceCellAt(_replaced->x, _replaced->y, _newCell); }
 
+private:
+    void replaceCellAt_NoTrackReplacedFood(const int _x, const int _y, Cell *_cell);
+
+    void replaceCell_NoTrackReplacedFood(Cell *_replaced, Cell *_newCell) { this->replaceCellAt_NoTrackReplacedFood(_replaced->x, _replaced->y, _newCell); }
+
+public:
     void swapCellAtIndex(int _x, int _y, Cell *_toSwap);
 
     Organism *createOrganism(const int _x, const int _y);

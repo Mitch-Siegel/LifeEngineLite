@@ -53,7 +53,7 @@ public:
 		float error = ((1000000.0 / targetTickrate) - instanteneousMeasurement);
 		if (maxSpeed)
 		{
-			error -= (1000.0 * (59.99 - framerate));
+			error -= (10000.0 * (59.99 - framerate));
 		}
 		float dt = 1.0 / targetTickrate;
 		// printf("DT is % .8f, error is % .8f\n", dt, error);
@@ -84,6 +84,11 @@ public:
 		this->data = new T[maxSamples * 2];
 	}
 
+	~DataTracker()
+	{
+		delete[] this->data;
+	}
+
 	void Add(T value)
 	{
 		this->data[this->dataP] = value;
@@ -97,7 +102,7 @@ public:
 		}
 	}
 
-	T *rawData()
+	T const *rawData()
 	{
 		int dataStartP = dataP - maxSamples;
 		if (dataStartP < 0)
@@ -282,7 +287,7 @@ void TickMain()
 			int leftoverThisStep = static_cast<int>((1000000.0 / targetTickrate) - micros);
 			leftoverMicros += leftoverThisStep;
 			// lastFrame = frameEnd;
-			if (leftoverMicros > 25000)
+			if (leftoverMicros > 5000)
 			{
 				if (maxSpeed)
 				{
@@ -347,8 +352,6 @@ void displayStats()
 	// static double touchSensorIntervals[class_null] = {0.0};
 	static double cellSentiments[class_null][cell_null] = {{0.0}};
 
-	// if (!maxSpeed && leftoverMicros >= MIN_EXTRA_MICROS)
-	// {
 	board->GetMutex();
 	for (int i = 0; i < class_null; i++)
 	{
