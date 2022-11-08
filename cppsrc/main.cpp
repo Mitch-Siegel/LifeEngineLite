@@ -6,9 +6,11 @@
 #include <boost/thread.hpp>
 
 #include <SDL2/SDL.h>
-#include "imgui-1.88/imgui.h"
-#include "imgui-1.88/backends/imgui_impl_sdl.h"
-#include "imgui-1.88/backends/imgui_impl_sdlrenderer.h"
+#include "imgui.h"
+#include "imgui_impl_sdl.h"
+#include "imgui_impl_sdlrenderer.h"
+
+#include "implot.h"
 
 #include "lifeforms.h"
 #include "board.h"
@@ -67,18 +69,56 @@ public:
 
 TickratePID pidController;
 
-/*
-previous_error = 0
-integral = 0
-Start:
-error = setpoint – input
-integral = integral + error*dt
-derivative = (error – previous error)/dt
-output = Kp*error + Ki*integral + Kd*derivative
-previous_error = error
-wait (dt)
-Goto Start
-*/
+template <class T> 
+class DataTracker
+{
+private:
+	int maxSamples = 0;
+	T *data;
+	int dataP = 0;
+
+public:
+	DataTracker(int maxSamples)
+	{
+		this->maxSamples = maxSamples;
+		this->data = new T[maxSamples * 2];
+	}
+
+	void Add(T value)
+	{
+		this->data[this->dataP] = value;
+		if(++this->dataP >= (maxSamples * 2))
+		{
+			for(int i = 0; i < maxSamples; i++)
+			{
+				this->data[i] = this->data[i + this->maxSamples];
+			}
+			this->dataP = maxSamples;
+		}
+	}
+
+	T *rawData()
+	{
+		int dataStartP = dataP - maxSamples;
+		if(dataStartP < 0)
+		{
+			dataStartP = 0;
+		}
+		return data + dataStartP;
+	}
+
+	size_t size()
+	{
+		if(dataP > maxSamples)
+		{
+			return maxSamples;
+		}
+		else
+		{
+			return dataP;
+		}
+	}
+};
 
 inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 {
@@ -166,7 +206,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	}
 	else
 	{
-		if(!board->TryGetMutex())
+		if (!board->TryGetMutex())
 		{
 			SDL_RenderCopy(r, boardBuf, NULL, NULL);
 			return -1.0;
@@ -532,13 +572,10 @@ void displayStats()
 
 #define BOARD_X 192
 #define BOARD_Y 192
-#define FRAMERATE_TRACKING_INTERVAL 500
 int main(int argc, char *argv[])
 {
-	int frameP = 0;
-	int cellModP = 0;
-	float frameRates[FRAMERATE_TRACKING_INTERVAL] = {60.0};
-	float cellsModifieds[FRAMERATE_TRACKING_INTERVAL] = {0.0};
+	DataTracker<float> frameRateData(500);
+	DataTracker<float> cellsModifiedData(250);
 	SDL_Init(SDL_INIT_VIDEO);
 	signal(SIGINT, intHandler);
 	// FrameratePID frameratePid;
@@ -591,6 +628,7 @@ int main(int argc, char *argv[])
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
 	ImGuiIO &io = ImGui::GetIO();
 	(void)io;
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
@@ -637,8 +675,7 @@ int main(int argc, char *argv[])
 	static size_t lastSecondFrameCount = frameCount;
 	while (!done)
 	{
-		frameRates[frameP] = ImGui::GetIO().Framerate;
-		++frameP %= FRAMERATE_TRACKING_INTERVAL;
+		frameRateData.Add(ImGui::GetIO().Framerate);
 
 		// Poll and handle events (inputs, window resize, etc.)
 		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -762,16 +799,8 @@ int main(int argc, char *argv[])
 														   // ImGui::Checkbox("Another Window", &show_another_window);
 														   // renderer and other code before this point
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
-			static float realFrameRates[FRAMERATE_TRACKING_INTERVAL];
-			static float realCellMods[FRAMERATE_TRACKING_INTERVAL];
-			for (int i = 0; i < FRAMERATE_TRACKING_INTERVAL; i++)
-			{
-				realFrameRates[i] = frameRates[(frameP + i) % FRAMERATE_TRACKING_INTERVAL];
-				realCellMods[i] = cellsModifieds[(cellModP + i) % FRAMERATE_TRACKING_INTERVAL];
-			}
-
-			ImGui::PlotLines("Frame Times", realFrameRates, FRAMERATE_TRACKING_INTERVAL);
-			ImGui::PlotLines("Proportion of cells modified per render call", realCellMods, FRAMERATE_TRACKING_INTERVAL);
+			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
+			ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
 			ImGui::SliderFloat("Target tick count per frame", &targetTickrate, 1.0, 100.0, "%.0f");
 			ImGui::Checkbox("Max speed (reduces render rate)", &maxSpeed);
@@ -822,8 +851,7 @@ int main(int argc, char *argv[])
 		float cellsModified = RenderBoard(renderer, frameCount);
 		if (cellsModified >= 0.0)
 		{
-			cellsModifieds[cellModP] = cellsModified;
-			++cellModP %= FRAMERATE_TRACKING_INTERVAL;
+			cellsModifiedData.Add(cellsModified);
 		}
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 
@@ -874,6 +902,7 @@ int main(int argc, char *argv[])
 	// Cleanup
 	ImGui_ImplSDLRenderer_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
+	ImPlot::DestroyContext();
 	ImGui::DestroyContext();
 
 	SDL_DestroyRenderer(renderer);
