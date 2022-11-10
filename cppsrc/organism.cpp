@@ -35,7 +35,7 @@ Organism::Organism(int center_x, int center_y)
 void Organism::Die()
 {
 	board->RemoveSpeciesMember(this->species);
-	for (size_t i = 0; i < this->nCells(); i++)
+	for (uint64_t i = 0; i < this->nCells(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
 		Cell *replacedWith = nullptr;
@@ -83,7 +83,7 @@ void Organism::Die()
 
 void Organism::Remove()
 {
-	for (size_t i = 0; i < this->nCells(); i++)
+	for (uint64_t i = 0; i < this->nCells(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
 		board->replaceCellAt(thisCell->x, thisCell->y, new Cell_Empty());
@@ -103,7 +103,7 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	for (size_t i = 0; i < this->nCells(); i++)
+	for (uint64_t i = 0; i < this->nCells(); i++)
 	{
 		this->myCells[i]->Tick();
 	}
@@ -116,21 +116,21 @@ Organism *Organism::Tick()
 			{
 			case intent_changeDir:
 			case intent_continue:
-				for (size_t i = 0; i < this->cellCounts[cell_mover]; i++)
+				for (uint64_t i = 0; i < this->cellCounts[cell_mover]; i++)
 				{
 					this->Move();
 				}
 				break;
 
 			case intent_rotateClockwise:
-				for (size_t i = 0; i < this->cellCounts[cell_mover]; i++)
+				for (uint64_t i = 0; i < this->cellCounts[cell_mover]; i++)
 				{
 					this->Rotate(true);
 				}
 				break;
 
 			case intent_rotateCounterClockwise:
-				for (size_t i = 0; i < this->cellCounts[cell_mover]; i++)
+				for (uint64_t i = 0; i < this->cellCounts[cell_mover]; i++)
 				{
 					this->Rotate(false);
 				}
@@ -168,7 +168,7 @@ void Organism::RecalculateStats()
 		cellCounts[i] = 0;
 	}
 
-	for (size_t i = 0; i < this->nCells(); i++)
+	for (uint64_t i = 0; i < this->nCells(); i++)
 	{
 		cellCounts[this->myCells[i]->type]++;
 		calculatedMaxEnergy += CellEnergyDensities[this->myCells[i]->type];
@@ -339,7 +339,7 @@ void Organism::Move()
 		std::vector<MovedCell> moves;
 
 		// first pass - pick up all cells and replace with empties
-		for (size_t i = 0; i < this->nCells(); i++)
+		for (uint64_t i = 0; i < this->nCells(); i++)
 		{
 			// pick up the cell we are moving
 			Cell *movedCell = this->myCells[i];
@@ -462,7 +462,7 @@ void Organism::Rotate(bool clockwise)
 	this->brain.RotateSuccess(clockwise);
 }
 
-void Organism::Damage(size_t n)
+void Organism::Damage(uint64_t n)
 {
 	if (n > this->currentHealth)
 	{
@@ -474,7 +474,7 @@ void Organism::Damage(size_t n)
 	this->brain.Punish();
 }
 
-void Organism::Heal(size_t n)
+void Organism::Heal(uint64_t n)
 {
 	this->currentHealth += n;
 	if (this->currentHealth > this->maxHealth)
@@ -483,7 +483,7 @@ void Organism::Heal(size_t n)
 	}
 }
 
-void Organism::ExpendEnergy(size_t n)
+void Organism::ExpendEnergy(uint64_t n)
 {
 	if (n > this->currentEnergy)
 	{
@@ -494,7 +494,7 @@ void Organism::ExpendEnergy(size_t n)
 	this->currentEnergy -= n;
 }
 
-void Organism::AddEnergy(size_t n)
+void Organism::AddEnergy(uint64_t n)
 {
 	this->currentEnergy += n;
 	if (this->currentEnergy > this->maxEnergy)
@@ -503,17 +503,17 @@ void Organism::AddEnergy(size_t n)
 	}
 }
 
-std::size_t Organism::GetMaxHealth()
+uint64_t Organism::GetMaxHealth()
 {
 	return this->maxHealth;
 }
 
-std::size_t Organism::GetEnergy()
+uint64_t Organism::GetEnergy()
 {
 	return this->currentEnergy;
 }
 
-std::size_t Organism::GetMaxEnergy()
+uint64_t Organism::GetMaxEnergy()
 {
 	return this->maxEnergy;
 }
@@ -521,7 +521,7 @@ std::size_t Organism::GetMaxEnergy()
 // returns true if possible, false if not
 bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 {
-	for (size_t i = 0; i < this->nCells(); i++)
+	for (uint64_t i = 0; i < this->nCells(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
 
@@ -542,7 +542,7 @@ bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 
 bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 {
-	for (size_t i = 0; i < this->nCells(); i++)
+	for (uint64_t i = 0; i < this->nCells(); i++)
 	{
 		Cell *thisCell = this->myCells[i];
 
@@ -598,7 +598,7 @@ Organism *Organism::Reproduce()
 
 				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra);
 				replicated->mutability = this->mutability;
-				for (size_t k = 0; k < this->nCells(); k++)
+				for (uint64_t k = 0; k < this->nCells(); k++)
 				{
 					Cell *thisCell = this->myCells[k];
 					switch (thisCell->type)
@@ -834,7 +834,7 @@ enum OrganismClassifications Organism::Classify()
 					 this->cellCounts[cell_bark] +
 					 this->cellCounts[cell_flower];
 	// if at least 1/3 plant or can't move, it's a plant
-	if (static_cast<size_t>(plantCells * 3) >= this->nCells() || !this->cellCounts[cell_mover])
+	if (static_cast<uint64_t>(plantCells * 3) >= this->nCells() || !this->cellCounts[cell_mover])
 	{
 		return class_plant;
 	}

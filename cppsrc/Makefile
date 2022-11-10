@@ -50,10 +50,10 @@ $(OBJDIR)/main.o: main.cpp
 	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./imgui-1.88/backends -I./implot-0.14 -o $@ $<
 
 $(OBJDIR)/util.o: util.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -o $@ $<
+	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./implot-0.14 -o $@ $<
 
 $(OBJDIR)/organismview.o: organismview.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -o $@ $<
+	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./implot-0.14 -o $@ $<
 
 clean:
 	rm $(OBJDIR)/*.o

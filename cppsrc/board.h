@@ -18,9 +18,9 @@ namespace std
     template <>
     struct hash<std::pair<int, int>>
     {
-        auto operator()(const std::pair<int, int> &p) const -> size_t
+        auto operator()(const std::pair<int, int> &p) const -> uint64_t
         {
-            return static_cast<std::size_t>(p.first) + (static_cast<std::size_t>(p.second) << 32);
+            return static_cast<uint64_t>(p.first) + (static_cast<uint64_t>(p.second) << 32);
         }
     };
 } // namespace std
@@ -51,7 +51,7 @@ private:
         std::vector<Spoilable_Cell *>::iterator end() { return this->cells.end(); }
     };
 
-    std::map<size_t, Food_Slot *> FoodCells;
+    std::map<uint64_t, Food_Slot *> FoodCells;
 
 public:
     std::unordered_map<unsigned int, enum OrganismClassifications>
@@ -62,7 +62,7 @@ public:
 
     std::vector<unsigned int> activeSpecies;
 
-    std::size_t tickCount;
+    uint64_t tickCount;
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
 

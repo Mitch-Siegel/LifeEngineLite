@@ -15,24 +15,24 @@ class Organism
 	friend class OrganismView;
 
 private:
-	std::size_t currentHealth, maxHealth;
-	std::size_t currentEnergy, maxEnergy;
+	uint64_t currentHealth, maxHealth;
+	uint64_t currentEnergy, maxEnergy;
 	std::vector<Cell *> myCells;
-	std::size_t nCells_;
+	uint64_t nCells_;
 
 public:
 	int x = -1;
 	int y = -1;
 	unsigned int species;
-	std::size_t age;
+	uint64_t age;
 	int mutability;
 	bool alive;
 	int reproductionCooldown;
-	std::size_t lifespan;
+	uint64_t lifespan;
 	Brain brain;
-	std::size_t cellCounts[cell_null];
+	uint64_t cellCounts[cell_null];
 
-	const std::size_t &nCells() const { return this->nCells_; }
+	const uint64_t &nCells() const { return this->nCells_; }
 
 	Organism(int center_x, int center_y);
 
@@ -56,19 +56,19 @@ public:
 
 	void ReplaceCell(Cell *_myCell, Cell *_newCell);
 
-	std::size_t GetMaxHealth();
+	uint64_t GetMaxHealth();
 
-	std::size_t GetEnergy();
+	uint64_t GetEnergy();
 
-	std::size_t GetMaxEnergy();
+	uint64_t GetMaxEnergy();
 
-	void Damage(std::size_t n);
+	void Damage(uint64_t n);
 
-	void Heal(std::size_t n);
+	void Heal(uint64_t n);
 
-	void ExpendEnergy(std::size_t n);
+	void ExpendEnergy(uint64_t n);
 
-	void AddEnergy(std::size_t n);
+	void AddEnergy(uint64_t n);
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
 

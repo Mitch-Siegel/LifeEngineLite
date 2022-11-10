@@ -14,4 +14,6 @@ public:
 
 // void TickMain();
 
+void AddImPlotColorMap();
+
 void SetColorForCell(SDL_Renderer *r, Cell *c);

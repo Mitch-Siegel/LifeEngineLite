@@ -44,8 +44,8 @@ void Board::Tick()
 {
 	this->GetMutex();
 	this->tickCount++;
-	std::map<size_t, Board::Food_Slot *> newFoodCells;
-	for (std::map<size_t, Board::Food_Slot *>::iterator sloti = this->FoodCells.begin(); sloti != this->FoodCells.end(); ++sloti)
+	std::map<uint64_t, Board::Food_Slot *> newFoodCells;
+	for (std::map<uint64_t, Board::Food_Slot *>::iterator sloti = this->FoodCells.begin(); sloti != this->FoodCells.end(); ++sloti)
 	{
 		if (sloti->first == 0)
 		{
@@ -128,14 +128,14 @@ void Board::Tick()
 	}
 	this->FoodCells = newFoodCells;
 	/*
-	for (size_t i = 0; i < this->FoodCells.size(); i++)
+	for (uint64_t i = 0; i < this->FoodCells.size(); i++)
 	{
 		this->FoodCells[i]->Tick();
 
 	}
 	*/
 
-	for (size_t i = 0; i < this->Organisms.size(); i++)
+	for (uint64_t i = 0; i < this->Organisms.size(); i++)
 	{
 		if (!this->Organisms[i]->alive)
 		{
@@ -182,11 +182,11 @@ void Board::Stats()
 	double plantCellCounts[cell_null] = {0.0};
 	double moverCellCounts[cell_null] = {0.0};
 	double moverCellSentiments[cell_null] = {0.0};
-	size_t touchSensorHaverCount = 0;
+	uint64_t touchSensorHaverCount = 0;
 	double touchSensorInterval = 0;
 	auto now = std::chrono::high_resolution_clock::now();
 	auto diff = now - lastFrame;
-	size_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
+	uint64_t millis = std::chrono::duration_cast<std::chrono::microseconds>(diff).count() / 1000;
 	printf("\nTICK %lu (%.2f t/s) (%lu organisms in %lu species)\n", this->tickCount, (28000.0 / (float)millis), this->Organisms.size(), this->activeSpecies.size());
 	lastFrame = now;
 	for (Organism *o : this->Organisms)

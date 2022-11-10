@@ -3,7 +3,8 @@
 #include <chrono>
 #include <SDL2/SDL.h>
 
-#include <imgui.h>
+#include "imgui.h"
+#include "implot.h"
 #include "board.h"
 
 extern Board *board;
@@ -97,63 +98,41 @@ void TickMain()
 	}
 }
 */
+
+const ImVec4 cellColors[cell_null] =
+	{
+		{0, 0, 0, 0},		  // empty
+		{10, 40, 10, 255},	  // plantmass
+		{150, 60, 60, 255},	  // biomass
+		{30, 120, 30, 255},	  // leaf
+		{75, 25, 25, 255},	  // bark
+		{50, 250, 150, 255},  // flower
+		{200, 200, 0, 255},	  // fruit
+		{255, 150, 0, 255},	  // herb
+		{255, 100, 150, 255}, // carn
+		{50, 120, 255, 255},  // mover
+		{255, 0, 0, 255},	  // killer
+		{175, 0, 255, 255},	  // armor
+		{255, 255, 255, 255}  // touch
+
+};
+
+void AddImPlotColorMap()
+{
+	// ImPlot::AddColormap("CellColors", )
+}
+
 void SetColorForCell(SDL_Renderer *r, Cell *c)
 {
 	switch (c->type)
 	{
-	case cell_empty:
-		SDL_SetRenderDrawColor(r, 0, 0, 0, 0);
-		break;
-
-	case cell_plantmass:
-		SDL_SetRenderDrawColor(r, 10, 40, 10, 255);
-		break;
-
-	case cell_biomass:
-		SDL_SetRenderDrawColor(r, 150, 60, 60, 255);
-		break;
-
-	case cell_leaf:
-		SDL_SetRenderDrawColor(r, 30, 120, 30, 255);
-		break;
-
-	case cell_bark:
-		SDL_SetRenderDrawColor(r, 75, 25, 25, 255);
-		break;
-
-	case cell_mover:
-		SDL_SetRenderDrawColor(r, 50, 120, 255, 255);
-		break;
-
-	case cell_herbivore_mouth:
-		SDL_SetRenderDrawColor(r, 255, 150, 0, 255);
-		break;
-
-	case cell_carnivore_mouth:
-		SDL_SetRenderDrawColor(r, 255, 100, 150, 255);
-		break;
-
-	case cell_flower:
-		SDL_SetRenderDrawColor(r, 50, 250, 150, 255);
-		break;
-
-	case cell_fruit:
-		SDL_SetRenderDrawColor(r, 200, 200, 0, 255);
-		break;
-
-	case cell_killer:
-		SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
-		break;
-
-	case cell_armor:
-		SDL_SetRenderDrawColor(r, 175, 0, 255, 255);
-		break;
-
-	case cell_touch:
-		SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
-		break;
-
 	case cell_null:
+		printf("Attempt to set color for null cell!\n");
+		exit(1);
 		break;
+
+	default:
+		const ImVec4 &thisColor = cellColors[c->type];
+		SDL_SetRenderDrawColor(r, thisColor.x, thisColor.y, thisColor.z, thisColor.w);
 	}
 }
