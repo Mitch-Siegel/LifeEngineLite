@@ -14,7 +14,9 @@
 
 #include "lifeforms.h"
 #include "board.h"
+#include "organismview.h"
 #include "rng.h"
+#include "util.h"
 
 #define MIN_EXTRA_MICROS 100
 static volatile int running = 1;
@@ -127,63 +129,7 @@ public:
 
 inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 {
-	switch (c->type)
-	{
-	case cell_empty:
-		SDL_SetRenderDrawColor(r, 0, 0, 0, 0);
-		break;
-
-	case cell_plantmass:
-		SDL_SetRenderDrawColor(r, 10, 40, 10, 255);
-		break;
-
-	case cell_biomass:
-		SDL_SetRenderDrawColor(r, 150, 60, 60, 255);
-		break;
-
-	case cell_leaf:
-		SDL_SetRenderDrawColor(r, 30, 120, 30, 255);
-		break;
-
-	case cell_bark:
-		SDL_SetRenderDrawColor(r, 75, 25, 25, 255);
-		break;
-
-	case cell_mover:
-		SDL_SetRenderDrawColor(r, 50, 120, 255, 255);
-		break;
-
-	case cell_herbivore_mouth:
-		SDL_SetRenderDrawColor(r, 255, 150, 0, 255);
-		break;
-
-	case cell_carnivore_mouth:
-		SDL_SetRenderDrawColor(r, 255, 100, 150, 255);
-		break;
-
-	case cell_flower:
-		SDL_SetRenderDrawColor(r, 50, 250, 150, 255);
-		break;
-
-	case cell_fruit:
-		SDL_SetRenderDrawColor(r, 200, 200, 0, 255);
-		break;
-
-	case cell_killer:
-		SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
-		break;
-
-	case cell_armor:
-		SDL_SetRenderDrawColor(r, 175, 0, 255, 255);
-		break;
-
-	case cell_touch:
-		SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
-		break;
-
-	case cell_null:
-		break;
-	}
+	SetColorForCell(r, c);
 	SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
 }
 
@@ -626,6 +572,7 @@ int main(int argc, char *argv[])
 	ImPlot::CreateContext();
 	ImGuiIO &io = ImGui::GetIO();
 	(void)io;
+	io.IniFilename = NULL;
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
@@ -668,6 +615,7 @@ int main(int argc, char *argv[])
 	bool done = false;
 	static size_t frameCount = 0;
 	static size_t lastSecondFrameCount = frameCount;
+	std::vector<std::unique_ptr<OrganismView>> activeOrganismViews;
 	while (!done)
 	{
 		frameRateData.Add(ImGui::GetIO().Framerate);
@@ -681,6 +629,7 @@ int main(int argc, char *argv[])
 		while (SDL_PollEvent(&event))
 		{
 			static bool mouse1Held = false;
+			static int totalDrag_x, totalDrag_y;
 			ImGui_ImplSDL2_ProcessEvent(&event);
 			if (event.type == SDL_QUIT)
 			{
@@ -694,20 +643,27 @@ int main(int argc, char *argv[])
 			}
 			else if (event.type == SDL_MOUSEWHEEL)
 			{
-				SDL_GetMouseState(&mouse_x, &mouse_y);
-				// scroll up
-				if (event.wheel.y > 0)
+				if (!io.WantCaptureMouse)
 				{
-					forceRedraw = true;
-					scaleFactor++;
-				}
-				// scroll down
-				else if (event.wheel.y < 0)
-				{
-					if (scaleFactor > 1)
+					SDL_GetMouseState(&mouse_x, &mouse_y);
+					// scroll up
+					if (event.wheel.y > 0)
 					{
 						forceRedraw = true;
-						scaleFactor--;
+						x_off -= mouse_x / scaleFactor;
+						y_off -= mouse_y / scaleFactor;
+						scaleFactor++;
+					}
+					// scroll down
+					else if (event.wheel.y < 0)
+					{
+						if (scaleFactor > 1)
+						{
+							forceRedraw = true;
+							x_off += mouse_x / scaleFactor;
+							y_off += mouse_y / scaleFactor;
+							scaleFactor--;
+						}
 					}
 				}
 			}
@@ -715,6 +671,8 @@ int main(int argc, char *argv[])
 			{
 				if (!io.WantCaptureMouse)
 				{
+					totalDrag_x = 0;
+					totalDrag_y = 0;
 					if (event.button.button == SDL_BUTTON_LEFT)
 					{
 						mouse1Held = true;
@@ -729,6 +687,21 @@ int main(int argc, char *argv[])
 				{
 					if (event.button.button == SDL_BUTTON_LEFT)
 					{
+						if (abs(totalDrag_x) < scaleFactor && abs(totalDrag_y) < scaleFactor)
+						{
+							int cell_x = (event.button.x - x_off) / scaleFactor;
+							int cell_y = (event.button.y - y_off) / scaleFactor;
+							if (!board->boundCheckPos(cell_x, cell_y))
+							{
+								Organism *clickedOrganism = board->cells[cell_y][cell_x]->myOrganism;
+								if (clickedOrganism != nullptr)
+								{
+									board->GetMutex();
+									activeOrganismViews.push_back(std::make_unique<OrganismView>(clickedOrganism, renderer));
+									board->ReleaseMutex();
+								}
+							}
+						}
 						mouse1Held = false;
 					}
 				}
@@ -757,6 +730,9 @@ int main(int argc, char *argv[])
 				forceRedraw = true;
 				int delta_x = mouse_x - event.button.x;
 				int delta_y = mouse_y - event.button.y;
+				totalDrag_x += delta_x;
+				totalDrag_y += delta_y;
+
 				x_off -= delta_x;
 				y_off -= delta_y;
 				if ((x_off + (board->dim_x * scaleFactor)) < scaleFactor)
@@ -814,16 +790,6 @@ int main(int argc, char *argv[])
 			ImGui::End();
 		}
 
-		/*
-		// 3. Show another simple window.
-		if (show_another_window)
-		{
-			ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-			ImGui::Text("Hello from another window!");
-			if (ImGui::Button("Close Me"))
-				show_another_window = false;
-			ImGui::End();
-		}*/
 		{
 			if (testWinShown)
 			{
@@ -834,6 +800,19 @@ int main(int argc, char *argv[])
 					testWinShown = false;
 				}
 				ImGui::End();
+			}
+		}
+
+		for (auto ovi = activeOrganismViews.begin(); ovi != activeOrganismViews.end(); ++ovi)
+		{
+			if (!(*ovi)->isOpen())
+			{
+				activeOrganismViews.erase(ovi);
+				ovi--;
+			}
+			else
+			{
+				(*ovi)->OnFrame();
 			}
 		}
 

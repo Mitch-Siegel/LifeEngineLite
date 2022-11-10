@@ -19,7 +19,7 @@ GAME_OBJS = $(GAME_SRCS:%=%.o)
 CFLAGS_NOWARNINGS = -g -O2
 CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall
 
-OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) main.o organism.o cell.o board.o rng.o brain.o
+OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) main.o organismview.o organism.o cell.o board.o rng.o brain.o util.o
 
 programs: lel
 
@@ -49,8 +49,11 @@ $(OBJDIR)/%.o: %.cpp
 $(OBJDIR)/main.o: main.cpp
 	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./imgui-1.88/backends -I./implot-0.14 -o $@ $<
 
-$(OBJDIR)/board.o: board.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $@ $<
+$(OBJDIR)/util.o: util.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -o $@ $<
+
+$(OBJDIR)/organismview.o: organismview.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -o $@ $<
 
 clean:
 	rm $(OBJDIR)/*.o

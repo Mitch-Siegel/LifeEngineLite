@@ -7,10 +7,12 @@
 #pragma once
 
 class Cell;
+class OrganismView;
 
 class Organism
 {
 	friend class Board;
+	friend class OrganismView;
 
 private:
 	std::size_t currentHealth, maxHealth;
