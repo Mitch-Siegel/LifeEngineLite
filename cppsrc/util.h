@@ -1,5 +1,7 @@
 class SDL_Renderer;
 class Cell;
+
+#include "implot.h"
 /*
 class TickratePID
 {
@@ -11,6 +13,10 @@ class TickratePID
 public:
 	float Tick(float instanteneousMeasurement);
 };*/
+
+#ifndef CellColormap
+extern ImPlotColormap CellColormap;
+#endif
 
 // void TickMain();
 

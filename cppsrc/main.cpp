@@ -570,6 +570,7 @@ int main(int argc, char *argv[])
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImPlot::CreateContext();
+	AddImPlotColorMap();
 	ImGuiIO &io = ImGui::GetIO();
 	(void)io;
 	io.IniFilename = NULL;

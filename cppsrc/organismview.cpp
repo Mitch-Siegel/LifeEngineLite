@@ -27,8 +27,10 @@ OrganismView::OrganismView(Organism *o, SDL_Renderer *r)
         int x_rel = c->x - organismX;
         int y_rel = c->y - organismY;
 
-        if (abs(x_rel) > maxX) maxX = abs(x_rel);
-        if (abs(y_rel) > maxY) maxY = abs(y_rel);
+        if (abs(x_rel) > maxX)
+            maxX = abs(x_rel);
+        if (abs(y_rel) > maxY)
+            maxY = abs(y_rel);
     }
     this->dim_x = (maxX * 2) + 1;
     this->dim_y = (maxY * 2) + 1;
@@ -55,7 +57,9 @@ OrganismView::OrganismView(Organism *o, SDL_Renderer *r)
 void OrganismView::OnFrame()
 {
     ImGui::Begin(this->name);
-    if(ImGui::Button("Close", ImVec2(125, 25)))
+    ImGui::SetWindowSize(ImVec2(240, -1.0));
+
+    if (ImGui::Button("Close", ImVec2(125, 25)))
     {
         printf("window closed!\n");
         this->open = false;
@@ -63,21 +67,45 @@ void OrganismView::OnFrame()
     ImGui::Image(this->t, ImVec2(this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR, this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR));
     // ImGui::Text("Test text");
     const char *cellNames[cell_null] = {"Empty", "Plantmass", "Biomass", "Leaf", "Bark", "Flower", "Fruit", "Herbivore", "Carnivore", "Mover", "Killer", "Armor", "Touch sensor"};
-    if (ImPlot::BeginPlot("##Histograms")) {
-        ImPlot::SetupAxes(NULL,NULL,ImPlotAxisFlags_AutoFit,ImPlotAxisFlags_AutoFit);
-        // ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
-        ImPlot::PlotPieChart(cellNames, this->cellCounts, cell_null, 10, 10, 25);
-        // ImPlot::PlotHistogram("Cell counts", this->cellCounts, cell_null);
-        // ImPlot::PlotHistogram("Empirical", dist.Data, 10000, bins, 1.0, range ? ImPlotRange(rmin,rmax) : ImPlotRange(), hist_flags);
-        // if ((hist_flags & ImPlotHistogramFlags_Density) && !(hist_flags & ImPlotHistogramFlags_NoOutliers)) {
-            // if (hist_flags & ImPlotHistogramFlags_Horizontal)
-                // ImPlot::PlotLine("Theoretical",y,x,100);
-            // else
-                // ImPlot::PlotLine("Theoretical",x,y,100);
+    for (int i = 1; i < cell_null; i++)
+    {
+        ImGui::Text("%s:%d", cellNames[i], cellCounts[i]);
+    }
+    // static const uint32_t xs[cell_null] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+        ImPlot::PushColormap(CellColormap);
+    int cmapsize = ImPlot::GetColormapSize();
+        ImGui::Text("Colormap size is %d", cmapsize);
+        for(int i = 0; i < cmapsize; i++)
+        {
+            ImVec4 thisColor = ImPlot::GetColormapColor(i);
+            printf("%f/%f/%f/%f\n", thisColor.x, thisColor.y, thisColor.z, thisColor.w);
+        }
+    
+    if (ImPlot::BeginPlot("Organism Makeup"))
+    {
+        ImPlot::PushColormap(CellColormap);
+
+        ImPlot::SetupAxes("Cell Type", "Cell Count", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+        // ImPlot::SetupAxisLimits(ImAxis_X1, 1, cell_null);
+        ImPlot::NextColormapColor();
+        // for (int i = 1; i < cell_null; i++)
+        // {
+        // ImPlot::PlotPieChart(cellNames + i, this->cellCounts + i, 1, 240, 240, 100);
+        // ImPlot::NextColormapColor();
         // }
+        // ImPlot::PlotBars("Organism Makeup", this->cellCounts, this->cellCounts, cell_null, 20);
+        // ImPlot::PlotStairs("Organism Makeup", xs, this->cellCounts, cell_null);
+        // ImPlot::Plot
+        // ImPlot::PlotLine("Organism Makeup", xs, this->cellCounts, cell_null);
+        // ImPlot::PlotHistogram("Organism Makeup", this->cellCounts, cell_null);
+        ImPlot::PlotPieChart(cellNames + 1, this->cellCounts + 1, cell_null - 1, 240, 240, 100);
+        ImPlot::PopColormap();
+
         ImPlot::EndPlot();
     }
+        ImPlot::PopColormap();
     
+
     ImGui::End();
 }
 

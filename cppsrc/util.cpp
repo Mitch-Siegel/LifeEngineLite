@@ -117,9 +117,21 @@ const ImVec4 cellColors[cell_null] =
 
 };
 
+
+ImPlotColormap CellColormap;
+
 void AddImPlotColorMap()
 {
-	// ImPlot::AddColormap("CellColors", )
+	ImVec4 cellColorFractions[cell_null];
+	memcpy(cellColorFractions, cellColors, cell_null * sizeof(ImVec4));
+	for(int i = 0; i < cell_null; i++)
+	{
+			cellColorFractions[i].w /= 255.0;
+			cellColorFractions[i].x /= 255.0;
+			cellColorFractions[i].y /= 255.0;
+			cellColorFractions[i].z /= 255.0;
+	}
+	CellColormap = ImPlot::AddColormap("CellColors", cellColorFractions, cell_null);
 }
 
 void SetColorForCell(SDL_Renderer *r, Cell *c)
