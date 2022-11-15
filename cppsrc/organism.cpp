@@ -72,6 +72,7 @@ void Organism::Die()
 		case cell_herbivore_mouth:
 		case cell_carnivore_mouth:
 		case cell_touch:
+		case cell_eye:
 			replacedWith = new Cell_Biomass();
 			break;
 		}

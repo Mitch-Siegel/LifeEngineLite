@@ -140,6 +140,8 @@ class Organism;
 
 #define ARMOR_HEALTH_BONUS 4 * MAX_HEALTH_MULTIPLIER
 
+#define MAX_EYE_SEEING_DISTANCE 20
+
 class Organism;
 
 class Cell
@@ -387,6 +389,26 @@ public:
 	void Tick() override;
 
 	Cell_Touch *Clone() override;
+
+	int getSenseInterval() { return this->senseInterval; };
+};
+
+class Cell_Eye : public Cell
+{
+	friend class Organism;
+	friend class Board;
+	int senseInterval;
+	int senseCooldown;
+	int direction;
+
+public:
+	~Cell_Eye() override;
+
+	Cell_Eye();
+
+	void Tick() override;
+
+	Cell_Eye *Clone() override;
 
 	int getSenseInterval() { return this->senseInterval; };
 };

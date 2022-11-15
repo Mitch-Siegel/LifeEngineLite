@@ -19,11 +19,12 @@ int CellEnergyDensities[cell_null] = {
 	0,	 // killer
 	-5,	 // armor
 	5,	 // touch sensor
+	5,	 // eye
 };
 
 Cell *GenerateRandomCell()
 {
-	switch (randInt(0, 7))
+	switch (randInt(0, 8))
 	{
 	case 0:
 		return new Cell_Mover();
@@ -56,6 +57,10 @@ Cell *GenerateRandomCell()
 	case 7:
 		return new Cell_Touch();
 		break;
+
+	case 8:
+		return new Cell_Mover();
+		break;
 	}
 
 	return nullptr;
@@ -67,7 +72,7 @@ Cell::~Cell()
 
 const int &Spoilable_Cell::TicksUntilSpoil()
 {
-	if(this->ticksUntilSpoil_ == nullptr)
+	if (this->ticksUntilSpoil_ == nullptr)
 	{
 		return this->startingTicksUntilSpoil;
 	}
@@ -794,4 +799,65 @@ void Cell_Touch::Tick()
 Cell_Touch *Cell_Touch::Clone()
 {
 	return new Cell_Touch(*this);
+}
+
+// eye cell
+Cell_Eye::~Cell_Eye()
+{
+}
+
+Cell_Eye::Cell_Eye()
+{
+	this->type = cell_eye;
+	this->myOrganism = nullptr;
+	this->senseCooldown = 0;
+	this->senseInterval = randInt(0, 15);
+	this->direction = randInt(0, 3);
+}
+
+void Cell_Eye::Tick()
+{
+	if (this->senseCooldown > 0)
+	{
+		this->senseCooldown--;
+		return;
+	}
+	int *deltaCoords = directions[this->direction];
+	for (int i = 0; i < MAX_EYE_SEEING_DISTANCE; i++)
+	{
+		int x_abs = this->x + deltaCoords[0];
+		int y_abs = this->y + deltaCoords[1];
+		if (!board->boundCheckPos(x_abs, y_abs))
+		{
+			Cell *checked = board->cells[y_abs][x_abs];
+			if (checked->type != cell_empty)
+			{
+				if (checked->myOrganism != this->myOrganism)
+				{
+					int seenSentiment = this->myOrganism->brain.cellSentiments[checked->type];
+					if (seenSentiment > 0)
+					{
+						for (int j = 0; j < seenSentiment; j++)
+						{
+							this->myOrganism->brain.Reward();
+						}
+					}
+					else
+					{
+						for (int j = 0; j < -1 * seenSentiment; j++)
+						{
+							this->myOrganism->brain.Reward();
+						}
+					}
+				}
+				break;
+			}
+		}
+	}
+	this->senseCooldown = this->senseInterval;
+}
+
+Cell_Eye *Cell_Eye::Clone()
+{
+	return new Cell_Eye(*this);
 }

@@ -113,10 +113,10 @@ const ImVec4 cellColors[cell_null] =
 		{50, 120, 255, 255},  // mover
 		{255, 0, 0, 255},	  // killer
 		{175, 0, 255, 255},	  // armor
-		{255, 255, 255, 255}  // touch
+		{150, 150, 150, 255}, // touch
+		{255, 255, 255, 255}  // eye
 
 };
-
 
 ImPlotColormap CellColormap;
 
@@ -124,12 +124,12 @@ void AddImPlotColorMap()
 {
 	ImVec4 cellColorFractions[cell_null];
 	memcpy(cellColorFractions, cellColors, cell_null * sizeof(ImVec4));
-	for(int i = 0; i < cell_null; i++)
+	for (int i = 0; i < cell_null; i++)
 	{
-			cellColorFractions[i].w /= 255.0;
-			cellColorFractions[i].x /= 255.0;
-			cellColorFractions[i].y /= 255.0;
-			cellColorFractions[i].z /= 255.0;
+		cellColorFractions[i].w /= 255.0;
+		cellColorFractions[i].x /= 255.0;
+		cellColorFractions[i].y /= 255.0;
+		cellColorFractions[i].z /= 255.0;
 	}
 	CellColormap = ImPlot::AddColormap("CellColors", cellColorFractions, cell_null);
 }

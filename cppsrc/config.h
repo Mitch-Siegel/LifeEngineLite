@@ -15,6 +15,7 @@ enum CellTypes
 	cell_killer,
 	cell_armor,
 	cell_touch,
+	cell_eye,
 	cell_null,
 };
 
