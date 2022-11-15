@@ -1,7 +1,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include <boost/thread/mutex.hpp>
 
 #include "config.h"
@@ -54,8 +54,7 @@ private:
     std::map<uint64_t, Food_Slot *> FoodCells;
 
 public:
-    std::unordered_map<unsigned int, enum OrganismClassifications>
-        speciesClassifications;
+    std::unordered_map<unsigned int, enum OrganismClassifications> speciesClassifications;
 
     std::unordered_map<unsigned int, unsigned int> evolvedFrom;
     std::unordered_map<unsigned int, unsigned int> peakSpeciesCounts;
@@ -66,7 +65,7 @@ public:
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
 
-    std::unordered_set<std::pair<int, int>> DeltaCells;
+    std::set<std::pair<int, int>> DeltaCells;
 
     std::vector<Organism *> Organisms;
 

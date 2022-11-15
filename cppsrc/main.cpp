@@ -586,7 +586,7 @@ int main(int argc, char *argv[])
 	// bool show_demo_window = true;
 	// bool show_another_window = false;
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-	bool testWinShown = true;
+	bool testWinShown = false;
 
 	int mouse_x = 0;
 	int mouse_y = 0;
@@ -747,12 +747,10 @@ int main(int argc, char *argv[])
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
+			ImGui::Begin("Hello, world!");
 			// ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, {800.f,600.f });
-			ImGui::Text("This is some useful text.");	   // Display some text (you can use a format strings too)
-			ImGui::Checkbox("Test Window", &testWinShown); // Edit bools storing our window open/close state
-														   // ImGui::Checkbox("Another Window", &show_another_window);
-														   // renderer and other code before this point
+			ImGui::Text("This is some useful text.");
+			ImGui::Checkbox("Test Window", &testWinShown);
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
 			ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
