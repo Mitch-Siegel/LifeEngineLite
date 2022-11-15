@@ -125,7 +125,8 @@ public:
 inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 {
 	SetColorForCell(r, c);
-	SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
+	SDL_RenderDrawPoint(r, x, y);
+	// SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
 }
 
 class Stats
@@ -346,13 +347,26 @@ bool forceRedraw = false;
 float RenderBoard(SDL_Renderer *r, size_t frameNum)
 {
 	// we'll use this texture as a seperate backbuffer
-	static SDL_Texture *boardBuf = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888,
-													 SDL_TEXTUREACCESS_TARGET, winX, winY);
+	static SDL_Texture *boardBuf = nullptr;
+
+	if (boardBuf == nullptr)
+	{
+		boardBuf = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888,
+						  SDL_TEXTUREACCESS_TARGET, board->dim_x, board->dim_y);
+	}
+
+	int x_off_cell = static_cast<int>(x_off / scaleFactor);
+	int y_off_cell = static_cast<int>(y_off / scaleFactor);
+	int dim_x_scaled = static_cast<int>(board->dim_x * scaleFactor);
+	int dim_y_scaled = static_cast<int>(board->dim_y * scaleFactor);
+	SDL_Rect srcRect = {x_off_cell, y_off_cell, board->dim_x + x_off_cell, board->dim_y + y_off_cell};
+	SDL_Rect dstRect = {-1 * x_off, -1 * y_off, dim_x_scaled, dim_y_scaled};
+	// SDL_Rect dstRect = {0, 0, static_cast<int>((board->dim_x * scaleFactor) - x_off), static_cast<int>((board->dim_y * scaleFactor) - y_off)};
 
 	if ((board->DeltaCells.size() == 0 && !forceRedraw) ||
 		(leftoverMicros < 0))
 	{
-		SDL_RenderCopy(r, boardBuf, NULL, NULL);
+		SDL_RenderCopy(r, boardBuf, &srcRect, &dstRect);
 		return -1.0;
 	}
 
@@ -368,15 +382,13 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	{
 		if (!board->TryGetMutex())
 		{
-			SDL_RenderCopy(r, boardBuf, NULL, NULL);
+			SDL_RenderCopy(r, boardBuf, &srcRect, &dstRect);
 			return -1.0;
 		}
 	}
 
 	// draw to board buffer instead of backbuffer
 	SDL_SetRenderTarget(r, boardBuf);
-	SDL_RenderSetScale(r, scaleFactor, scaleFactor);
-
 	size_t cellsModified = 0;
 
 	if (forceRedraw)
@@ -413,11 +425,10 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	}
 
 	board->ReleaseMutex();
-
 	SDL_RenderSetScale(r, 1.0, 1.0);
 	forceRedraw = false;
 	SDL_SetRenderTarget(r, NULL);
-	SDL_RenderCopy(r, boardBuf, NULL, NULL);
+	SDL_RenderCopy(r, boardBuf, &srcRect, &dstRect);
 	return static_cast<float>(cellsModified) / (board->dim_x * board->dim_y);
 }
 
@@ -704,8 +715,9 @@ int main(int argc, char *argv[])
 				totalDrag_x += delta_x;
 				totalDrag_y += delta_y;
 
-				x_off -= delta_x;
-				y_off -= delta_y;
+				x_off += delta_x;
+				y_off += delta_y;
+				
 				if ((x_off + (board->dim_x * scaleFactor)) < scaleFactor)
 				{
 					x_off = -1 * ((board->dim_x - 1) * scaleFactor);
@@ -722,6 +734,7 @@ int main(int argc, char *argv[])
 				{
 					y_off = winY - scaleFactor;
 				}
+				
 				// printf("Delta on mouse drag: %d, %d\n", delta_x, delta_y);
 				mouse_x = event.button.x;
 				mouse_y = event.button.y;
