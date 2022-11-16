@@ -66,8 +66,7 @@ void OrganismView::OnFrame()
     }
     ImGui::Image(this->t, ImVec2(this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR, this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR));
     // ImGui::Text("Test text");
-    const char *cellNames[cell_null] = {"Empty", "Plantmass", "Biomass", "Leaf", "Bark", "Flower", "Fruit", "Herbivore", "Carnivore", "Mover", "Killer", "Armor", "Touch sensor"};
-    const uint32_t xs[cell_null] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    
     ImVec2 size;
     if (ImPlot::BeginPlot("Organism Makeup"))
     {
@@ -80,7 +79,7 @@ void OrganismView::OnFrame()
         // skip empty/plantmass/biomass
         for (int i = cell_leaf; i < cell_null; i++)
         {
-            ImPlot::PlotBars(cellNames[i], xs + i, this->cellCounts + i, 1, 1);
+            ImPlot::PlotBars(cellNames[i], cellXs + i, this->cellCounts + i, 1, 1);
             // ImPlot::PlotHistogram(cellNames[i], this->cellCounts + i, 1, 1, 1.0, ImPlotRange(i - 1, i));
         }
         // ImPlot::PlotBarGroups(cellNames, this->cellCounts, cell_null, 1);

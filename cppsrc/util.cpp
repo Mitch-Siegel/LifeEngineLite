@@ -2,6 +2,7 @@
 #include <boost/thread.hpp>
 #include <chrono>
 #include <SDL2/SDL.h>
+#include <cstdint>
 
 #include "imgui.h"
 #include "implot.h"
@@ -101,24 +102,58 @@ void TickMain()
 
 const ImVec4 cellColors[cell_null] =
 	{
-		{0, 0, 0, 0},		  // empty
-		{10, 40, 10, 255},	  // plantmass
-		{150, 60, 60, 255},	  // biomass
-		{30, 120, 30, 255},	  // leaf
-		{75, 25, 25, 255},	  // bark
-		{50, 250, 150, 255},  // flower
-		{200, 200, 0, 255},	  // fruit
-		{255, 150, 0, 255},	  // herb
-		{255, 100, 150, 255}, // carn
-		{50, 120, 255, 255},  // mover
-		{255, 0, 0, 255},	  // killer
-		{175, 0, 255, 255},	  // armor
-		{150, 150, 150, 255}, // touch
-		{255, 255, 255, 255}  // eye
+		{0, 0, 0, 0},		  // empty		
+		{10, 40, 10, 255},	  // plantmass		
+		{150, 60, 60, 255},	  // biomass		
+		{30, 120, 30, 255},	  // leaf		
+		{75, 25, 25, 255},	  // bark		
+		{50, 250, 150, 255},  // flower		
+		{200, 200, 0, 255},	  // fruit		
+		{255, 150, 0, 255},	  // herb		
+		{255, 100, 150, 255}, // carn		
+		{50, 120, 255, 255},  // mover		
+		{255, 0, 0, 255},	  // killer		
+		{175, 0, 255, 255},	  // armor		
+		{150, 150, 150, 255}, // touch		
+		{255, 255, 255, 255}  // eye		
 
 };
 
+const ImVec4 classColors[class_null] =
+	{
+		{30.0 / 255, 120.0 / 255, 30.0 / 255, 255.0 / 255},	  // plant
+		{255.0 / 255, 150.0 / 255, 0.0 / 255, 255.0 / 255},	  // herb
+		{255.0 / 255, 100.0 / 255, 150.0 / 255, 255.0 / 255}, // carn
+		{255.0 / 255, 0.0 / 255, 255.0 / 255, 255.0 / 255}	  // omni
+};
+
+const char *cellNames[cell_null] =
+	{"empty",
+	 "plantmass",
+	 "biomass",
+	 "leaf",
+	 "bark",
+	 "flower",
+	 "fruit",
+	 "herbivore",
+	 "carnivore",
+	 "mover",
+	 "killer",
+	 "armor",
+	 "touch",
+	 "eye"};
+
+const char *classNames[class_null] =
+	{"plant",
+	 "herbivore",
+	 "carnivore",
+	 "omnivore"};
+
+const uint32_t cellXs[cell_null] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+const double cellXs_double[cell_null] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0};
+
 ImPlotColormap CellColormap;
+ImPlotColormap ClassColormap;
 
 void AddImPlotColorMap()
 {
@@ -132,6 +167,7 @@ void AddImPlotColorMap()
 		cellColorFractions[i].z /= 255.0;
 	}
 	CellColormap = ImPlot::AddColormap("CellColors", cellColorFractions, cell_null);
+	ClassColormap = ImPlot::AddColormap("ClassColors", classColors, cell_null);
 }
 
 void SetColorForCell(SDL_Renderer *r, Cell *c)

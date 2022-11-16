@@ -19,7 +19,7 @@ GAME_OBJS = $(GAME_SRCS:%=%.o)
 CFLAGS_NOWARNINGS = -g -O2
 CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall
 
-OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) main.o organismview.o organism.o cell.o board.o rng.o brain.o util.o
+OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) main.o organismview.o detailedstats.o organism.o cell.o board.o rng.o brain.o util.o
 
 programs: lel
 
@@ -46,6 +46,7 @@ $(OBJDIR)/%.o: %.cpp
 # @echo game file:
 	$(CC) -c $(CFLAGS_WARNINGS) -o $@ $<
 
+#this is horrible and I should put a stop to it
 $(OBJDIR)/main.o: main.cpp
 	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./imgui-1.88/backends -I./implot-0.14 -o $@ $<
 
@@ -53,6 +54,9 @@ $(OBJDIR)/util.o: util.cpp
 	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./implot-0.14 -o $@ $<
 
 $(OBJDIR)/organismview.o: organismview.cpp
+	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./implot-0.14 -o $@ $<
+
+$(OBJDIR)/detailedstats.o: detailedstats.cpp
 	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./implot-0.14 -o $@ $<
 
 clean:

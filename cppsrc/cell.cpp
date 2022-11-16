@@ -59,7 +59,7 @@ Cell *GenerateRandomCell()
 		break;
 
 	case 8:
-		return new Cell_Mover();
+		return new Cell_Eye();
 		break;
 	}
 

@@ -263,6 +263,9 @@ bool Organism::CheckValidity()
 	// must have a mover to have a touch sensor
 	invalid |= (this->cellCounts[cell_touch] > 0 && this->cellCounts[cell_mover] == 0);
 
+	// must have a mover to have an eye
+	invalid |= (this->cellCounts[cell_eye] > 0 && this->cellCounts[cell_mover] == 0);
+
 	bool hasCenterCell = false;
 
 	// plants must have a killer cell next to bark

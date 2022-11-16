@@ -2,6 +2,8 @@ class SDL_Renderer;
 class Cell;
 
 #include "implot.h"
+#include "config.h"
+#include <cstdint>
 /*
 class TickratePID
 {
@@ -16,6 +18,11 @@ public:
 
 #ifndef CellColormap
 extern ImPlotColormap CellColormap;
+extern ImPlotColormap ClassColormap;
+extern const char *cellNames[cell_null];
+extern const char *classNames[class_null];
+extern const uint32_t cellXs[cell_null];
+extern const double cellXs_double[cell_null];
 #endif
 
 // void TickMain();

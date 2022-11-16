@@ -15,6 +15,7 @@
 #include "lifeforms.h"
 #include "board.h"
 #include "organismview.h"
+#include "detailedstats.h"
 #include "rng.h"
 #include "util.h"
 
@@ -260,14 +261,17 @@ public:
 
 		// ImPlot::SetNextAxesLimits(0, organismCountData.size(), 0, static_cast<double>(maxOrganisms));
 		ImPlot::SetNextAxesToFit();
-		if (ImPlot::BeginPlot("Organism Counts by Classification"))
+		// ImPlot::BeginPlot("Bar Graph##Line", "Day", NULL, ImVec2(-1, 0), ImPlotFlags_NoLegend | ImPlotFlags_NoBoxSelect | ImPlotFlags_AntiAliased, ImPlotAxisFlags_Time, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit)
+		if (ImPlot::BeginPlot("Organism Counts by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit))
 		{
+			ImPlot::PushColormap(ClassColormap);
 			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-			ImPlot::PlotLine("Total Organisms", tickData.rawData(), organismCountData.rawData(), static_cast<int>(organismCountData.size()));
 			ImPlot::PlotLine("Plants", tickData.rawData(), plantCountData.rawData(), static_cast<int>(organismCountData.size()));
 			ImPlot::PlotLine("Herbivores", tickData.rawData(), herbCountData.rawData(), static_cast<int>(organismCountData.size()));
 			ImPlot::PlotLine("Carnivores", tickData.rawData(), carnCountData.rawData(), static_cast<int>(organismCountData.size()));
 			ImPlot::PlotLine("Omnivores", tickData.rawData(), omniCountData.rawData(), static_cast<int>(organismCountData.size()));
+			ImPlot::PopColormap();
+			ImPlot::PlotLine("Total Organisms", tickData.rawData(), organismCountData.rawData(), static_cast<int>(organismCountData.size()));
 			ImPlot::EndPlot();
 		}
 	}
@@ -352,7 +356,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	if (boardBuf == nullptr)
 	{
 		boardBuf = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888,
-						  SDL_TEXTUREACCESS_TARGET, board->dim_x, board->dim_y);
+									 SDL_TEXTUREACCESS_TARGET, board->dim_x, board->dim_y);
 	}
 
 	int x_off_cell = static_cast<int>(x_off / scaleFactor);
@@ -445,7 +449,7 @@ void TickMain()
 	{
 		if (autoplay)
 		{
-			if(board->Tick())
+			if (board->Tick())
 			{
 				continue;
 			}
@@ -487,7 +491,6 @@ void TickMain()
 				}
 				lastFrame = frameEnd;
 			}
-
 		}
 		else
 		{
@@ -680,7 +683,7 @@ int main(int argc, char *argv[])
 
 				x_off += delta_x;
 				y_off += delta_y;
-				
+
 				if ((x_off + (board->dim_x * scaleFactor)) < scaleFactor)
 				{
 					x_off = -1 * ((board->dim_x - 1) * scaleFactor);
@@ -697,7 +700,7 @@ int main(int argc, char *argv[])
 				{
 					y_off = winY - scaleFactor;
 				}
-				
+
 				// printf("Delta on mouse drag: %d, %d\n", delta_x, delta_y);
 				mouse_x = event.button.x;
 				mouse_y = event.button.y;
@@ -712,7 +715,7 @@ int main(int argc, char *argv[])
 		{
 			ImGui::Begin("Hello, world!");
 			ImGui::Text("This is some useful text.");
-			ImGui::Checkbox("Test Window", &testWinShown);
+			ImGui::Checkbox("Detailed Stats", &showDetailedStats);
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
 			ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
@@ -731,6 +734,11 @@ int main(int argc, char *argv[])
 
 			ImGui::Text("%lu organisms in %lu species", board->Organisms.size(), board->activeSpecies().size());
 			stats.Display();
+
+			if (showDetailedStats)
+			{
+				DetailedStats();
+			}
 			ImGui::End();
 		}
 
