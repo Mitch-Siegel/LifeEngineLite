@@ -25,12 +25,37 @@ namespace std
     };
 } // namespace std
 
+struct SDL_Texture;
+
+class SpeciesInfo
+{
+public:
+    uint32_t number;
+    uint32_t evolvedFrom;
+    uint32_t peakCount;
+    uint32_t count;
+    std::vector<uint32_t> evolvedInto;
+
+    enum OrganismClassifications classification;
+
+    SDL_Texture *example;
+
+    SpeciesInfo()
+    {
+        this->number = 0;
+        this->evolvedFrom = 0;
+        this->peakCount = 0;
+        this->count = 0;
+        this->classification = class_null;
+        this->example = nullptr;
+    };
+};
+
 class Board
 {
 private:
     boost::mutex mutex;
     unsigned int nextSpecies;
-    std::unordered_map<unsigned int, unsigned int> speciesCounts;
 
     class Food_Slot
     {
@@ -53,14 +78,11 @@ private:
 
     std::map<uint64_t, Food_Slot *> FoodCells;
 
+    std::map<uint32_t, SpeciesInfo> species;
+
+    std::vector<uint32_t> activeSpecies_;
+
 public:
-    std::unordered_map<unsigned int, enum OrganismClassifications> speciesClassifications;
-
-    std::unordered_map<unsigned int, unsigned int> evolvedFrom;
-    std::unordered_map<unsigned int, unsigned int> peakSpeciesCounts;
-
-    std::vector<unsigned int> activeSpecies;
-
     uint64_t tickCount;
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
@@ -79,7 +101,7 @@ public:
 
     inline void ReleaseMutex() { this->mutex.unlock(); }
 
-    void Tick();
+    bool Tick();
 
     void Stats();
 
@@ -106,4 +128,11 @@ public:
     void AddSpeciesMember(Organism *o);
 
     void RemoveSpeciesMember(unsigned int species);
+
+    const SpeciesInfo &GetSpeciesInfo(uint32_t species);
+
+    const std::vector<uint32_t> &activeSpecies() {return this->activeSpecies_;};
+
+     void RecordEvolvedFrom(Organism* evolvedFrom, Organism* evolvedTo);
+
 };

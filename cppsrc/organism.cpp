@@ -142,7 +142,7 @@ Organism *Organism::Tick()
 
 	this->AddEnergy(((this->age % 6 == 0) ? this->cellCounts[cell_leaf] : 0) +
 					(this->cellCounts[cell_leaf] > 0));
-	
+
 	if (this->reproductionCooldown == 0)
 	{
 		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.2))
@@ -644,13 +644,14 @@ Organism *Organism::Reproduce()
 				if (newSpecies)
 				{
 					replicated->species = board->GetNextSpecies();
-					board->evolvedFrom[replicated->species] = this->species;
+					board->AddSpeciesMember(replicated);
+					board->RecordEvolvedFrom(this, replicated);
 				}
 				else
 				{
 					replicated->species = this->species;
+					board->AddSpeciesMember(replicated);
 				}
-				board->AddSpeciesMember(replicated);
 
 				if (randPercent(this->mutability))
 				{
@@ -713,7 +714,7 @@ bool Organism::Mutate()
 
 		Cell *toReplace = this->myCells[switchedIndex];
 		Cell *replacedWith = GenerateRandomCell();
-		while(replacedWith->type == toReplace->type)
+		while (replacedWith->type == toReplace->type)
 		{
 			delete replacedWith;
 			replacedWith = GenerateRandomCell();
