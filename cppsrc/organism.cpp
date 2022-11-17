@@ -385,7 +385,7 @@ void Organism::Move()
 		// this->brain.ForceRechoose();
 		if (this->cellCounts[cell_touch])
 		{
-			this->brain.Punish();
+			this->brain.Punish(1.0);
 		}
 	}
 }
@@ -475,7 +475,7 @@ void Organism::Damage(uint64_t n)
 	}
 
 	this->currentHealth -= n;
-	this->brain.Punish();
+	this->brain.Punish(1.0);
 }
 
 void Organism::Heal(uint64_t n)

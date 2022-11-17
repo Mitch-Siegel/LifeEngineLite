@@ -16,15 +16,16 @@ public:
     enum Intent currentIntent;
     bool justRewarded;
     int moveDirIndex;
-    int conviction, maxConviction, rotatevschange, turnwhenrotate;
+    float conviction;
+    int maxConviction, rotatevschange, turnwhenrotate;
     
-    int cellSentiments[cell_null];
+    float cellSentiments[cell_null];
     
     enum Intent Decide();
 
-    void Reward();
+    void Reward(float amount);
 
-    void Punish();
+    void Punish(float amount);
 
     void ForceRechoose();
 

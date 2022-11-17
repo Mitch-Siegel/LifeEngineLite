@@ -5,7 +5,7 @@ Brain::Brain()
 {
     this->currentIntent = intent_changeDir;
     this->moveDirIndex = -1;
-    this->conviction = 0;
+    this->conviction = 0.0;
     this->maxConviction = 2;
     // chance to rotate instead of changing direction
     this->rotatevschange = 25;
@@ -17,22 +17,22 @@ Brain::Brain()
         this->cellSentiments[i] = 0;
     }
 
-    int startingSentimentIndex = randInt(cell_empty, cell_null - 1);
-    this->cellSentiments[startingSentimentIndex] = randPercent(50) ? 1 : -1;
+    int startingSentimentIndex = randInt(cell_empty + 1, cell_null - 1);
+    this->cellSentiments[startingSentimentIndex] = randFloat(-1, 1);
 }
 
-void Brain::Reward()
+void Brain::Reward(float amount)
 {
-    if (++this->conviction > maxConviction)
+    if ((this->conviction += amount) > maxConviction)
     {
         this->conviction = maxConviction;
     }
     this->justRewarded = true;
 }
 
-void Brain::Punish()
+void Brain::Punish(float amount)
 {
-    if (--this->conviction < (-1 * maxConviction))
+    if ((this->conviction -= amount) < (-1 * maxConviction))
     {
         this->conviction = (-1 * maxConviction);
     }
@@ -124,7 +124,8 @@ void Brain::RotateSuccess(bool clockwise)
 void Brain::Mutate()
 {
     // slightly bias towards lowering conviction so it doesn't just always shoot up
-    this->maxConviction += (randInt(-3, 2));
+    this->maxConviction += randPercent(10) * (randInt(-3, 2));
+
     if (this->maxConviction < 1)
     {
         this->maxConviction = 1;
@@ -151,14 +152,18 @@ void Brain::Mutate()
 
     if (randPercent(10))
     {
-        this->cellSentiments[randInt(cell_empty + 1, cell_null - 1)] += (randPercent(50) ? 1 : -1);
-        // for (int i = cell_empty; i < cell_null; i++)
-        // {
-        // if (randPercent(10))
-        // {
-        // this->cellSentiments[i] += randInt(-1, 1);
-        // }
-        // }
+        this->cellSentiments[randInt(cell_empty + 1, cell_null - 1)] += (randFloat(-1, 1));
+        for (int i = cell_empty; i < cell_null; i++)
+        {
+            if (this->cellSentiments[i] > 1.0)
+            {
+                this->cellSentiments[i] = 1.0;
+            }
+            else if (this->cellSentiments[i] < -1.0)
+            {
+                this->cellSentiments[i] = -1.0;
+            }
+        }
     }
 }
 

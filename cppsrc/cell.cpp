@@ -510,9 +510,7 @@ void Cell_Herbivore::Tick()
 	// if eating something other than a leaf, take time to digest it
 	if (couldEat)
 	{
-		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy * FOOD_MULTIPLIER);
-		// this->digestCooldown = gainedEnergy - 1;
 	}
 
 	if (!valid)
@@ -597,9 +595,7 @@ void Cell_Carnivore::Tick()
 
 	if (couldEat)
 	{
-		// this->myOrganism->brain.Reward();
 		this->myOrganism->AddEnergy(gainedEnergy * FOOD_MULTIPLIER);
-		// this->digestCooldown = sqrt(gainedEnergy);
 		this->digestCooldown = 6;
 	}
 
@@ -778,20 +774,11 @@ void Cell_Touch::Tick()
 
 	if (totalSense > 0)
 	{
-
-		for (int j = 0; j < totalSense; j++)
-		{
-			this->myOrganism->brain.Reward();
-		}
+		this->myOrganism->brain.Reward(totalSense);
 	}
 	else if (totalSense < 0)
 	{
-
-		int senseAbs = -1 * totalSense;
-		for (int j = 0; j < senseAbs; j++)
-		{
-			this->myOrganism->brain.Punish();
-		}
+		this->myOrganism->brain.Punish(-1 * totalSense);
 	}
 	this->senseCooldown = this->senseInterval;
 }
@@ -837,17 +824,11 @@ void Cell_Eye::Tick()
 					int seenSentiment = this->myOrganism->brain.cellSentiments[checked->type];
 					if (seenSentiment > 0)
 					{
-						for (int j = 0; j < seenSentiment; j++)
-						{
-							this->myOrganism->brain.Reward();
-						}
+						this->myOrganism->brain.Reward(seenSentiment);
 					}
 					else
 					{
-						for (int j = 0; j < -1 * seenSentiment; j++)
-						{
-							this->myOrganism->brain.Reward();
-						}
+						this->myOrganism->brain.Reward(-1 * seenSentiment);
 					}
 				}
 				break;
