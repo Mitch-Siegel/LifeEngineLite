@@ -40,9 +40,9 @@ int ticksThisSecond = 0;
 class TickratePID
 {
 	float previous_error = 0.0;
-	float Kp = 0.00024;
-	float Ki = 0.00002;
-	float Kd = 0.0000001;
+	float Kp = 0.000024;
+	float Ki = 0.0002;
+	float Kd = 0.00000001;
 
 public:
 	float Tick(float instanteneousMeasurement)
@@ -359,13 +359,75 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 									 SDL_TEXTUREACCESS_TARGET, board->dim_x, board->dim_y);
 	}
 
-	int x_off_cell = static_cast<int>(x_off / scaleFactor);
-	int y_off_cell = static_cast<int>(y_off / scaleFactor);
+	// int x_off_cell = static_cast<int>(x_off / scaleFactor);
+	// int y_off_cell = static_cast<int>(y_off / scaleFactor);
 	int dim_x_scaled = static_cast<int>(board->dim_x * scaleFactor);
 	int dim_y_scaled = static_cast<int>(board->dim_y * scaleFactor);
-	SDL_Rect srcRect = {x_off_cell, y_off_cell, board->dim_x + x_off_cell, board->dim_y + y_off_cell};
-	SDL_Rect dstRect = {-1 * x_off, -1 * y_off, dim_x_scaled, dim_y_scaled};
-	// SDL_Rect dstRect = {0, 0, static_cast<int>((board->dim_x * scaleFactor) - x_off), static_cast<int>((board->dim_y * scaleFactor) - y_off)};
+
+	int x_src, y_src, w_src, h_src;
+	int x_dst, y_dst, w_dst, h_dst;
+
+	x_src = 0;
+	y_src = 0;
+	w_src = board->dim_x;
+	h_src = board->dim_y;
+
+	x_dst = 0;
+	y_dst = 0;
+	w_dst = winX;
+	h_dst = winY;
+
+	if (w_dst > dim_x_scaled)
+	{
+		w_dst = dim_x_scaled;
+		x_dst = x_off;
+	}
+	else
+	{
+		if (x_off >= 0)
+		{
+			x_src = (x_off / scaleFactor);
+			if(x_off + winX > dim_x_scaled)
+			{
+				w_src = (dim_x_scaled - x_off) / scaleFactor;
+				w_dst = w_src * scaleFactor;
+			}
+		}
+		else
+		{
+			x_dst = -1 * x_off;
+			w_src = (winX - x_dst) / scaleFactor;
+			w_dst = (winX - x_dst);
+		}
+
+	}
+
+	if (h_dst > dim_y_scaled)
+	{
+		h_dst = dim_y_scaled;
+		y_dst = y_off;
+	}
+	else
+	{
+		if (y_off > 0)
+		{
+			y_src = (y_off / scaleFactor);
+			if(y_off + winY > dim_x_scaled)
+			{
+				h_src = (dim_y_scaled - y_off) / scaleFactor;
+				h_dst = h_src * scaleFactor;
+			}
+		}
+		else
+		{
+			
+		}
+	}
+
+	SDL_Rect srcRect = {x_src, y_src, w_src, h_src};
+	SDL_Rect dstRect = {x_dst, y_dst, w_dst, h_dst};
+
+	printf("Mapping  % 3d,% 3d, % 3dx% 3d\n@(%2.0f)x to % 3d,% 3d, % 3dx% 3d\n\n", x_src, y_src, w_src, h_src, scaleFactor, x_dst, y_dst, w_dst, h_dst);
 
 	if ((board->DeltaCells.size() == 0 && !forceRedraw) ||
 		(leftoverMicros < 0))
@@ -513,7 +575,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	board = new Board(512, 512);
+	board = new Board(192, 108);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
 	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
@@ -672,26 +734,31 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-
+			else if (event.type == SDL_WINDOWEVENT_SIZE_CHANGED || event.type == SDL_WINDOWEVENT)
+			{
+				SDL_GetWindowSize(window, &winX, &winY);
+			}
 			if (mouse1Held)
 			{
 				forceRedraw = true;
-				int delta_x = mouse_x - event.button.x;
-				int delta_y = mouse_y - event.button.y;
+				int delta_x = event.button.x - mouse_x;
+				int delta_y = event.button.y - mouse_y;
 				totalDrag_x += delta_x;
 				totalDrag_y += delta_y;
 
 				x_off += delta_x;
 				y_off += delta_y;
 
-				if ((x_off + (board->dim_x * scaleFactor)) < scaleFactor)
+				/*
+				if (x_off < 0)
 				{
-					x_off = -1 * ((board->dim_x - 1) * scaleFactor);
+					x_off = 0;
 				}
-				else if (x_off > winX - scaleFactor)
+				else if (board->dim_x - (x_off / scaleFactor) < 0)
 				{
-					x_off = winX - scaleFactor;
+					x_off = (board->dim_x - 1) * scaleFactor;
 				}
+
 				if ((y_off + (board->dim_y * scaleFactor)) < scaleFactor)
 				{
 					y_off = -1 * ((board->dim_y - 1) * scaleFactor);
@@ -700,6 +767,7 @@ int main(int argc, char *argv[])
 				{
 					y_off = winY - scaleFactor;
 				}
+				*/
 
 				// printf("Delta on mouse drag: %d, %d\n", delta_x, delta_y);
 				mouse_x = event.button.x;
@@ -715,6 +783,8 @@ int main(int argc, char *argv[])
 		{
 			ImGui::Begin("Hello, world!");
 			ImGui::Text("This is some useful text.");
+			ImGui::Text("Viewport offset: %d,%d", x_off, y_off);
+			ImGui::Text("Window dimensions: %d,%d", winX, winY);
 			ImGui::Checkbox("Detailed Stats", &showDetailedStats);
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
