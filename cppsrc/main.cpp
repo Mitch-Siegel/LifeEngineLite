@@ -377,7 +377,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	w_dst = winX;
 	h_dst = winY;
 
-	if (w_dst > dim_x_scaled)
+	if (w_dst >= dim_x_scaled)
 	{
 		w_dst = dim_x_scaled;
 		x_dst = x_off;
@@ -387,7 +387,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 		if (x_off >= 0)
 		{
 			x_src = (x_off / scaleFactor);
-			if(x_off + winX > dim_x_scaled)
+			if (x_off + winX > dim_x_scaled)
 			{
 				w_src = (dim_x_scaled - x_off) / scaleFactor;
 				w_dst = w_src * scaleFactor;
@@ -395,24 +395,23 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 		}
 		else
 		{
-			x_dst = -1 * x_off;
-			w_src = (winX - x_dst) / scaleFactor;
-			w_dst = (winX - x_dst);
+			x_dst = -1 * (x_off);
+			w_src = (winX + x_off) / scaleFactor;
+			w_dst = w_src * scaleFactor;
 		}
-
 	}
 
-	if (h_dst > dim_y_scaled)
+	if (h_dst >= dim_y_scaled)
 	{
 		h_dst = dim_y_scaled;
 		y_dst = y_off;
 	}
 	else
 	{
-		if (y_off > 0)
+		if (y_off >= 0)
 		{
 			y_src = (y_off / scaleFactor);
-			if(y_off + winY > dim_x_scaled)
+			if (y_off + winY > dim_y_scaled)
 			{
 				h_src = (dim_y_scaled - y_off) / scaleFactor;
 				h_dst = h_src * scaleFactor;
@@ -420,10 +419,12 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 		}
 		else
 		{
-			
+			y_dst = -1 * (y_off);
+			h_src = (winY + y_off) / scaleFactor;
+			h_dst = h_src * scaleFactor;
 		}
 	}
-
+	// forceRedraw = true;
 	SDL_Rect srcRect = {x_src, y_src, w_src, h_src};
 	SDL_Rect dstRect = {x_dst, y_dst, w_dst, h_dst};
 
@@ -459,7 +460,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 
 	if (forceRedraw)
 	{
-		SDL_RenderClear(r);
+		// SDL_RenderClear(r);
 		for (int y = 0; y < board->dim_y; y++)
 		{
 			if (y + (y_off / scaleFactor) < 0 || ((y - board->dim_y) * scaleFactor) + y_off > winY)
@@ -491,7 +492,6 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	}
 
 	board->ReleaseMutex();
-	SDL_RenderSetScale(r, 1.0, 1.0);
 	forceRedraw = false;
 	SDL_SetRenderTarget(r, NULL);
 	SDL_RenderCopy(r, boardBuf, &srcRect, &dstRect);
@@ -575,7 +575,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	board = new Board(192, 108);
+	board = new Board(960, 540);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
 	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
