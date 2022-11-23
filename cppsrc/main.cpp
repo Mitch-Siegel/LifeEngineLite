@@ -359,71 +359,57 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 									 SDL_TEXTUREACCESS_TARGET, board->dim_x, board->dim_y);
 	}
 
-	// int x_off_cell = static_cast<int>(x_off / scaleFactor);
-	// int y_off_cell = static_cast<int>(y_off / scaleFactor);
-	int dim_x_scaled = static_cast<int>(board->dim_x * scaleFactor);
-	int dim_y_scaled = static_cast<int>(board->dim_y * scaleFactor);
-
 	int x_src, y_src, w_src, h_src;
 	int x_dst, y_dst, w_dst, h_dst;
 
-	x_src = 0;
-	y_src = 0;
-	w_src = board->dim_x;
-	h_src = board->dim_y;
+	x_src = x_off / scaleFactor;
+	y_src = y_off / scaleFactor;
 
 	x_dst = 0;
 	y_dst = 0;
 	w_dst = winX;
 	h_dst = winY;
 
-	if (w_dst >= dim_x_scaled)
+	if (x_src < 0)
 	{
-		w_dst = dim_x_scaled;
-		x_dst = x_off;
-	}
-	else
-	{
-		if (x_off >= 0)
-		{
-			x_src = (x_off / scaleFactor);
-			if (x_off + winX > dim_x_scaled)
-			{
-				w_src = (dim_x_scaled - x_off) / scaleFactor;
-				w_dst = w_src * scaleFactor;
-			}
-		}
-		else
-		{
-			x_dst = -1 * (x_off);
-			w_src = (winX + x_off) / scaleFactor;
-			w_dst = w_src * scaleFactor;
-		}
+		// w_src += (x_src / scaleFactor);
+		x_src = 0;
 	}
 
-	if (h_dst >= dim_y_scaled)
+	if (y_src < 0)
 	{
-		h_dst = dim_y_scaled;
-		y_dst = y_off;
+		// h_src += (y_src / scaleFactor);
+		y_src = 0;
+	}
+	if (board->dim_x * scaleFactor <= winX)
+	{
+		w_src = (winX - x_src) / scaleFactor;
 	}
 	else
 	{
-		if (y_off >= 0)
-		{
-			y_src = (y_off / scaleFactor);
-			if (y_off + winY > dim_y_scaled)
-			{
-				h_src = (dim_y_scaled - y_off) / scaleFactor;
-				h_dst = h_src * scaleFactor;
-			}
-		}
-		else
-		{
-			y_dst = -1 * (y_off);
-			h_src = (winY + y_off) / scaleFactor;
-			h_dst = h_src * scaleFactor;
-		}
+		w_src = (winX / scaleFactor);
 	}
+	if(w_src > board->dim_x)
+	{
+		w_src = board->dim_x;
+	}
+
+	if (board->dim_y * scaleFactor <= winY)
+	{
+		h_src = (winY - y_src) / scaleFactor;
+	}
+	else
+	{
+		h_src = (winY / scaleFactor);
+	}
+	if(h_src > board->dim_y)
+	{
+		h_src = board->dim_y;
+	}
+
+	w_dst = w_src * scaleFactor;
+	h_dst = h_src * scaleFactor;
+
 	// forceRedraw = true;
 	SDL_Rect srcRect = {x_src, y_src, w_src, h_src};
 	SDL_Rect dstRect = {x_dst, y_dst, w_dst, h_dst};
@@ -575,7 +561,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	board = new Board(960, 540);
+	board = new Board(480, 270);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
 	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
@@ -660,8 +646,8 @@ int main(int argc, char *argv[])
 					if (event.wheel.y > 0)
 					{
 						forceRedraw = true;
-						x_off -= mouse_x / scaleFactor;
-						y_off -= mouse_y / scaleFactor;
+						// x_off -= mouse_x / scaleFactor;
+						// y_off -= mouse_y / scaleFactor;
 						scaleFactor++;
 					}
 					// scroll down
@@ -670,8 +656,8 @@ int main(int argc, char *argv[])
 						if (scaleFactor > 1)
 						{
 							forceRedraw = true;
-							x_off += mouse_x / scaleFactor;
-							y_off += mouse_y / scaleFactor;
+							// x_off += mouse_x / scaleFactor;
+							// y_off += mouse_y / scaleFactor;
 							scaleFactor--;
 						}
 					}
