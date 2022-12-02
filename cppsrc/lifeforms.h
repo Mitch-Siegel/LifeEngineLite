@@ -23,18 +23,23 @@ private:
 public:
 	int x = -1;
 	int y = -1;
+	int direction;
 	unsigned int species;
 	uint64_t age;
 	int mutability;
 	bool alive;
 	int reproductionCooldown;
 	uint64_t lifespan;
-	Brain brain;
+	Brain *brain;
 	uint64_t cellCounts[cell_null];
 
 	const uint64_t &nCells() const { return this->nCells_; }
 
 	Organism(int center_x, int center_y);
+
+	Organism(int center_x, int center_y, const Brain &baseBrain);
+
+	~Organism();
 
 	void Die();
 
@@ -46,7 +51,7 @@ public:
 
 	bool CheckValidity();
 
-	void Move();
+	void Move(int moveDirection);
 
 	void Rotate(bool clockwise);
 

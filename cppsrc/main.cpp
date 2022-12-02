@@ -310,9 +310,6 @@ public:
 			organismStats[thisClass][count_age] += o->age;
 			organismStats[thisClass][count_lifespan] += o->lifespan;
 			organismStats[thisClass][count_mutability] += o->mutability;
-			organismStats[thisClass][count_maxconviction] += o->brain.maxConviction;
-			organismStats[thisClass][count_rotatevschange] += o->brain.rotatevschange;
-			organismStats[thisClass][count_turnwhenrotate] += o->brain.turnwhenrotate;
 			organismStats[thisClass][count_raw]++;
 			for (int i = 0; i < cell_null; i++)
 			{
@@ -321,10 +318,6 @@ public:
 			if (o->cellCounts[cell_touch] > 0)
 			{
 				touchSensorHaverCounts[thisClass]++;
-				for (int i = 0; i < cell_null; i++)
-				{
-					cellSentiments[thisClass][i] += o->brain.cellSentiments[i];
-				}
 			}
 		}
 		board->ReleaseMutex();
@@ -414,7 +407,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	SDL_Rect srcRect = {x_src, y_src, w_src, h_src};
 	SDL_Rect dstRect = {x_dst, y_dst, w_dst, h_dst};
 
-	printf("Mapping  % 3d,% 3d, % 3dx% 3d\n@(%2.0f)x to % 3d,% 3d, % 3dx% 3d\n\n", x_src, y_src, w_src, h_src, scaleFactor, x_dst, y_dst, w_dst, h_dst);
+	// printf("Mapping  % 3d,% 3d, % 3dx% 3d\n@(%2.0f)x to % 3d,% 3d, % 3dx% 3d\n\n", x_src, y_src, w_src, h_src, scaleFactor, x_dst, y_dst, w_dst, h_dst);
 
 	if ((board->DeltaCells.size() == 0 && !forceRedraw) ||
 		(leftoverMicros < 0))

@@ -753,7 +753,6 @@ void Cell_Touch::Tick()
 		this->senseCooldown--;
 		return;
 	}
-	int totalSense = 0;
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[i];
@@ -767,19 +766,9 @@ void Cell_Touch::Tick()
 				continue;
 			}
 
-			int thisSentiment = this->myOrganism->brain.cellSentiments[checked->type];
-			totalSense += thisSentiment;
 		}
 	}
 
-	if (totalSense > 0)
-	{
-		this->myOrganism->brain.Reward(totalSense);
-	}
-	else if (totalSense < 0)
-	{
-		this->myOrganism->brain.Punish(-1 * totalSense);
-	}
 	this->senseCooldown = this->senseInterval;
 }
 
@@ -821,15 +810,6 @@ void Cell_Eye::Tick()
 			{
 				if (checked->myOrganism != this->myOrganism)
 				{
-					int seenSentiment = this->myOrganism->brain.cellSentiments[checked->type];
-					if (seenSentiment > 0)
-					{
-						this->myOrganism->brain.Reward(seenSentiment);
-					}
-					else
-					{
-						this->myOrganism->brain.Reward(-1 * seenSentiment);
-					}
 				}
 				break;
 			}

@@ -26,10 +26,39 @@ Organism::Organism(int center_x, int center_y)
 	this->alive = true;
 	this->reproductionCooldown = 0;
 	this->mutability = DEFAULT_MUTABILITY;
+	this->brain = new Brain();
 	for (int i = 0; i < cell_null; i++)
 	{
 		this->cellCounts[i] = 0;
 	}
+}
+
+Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
+{
+	this->x = center_x;
+	this->y = center_y;
+	this->species = 0;
+	this->myCells = std::vector<Cell *>();
+	this->maxHealth = 0;
+	this->currentHealth = this->maxHealth;
+	this->currentEnergy = 0;
+	this->lifespan = 0;
+	this->maxEnergy = 0;
+	this->age = 0;
+	this->nCells_ = 0;
+	this->alive = true;
+	this->reproductionCooldown = 0;
+	this->mutability = DEFAULT_MUTABILITY;
+	this->brain = new Brain(baseBrain);
+	for (int i = 0; i < cell_null; i++)
+	{
+		this->cellCounts[i] = 0;
+	}
+}
+
+Organism::~Organism()
+{
+	delete this->brain;
 }
 
 void Organism::Die()
@@ -113,29 +142,42 @@ Organism *Organism::Tick()
 	{
 		if (this->currentEnergy > 2)
 		{
-			switch (this->brain.Decide())
+			switch (this->brain->Decide())
 			{
-			case intent_changeDir:
-			case intent_continue:
-				for (uint64_t i = 0; i < this->cellCounts[cell_mover]; i++)
-				{
-					this->Move();
-				}
-				break;
-
-			case intent_rotateClockwise:
-				for (uint64_t i = 0; i < this->cellCounts[cell_mover]; i++)
-				{
-					this->Rotate(true);
-				}
-				break;
-
-			case intent_rotateCounterClockwise:
-				for (uint64_t i = 0; i < this->cellCounts[cell_mover]; i++)
-				{
-					this->Rotate(false);
-				}
-				break;
+			case intent_idle:
+			{
+			}
+			break;
+			case intent_forward:
+			{
+				this->Move(3);
+			}
+			break;
+			case intent_back:
+			{
+				this->Move(1);
+			}
+			break;
+			case intent_left:
+			{
+				this->Move(2);
+			}
+			break;
+			case intent_right:
+			{
+				this->Move(0);
+			}
+			break;
+			case intent_rotate_clockwise:
+			{
+				this->Rotate(true);
+			}
+			break;
+			case intent_rotate_counterclockwise:
+			{
+				this->Rotate(false);
+			}
+			break;
 			}
 		}
 	}
@@ -323,9 +365,9 @@ bool Organism::CheckValidity()
 	return invalid;
 }
 
-void Organism::Move()
+void Organism::Move(int moveDirection)
 {
-	int *moveDir = directions[this->brain.moveDirIndex];
+	int *moveDir = directions[(moveDirection + this->direction) % 4];
 	if (this->CanMoveToPosition(this->x + moveDir[0], this->y + moveDir[1]))
 	{
 		class MovedCell
@@ -379,14 +421,6 @@ void Organism::Move()
 		*/
 		int moveCost = floor(this->nCells() * 0.5) * (this->cellCounts[cell_leaf] + 1);
 		this->ExpendEnergy(moveCost);
-	}
-	else
-	{
-		// this->brain.ForceRechoose();
-		if (this->cellCounts[cell_touch])
-		{
-			this->brain.Punish(1.0);
-		}
 	}
 }
 
@@ -463,7 +497,15 @@ void Organism::Rotate(bool clockwise)
 	int rotateCost = floor(this->nCells() * 0.5) * (this->cellCounts[cell_leaf] + 1);
 
 	this->ExpendEnergy(rotateCost);
-	this->brain.RotateSuccess(clockwise);
+	this->direction += (clockwise ? 1 : -1);
+	if (this->direction < 0)
+	{
+		this->direction = 3;
+	}
+	else if (this->direction > 4)
+	{
+		this->direction %= 4;
+	}
 }
 
 void Organism::Damage(uint64_t n)
@@ -475,7 +517,6 @@ void Organism::Damage(uint64_t n)
 	}
 
 	this->currentHealth -= n;
-	this->brain.Punish(1.0);
 }
 
 void Organism::Heal(uint64_t n)
@@ -600,7 +641,7 @@ Organism *Organism::Reproduce()
 
 				this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER);
 
-				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra);
+				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra, *this->brain);
 				replicated->mutability = this->mutability;
 				for (uint64_t k = 0; k < this->nCells(); k++)
 				{
@@ -684,11 +725,10 @@ Organism *Organism::Reproduce()
 				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN; // + randInt(0, REPRODUCTION_COOLDOWN);
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->GetMaxHealth());
-				replicated->brain = this->brain.Clone();
-				if (replicated->cellCounts[cell_mover])
-				{
-					replicated->brain.Mutate();
-				}
+				// if (replicated->cellCounts[cell_mover])
+				// {
+					// replicated->brain->Mutate();
+				// }
 				replicated->currentEnergy = randInt(replicated->maxEnergy / 2, replicated->maxEnergy);
 				replicated->lifespan = sqrt(replicated->maxEnergy) * sqrt(replicated->nCells()) * LIFESPAN_MULTIPLIER;
 				return replicated;

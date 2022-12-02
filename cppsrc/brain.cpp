@@ -1,173 +1,94 @@
 #include "brain.h"
 #include "rng.h"
 
-Brain::Brain()
+Brain::Brain() : SimpleNets::DAGNetwork(2, {{SimpleNets::logistic, 4}}, {7, SimpleNets::logistic})
 {
-    this->currentIntent = intent_changeDir;
-    this->moveDirIndex = -1;
-    this->conviction = 0.0;
-    this->maxConviction = 2;
-    // chance to rotate instead of changing direction
-    this->rotatevschange = 25;
-    this->turnwhenrotate = 50;
-    this->justRewarded = false;
-
-    for (int i = 0; i < cell_null; i++)
-    {
-        this->cellSentiments[i] = 0;
-    }
-
-    int startingSentimentIndex = randInt(cell_empty + 1, cell_null - 1);
-    this->cellSentiments[startingSentimentIndex] = randFloat(-1, 1);
+    this->nextSensorIndex = 0;
 }
 
-void Brain::Reward(float amount)
+Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
 {
-    if ((this->conviction += amount) > maxConviction)
-    {
-        this->conviction = maxConviction;
-    }
-    this->justRewarded = true;
 }
 
-void Brain::Punish(float amount)
+Brain::~Brain()
 {
-    if ((this->conviction -= amount) < (-1 * maxConviction))
-    {
-        this->conviction = (-1 * maxConviction);
-    }
 }
 
-void Brain::ForceRechoose()
+void Brain::TryAddRandomInputConnection()
 {
-    this->conviction = -1 * this->maxConviction;
+    this->AddConnection(this->layers[0][randInt(0, this->layers[0].size())].Id(),
+                        this->layers[1][randInt(0, this->layers[1].size())].Id(),
+                        randFloat(-1.0, 1.0));
 }
 
-enum Intent Brain::Decide()
+void Brain::TryAddRandomHiddenConnection()
 {
-    if (justRewarded)
+    if (this->layers[1].size() > 1)
     {
-        justRewarded = false;
-        return currentIntent;
-    }
-    if ((this->currentIntent == intent_continue) &&
-        ((randInt(0, 2 * maxConviction) - maxConviction) > conviction /* ||
-          (randPercent(3) && randPercent(3))*/
-         ))
-    {
-        if (!randPercent(rotatevschange))
+        size_t firstIndex = randInt(0, this->layers[1].size());
+        size_t secondIndex = randInt(0, this->layers[1].size() - 1);
+        if (secondIndex == firstIndex)
         {
-            this->currentIntent = intent_changeDir;
-        }
-        else
-        {
-            if (randPercent(50))
+            if (secondIndex < this->layers[1].size() - 1)
             {
-                this->currentIntent = intent_rotateClockwise;
+                if (secondIndex > 0)
+                {
+                    secondIndex += randPercent(50) ? -1 : 1;
+                }
+                else
+                {
+                    secondIndex++;
+                }
             }
             else
             {
-                this->currentIntent = intent_rotateCounterClockwise;
+                secondIndex--;
             }
         }
+        this->AddConnection(this->layers[1][firstIndex].Id(),
+                            this->layers[1][secondIndex].Id(),
+                            randFloat(-1.0, 1.0));
     }
-    switch (this->currentIntent)
-    {
-    case intent_continue:
-        return intent_continue;
-
-    case intent_changeDir:
-        this->moveDirIndex = randInt(0, 3);
-        this->currentIntent = intent_continue;
-        this->conviction = ceil(this->maxConviction / 2.0);
-        return intent_continue;
-
-    case intent_rotateClockwise:
-        this->currentIntent = intent_continue;
-        this->conviction = ceil(this->maxConviction / 2.0);
-        return intent_rotateClockwise;
-
-    case intent_rotateCounterClockwise:
-        this->currentIntent = intent_continue;
-        this->conviction = ceil(this->maxConviction / 2.0);
-        return intent_rotateCounterClockwise;
-    }
-
-    // really, G++ can't figure out that this is unreachable?!
-    return this->currentIntent;
 }
 
-// if the call to rotate() succeeds, this is called
-// make the organism's movement direction turn correspondingly
-void Brain::RotateSuccess(bool clockwise)
+void Brain::TryAddRandomOutputConnection()
 {
-    if (randPercent(turnwhenrotate))
+    this->AddConnection(this->layers[1][randInt(0, this->layers[1].size())].Id(),
+                        this->layers[2][randInt(0, this->layers[2].size())].Id(),
+                        randFloat(-1.0, 1.0));
+}
+
+void Brain::SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion)
+{
+    this->SetInput(0, {energyProportion, healthProportion});
+}
+
+void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_null])
+{
+    std::vector<nn_num_t> valuesVector(cell_null);
+    for (int i = 0; i < cell_null; i++)
     {
-        if (clockwise)
-        {
-            ++this->moveDirIndex %= 4;
-        }
-        else
-        {
-            if (--this->moveDirIndex < 0)
-            {
-                this->moveDirIndex = 3;
-            }
-        }
+        valuesVector[i] = values[i];
     }
-    else
-    {
-        this->currentIntent = intent_changeDir;
-    }
+    this->SetInput(2 + (senseCellIndex * cell_null), valuesVector);
 }
 
 void Brain::Mutate()
 {
-    // slightly bias towards lowering conviction so it doesn't just always shoot up
-    this->maxConviction += randPercent(10) * (randInt(-3, 2));
-
-    if (this->maxConviction < 1)
-    {
-        this->maxConviction = 1;
-    }
-    this->rotatevschange += (randInt(-1, 1) * (1 + (randPercent(50) * randInt(0, 2))));
-    if (this->rotatevschange < 0)
-    {
-        this->rotatevschange = 0;
-    }
-    else if (this->rotatevschange > 100)
-    {
-        this->rotatevschange = 100;
-    }
-
-    this->turnwhenrotate += (randInt(-1, 1) * (1 + (randPercent(50) * randInt(0, 2))));
-    if (this->turnwhenrotate < 0)
-    {
-        this->turnwhenrotate = 0;
-    }
-    else if (this->turnwhenrotate > 100)
-    {
-        this->turnwhenrotate = 100;
-    }
-
-    if (randPercent(10))
-    {
-        this->cellSentiments[randInt(cell_empty + 1, cell_null - 1)] += (randFloat(-1, 1));
-        for (int i = cell_empty; i < cell_null; i++)
-        {
-            if (this->cellSentiments[i] > 1.0)
-            {
-                this->cellSentiments[i] = 1.0;
-            }
-            else if (this->cellSentiments[i] < -1.0)
-            {
-                this->cellSentiments[i] = -1.0;
-            }
-        }
-    }
 }
 
-Brain Brain::Clone()
+unsigned int Brain::GetNewSensorIndex()
 {
-    return Brain(*this);
+    for (int i = 0; i < cell_null; i++)
+    {
+        this->AddInput();
+    }
+    return this->nextSensorIndex++;
 }
+
+enum Intent Brain::Decide()
+{
+    // ok to cast to enum because the net chooses between discrete outputs and returns the index of the chosen one
+    return static_cast<enum Intent>(this->Output());
+}
+
