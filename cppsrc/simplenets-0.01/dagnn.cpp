@@ -136,7 +136,6 @@ namespace SimpleNets
             {
                 if (seenStartingUnit)
                 {
-                    this->RemoveConnection(c);
                     return true;
                 }
                 else

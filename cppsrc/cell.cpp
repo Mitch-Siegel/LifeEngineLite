@@ -761,6 +761,7 @@ void Cell_Touch::Tick()
 		this->senseCooldown--;
 		return;
 	}
+	nn_num_t cellsTouched[cell_null] = {0.0};
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[i];
@@ -773,8 +774,10 @@ void Cell_Touch::Tick()
 			{
 				continue;
 			}
+			cellsTouched[checked->type]++;
 		}
 	}
+	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsTouched);
 
 	this->senseCooldown = this->senseInterval;
 }
@@ -805,6 +808,7 @@ void Cell_Eye::Tick()
 		this->senseCooldown--;
 		return;
 	}
+	nn_num_t cellsSeen[cell_null] = {0.0};
 	int *deltaCoords = directions[this->direction];
 	for (int i = 0; i < MAX_EYE_SEEING_DISTANCE; i++)
 	{
@@ -817,11 +821,14 @@ void Cell_Eye::Tick()
 			{
 				if (checked->myOrganism != this->myOrganism)
 				{
+					cellsSeen[checked->type] = static_cast<nn_num_t>(MAX_EYE_SEEING_DISTANCE - i) / MAX_EYE_SEEING_DISTANCE;
 				}
 				break;
 			}
 		}
 	}
+	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsSeen);
+
 	this->senseCooldown = this->senseInterval;
 }
 

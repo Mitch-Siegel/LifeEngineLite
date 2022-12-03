@@ -40,7 +40,7 @@ private:
 public:
     Brain();
     Brain(const Brain &b);
-    ~Brain();
+    ~Brain() = default;
 
     void SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion);
 

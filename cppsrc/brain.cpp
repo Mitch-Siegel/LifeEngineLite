@@ -1,7 +1,9 @@
 #include "brain.h"
 #include "rng.h"
 
-Brain::Brain() : SimpleNets::DAGNetwork(6, {}, {7, SimpleNets::logistic})
+#define BRAIN_DEFAULT_INPUTS 6
+
+Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets::logistic})
 {
     this->nextSensorIndex = 0;
 
@@ -60,10 +62,7 @@ Brain::Brain() : SimpleNets::DAGNetwork(6, {}, {7, SimpleNets::logistic})
 
 Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
 {
-}
-
-Brain::~Brain()
-{
+    this->nextSensorIndex = b.nextSensorIndex;
 }
 
 bool Brain::TryAddRandomInputConnectionBySrc(size_t srcId)
@@ -182,7 +181,7 @@ void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_nu
     {
         valuesVector[i] = values[i];
     }
-    this->SetInput(2 + (senseCellIndex * cell_null), valuesVector);
+    this->SetInput((BRAIN_DEFAULT_INPUTS - 1) + (senseCellIndex * cell_null), valuesVector);
 }
 
 void Brain::Mutate()
@@ -329,7 +328,7 @@ unsigned int Brain::GetNewSensorIndex()
 {
     for (int i = 0; i < cell_null; i++)
     {
-        this->AddInput();
+        this->TryAddRandomHiddenConnectionBySrc(this->AddInput());
     }
     return this->nextSensorIndex++;
 }

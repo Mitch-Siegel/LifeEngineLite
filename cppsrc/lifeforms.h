@@ -55,6 +55,8 @@ public:
 
 	void Rotate(bool clockwise);
 
+	void OnCellAdded(Cell *added);
+
 	void AddCell(int x_rel, int y_rel, Cell *_cell);
 
 	void RemoveCell(Cell *_myCell);
@@ -173,7 +175,6 @@ private:
 	int startingTicksUntilSpoil;
 
 public:
-
 	const int &TicksUntilSpoil();
 
 	void attachTicksUntilSpoil(int *slotValue);
@@ -379,7 +380,26 @@ public:
 	Cell_Armor *Clone() override;
 };
 
-class Cell_Touch : public Cell
+class Sensor_Cell : public Cell
+{
+private:
+	int brainInputIndex_;
+
+public:
+	void SetBrainInputIndex(int index) { this->brainInputIndex_ = index; };
+
+	const int &BrainInputIndex() { return this->brainInputIndex_; };
+
+	Sensor_Cell() { this->brainInputIndex_ = -1; };
+
+	Sensor_Cell(const Sensor_Cell &c)
+	{
+		*this = c;
+		this->brainInputIndex_ = c.brainInputIndex_;
+	}
+};
+
+class Cell_Touch : public Sensor_Cell
 {
 	friend class Organism;
 	friend class Board;
@@ -398,7 +418,7 @@ public:
 	int getSenseInterval() { return this->senseInterval; };
 };
 
-class Cell_Eye : public Cell
+class Cell_Eye : public Sensor_Cell
 {
 	friend class Organism;
 	friend class Board;

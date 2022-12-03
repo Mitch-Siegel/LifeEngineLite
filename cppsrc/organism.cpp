@@ -187,8 +187,7 @@ Organism *Organism::Tick()
 
 	if (this->reproductionCooldown == 0)
 	{
-		// random chance to reproduce if have enough energy
-		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.2) && randPercent(10))
+		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.2))
 		{
 			return this->Reproduce();
 		}
@@ -835,6 +834,26 @@ bool Organism::Mutate()
 	return false;
 }
 
+void Organism::OnCellAdded(Cell *added)
+{
+	switch (added->type)
+	{
+	case cell_touch:
+	case cell_eye:
+	{
+		Sensor_Cell *c = static_cast<Sensor_Cell *>(added);
+		if (c->BrainInputIndex() == -1)
+		{
+			c->SetBrainInputIndex(this->brain->GetNewSensorIndex());
+		}
+	}
+	break;
+
+	default:
+		break;
+	}
+}
+
 void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 {
 	int x_abs = this->x + x_rel;
@@ -851,6 +870,9 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	board->replaceCellAt(x_abs, y_abs, _cell);
 	this->myCells.push_back(_cell);
 	this->nCells_++;
+	
+	this->OnCellAdded(_cell);
+
 	this->RecalculateStats();
 }
 
@@ -876,6 +898,9 @@ void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 	// int x_rel = _myCell->x - this->x;
 	// int y_rel = _myCell->y - this->y;
 	board->replaceCell(_myCell, _newCell);
+
+	this->OnCellAdded(_newCell);
+
 	this->RecalculateStats();
 	// this->AddCell(x_rel, y_rel, _newCell);
 }
