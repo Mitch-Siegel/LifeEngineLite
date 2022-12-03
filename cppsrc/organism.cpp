@@ -141,45 +141,44 @@ Organism *Organism::Tick()
 
 	if (this->cellCounts[cell_mover])
 	{
-		if (this->currentEnergy > 2)
+		this->brain->SetBaselineInput(static_cast<nn_num_t>(this->currentEnergy) / static_cast<nn_num_t>(this->maxEnergy),
+									  static_cast<nn_num_t>(this->currentHealth) / static_cast<nn_num_t>(this->maxHealth));
+		switch (this->brain->Decide())
 		{
-			switch (this->brain->Decide())
-			{
-			case intent_idle:
-			{
-			}
-			break;
-			case intent_forward:
-			{
-				this->Move(3);
-			}
-			break;
-			case intent_back:
-			{
-				this->Move(1);
-			}
-			break;
-			case intent_left:
-			{
-				this->Move(2);
-			}
-			break;
-			case intent_right:
-			{
-				this->Move(0);
-			}
-			break;
-			case intent_rotate_clockwise:
-			{
-				this->Rotate(true);
-			}
-			break;
-			case intent_rotate_counterclockwise:
-			{
-				this->Rotate(false);
-			}
-			break;
-			}
+		case intent_idle:
+		{
+		}
+		break;
+		case intent_forward:
+		{
+			this->Move(3);
+		}
+		break;
+		case intent_back:
+		{
+			this->Move(1);
+		}
+		break;
+		case intent_left:
+		{
+			this->Move(2);
+		}
+		break;
+		case intent_right:
+		{
+			this->Move(0);
+		}
+		break;
+		case intent_rotate_clockwise:
+		{
+			this->Rotate(true);
+		}
+		break;
+		case intent_rotate_counterclockwise:
+		{
+			this->Rotate(false);
+		}
+		break;
 		}
 	}
 
@@ -188,7 +187,8 @@ Organism *Organism::Tick()
 
 	if (this->reproductionCooldown == 0)
 	{
-		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.2))
+		// random chance to reproduce if have enough energy
+		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.2) && randPercent(10))
 		{
 			return this->Reproduce();
 		}
@@ -724,7 +724,7 @@ Organism *Organism::Reproduce()
 					replicated->Rotate(randPercent(50));
 				}
 
-				if (randPercent(this->mutability))
+				if (this->cellCounts[cell_mover] && randPercent(this->mutability))
 				{
 					replicated->brain->Mutate();
 				}
@@ -734,7 +734,7 @@ Organism *Organism::Reproduce()
 				replicated->Heal(replicated->GetMaxHealth());
 				// if (replicated->cellCounts[cell_mover])
 				// {
-					// replicated->brain->Mutate();
+				// replicated->brain->Mutate();
 				// }
 				replicated->currentEnergy = randInt(replicated->maxEnergy / 2, replicated->maxEnergy);
 				replicated->lifespan = sqrt(replicated->maxEnergy) * sqrt(replicated->nCells()) * LIFESPAN_MULTIPLIER;

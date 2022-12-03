@@ -341,7 +341,15 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				this->myOrganism->ReplaceCell(this, new Cell_Leaf(25));
+				if (randPercent(FLOWER_EXPAND_PERCENT))
+				{
+					this->myOrganism->ReplaceCell(this, new Cell_Leaf(25));
+				}
+				else
+				{
+					this->myOrganism->RemoveCell(this);
+					board->replaceCell(this, new Cell_Empty());
+				}
 			}
 		}
 	}
@@ -765,7 +773,6 @@ void Cell_Touch::Tick()
 			{
 				continue;
 			}
-
 		}
 	}
 

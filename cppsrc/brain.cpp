@@ -1,9 +1,61 @@
 #include "brain.h"
 #include "rng.h"
 
-Brain::Brain() : SimpleNets::DAGNetwork(2, {{SimpleNets::logistic, 4}}, {7, SimpleNets::logistic})
+Brain::Brain() : SimpleNets::DAGNetwork(6, {}, {7, SimpleNets::logistic})
 {
     this->nextSensorIndex = 0;
+
+    for(int i = 0; i < 3; i++)
+    {
+        this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::linear)));
+    }
+
+    while (this->TryAddRandomInputConnection())
+        ;
+
+    while (this->TryAddRandomHiddenConnection())
+        ;
+
+    while (this->TryAddRandomOutputConnection())
+        ;
+
+    while (this->TryAddRandomInputOutputConnection())
+        ;
+
+    int nConnections = 0;
+    while (nConnections < 10)
+    {
+        switch (randInt(0, 3))
+        {
+        case 0:
+            if (!this->TryAddRandomInputConnection())
+            {
+                nConnections++;
+            }
+            break;
+
+        case 1:
+            if (!this->TryAddRandomHiddenConnection())
+            {
+                nConnections++;
+            }
+            break;
+
+        case 2:
+            if (!this->TryAddRandomOutputConnection())
+            {
+                nConnections++;
+            }
+            break;
+
+        case 3:
+            if (!this->TryAddRandomInputOutputConnection())
+            {
+                nConnections++;
+            }
+            break;
+        }
+    }
 }
 
 Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
@@ -119,7 +171,8 @@ bool Brain::TryAddRandomOutputConnection()
 
 void Brain::SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion)
 {
-    this->SetInput(0, {energyProportion, healthProportion});
+    this->SetInput(0, {randFloat(-1.0, 1.0), randFloat(-1.0, 1.0), randFloat(-1.0, 1.0), randFloat(-1.0, 1.0),
+                       energyProportion, healthProportion});
 }
 
 void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_null])
@@ -223,7 +276,7 @@ void Brain::Mutate()
             {
                 ++toModify;
             }
-            
+
             this->ChangeWeight(toModify->first.first, toModify->first.second, randFloat(-1.0, 1.0));
         }
         else // add/remove connection
