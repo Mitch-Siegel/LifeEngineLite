@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <algorithm>
 
 #include "nnet.h"
 namespace SimpleNets
@@ -19,11 +20,12 @@ namespace SimpleNets
 
         for (Layer l : n.layers)
         {
-            this->layers.push_back(Layer(this, false));
+            Layer newL = Layer(this, false);
             for (auto u = l.begin(); u != l.end(); ++u)
             {
-                this->layers.back().AddUnit(this->units_[(*u)->Id()]);
+                newL.AddUnit(this->units_[(*u)->Id()]);
             }
+            this->layers.push_back(newL);
         }
 
         for (auto c : n.connections_)
@@ -100,10 +102,6 @@ namespace SimpleNets
         case linear:
             u = new Units::Linear(id);
             break;
-
-        default:
-            printf("Unexpected type %d\n", t);
-            exit(1);
         }
         this->units_[id] = u;
         return u;
@@ -117,6 +115,11 @@ namespace SimpleNets
     const std::map<size_t, Unit *> &NeuralNet::units()
     {
         return this->units_;
+    }
+
+    const std::map<std::pair<size_t, size_t>, Connection *> &NeuralNet::connections()
+    {
+        return this->connections_;
     }
 
     Layer &NeuralNet::operator[](int index)
@@ -144,7 +147,7 @@ namespace SimpleNets
             for (size_t j = 0; j < l.size(); j++)
             {
                 Unit &u = l[j];
-                printf("Neuron %2lu (type %10s - %p): raw: %f, delta %f, error %f\n\tactivation: %f\n\tweights:", u.Id(), GetNeuronTypeName(u.type()), &u, u.Raw(), u.delta, u.error, u.Activation());
+                printf("Neuron %2lu (type %10s): raw: %f, delta %f, error %f\n\tactivation: %f\n\tweights:", u.Id(), GetNeuronTypeName(u.type()), u.Raw(), u.delta, u.error, u.Activation());
                 for (auto connection : u.InboundConnections())
                 {
                     printf("%lu->this % 0.07f, ", connection->from->Id(), connection->weight);
@@ -164,7 +167,6 @@ namespace SimpleNets
             printf("Error setting input for neural network!\n"
                    "Expected %lu input values, received vector of size %lu\n",
                    this->layers[0].size(), values.size());
-            exit(1);
         }
         for (size_t i = 0; i < values.size(); i++)
         {
@@ -181,8 +183,7 @@ namespace SimpleNets
         {
             printf("Error setting input for neural network!\n"
                    "Expected %lu input values, received vector of size %lu\n",
-                   this->layers[0].size() - 1, values.size() - index);
-            exit(1);
+                   this->layers[0].size() - 1, values.size());
         }
         for (size_t i = 0; i < values.size(); i++)
         {
@@ -268,6 +269,33 @@ namespace SimpleNets
         delete c;
     }
 
+    void NeuralNet::RemoveUnit(size_t id)
+    {
+        Unit *u = this->units_[id];
+        for (Layer &l : this->layers)
+        {
+            std::vector<Unit *>::iterator toErase;
+            if ((toErase = std::find(l.begin(), l.end(), u)) != l.end())
+            {
+                l.erase(toErase);
+                break;
+            }
+        }
+        auto outbound = u->OutboundConnections();
+        for (auto oc : outbound)
+        {
+            this->RemoveConnection(oc);
+        }
+
+        auto inbound = u->InboundConnections();
+        for (auto ic : inbound)
+        {
+            this->RemoveConnection(ic);
+        }
+        this->units_.erase(id);
+        delete u;
+    }
+
     const nn_num_t NeuralNet::GetWeight(size_t fromId, size_t toId)
     {
         if (this->connections_.count({fromId, toId}) == 0)
@@ -278,6 +306,16 @@ namespace SimpleNets
         // Unit *from = this->units_[fromId];
         // return from->GetConnections().find(Connection(toId))->weight;
         return this->connections_[{fromId, toId}]->weight;
+    }
+
+    void NeuralNet::ChangeWeight(size_t fromId, size_t toId, nn_num_t delta)
+    {
+        if (this->connections_.count({fromId, toId}) == 0)
+        {
+            printf("Error changing connection weight from %lu->%lu - connection doesn't exist!\n", fromId, toId);
+            exit(1);
+        }
+        this->connections_[{fromId, toId}]->weight += delta;
     }
 
     /*

@@ -27,6 +27,7 @@ Organism::Organism(int center_x, int center_y)
 	this->reproductionCooldown = 0;
 	this->mutability = DEFAULT_MUTABILITY;
 	this->brain = new Brain();
+	this->direction = randInt(0, 3);
 	for (int i = 0; i < cell_null; i++)
 	{
 		this->cellCounts[i] = 0;
@@ -642,6 +643,7 @@ Organism *Organism::Reproduce()
 				this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER);
 
 				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra, *this->brain);
+				replicated->direction = this->direction;
 				replicated->mutability = this->mutability;
 				for (uint64_t k = 0; k < this->nCells(); k++)
 				{
@@ -720,6 +722,11 @@ Organism *Organism::Reproduce()
 				if (randPercent(this->mutability))
 				{
 					replicated->Rotate(randPercent(50));
+				}
+
+				if (randPercent(this->mutability))
+				{
+					replicated->brain->Mutate();
 				}
 
 				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN; // + randInt(0, REPRODUCTION_COOLDOWN);

@@ -38,6 +38,8 @@ namespace SimpleNets
 
         size_t AddNeuron(neuronTypes t);
 
+        void RemoveHiddenNeuron(size_t id);
+
         size_t AddInput();
     };
 } // namespace SimpleNets

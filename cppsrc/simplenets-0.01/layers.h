@@ -29,6 +29,7 @@ namespace SimpleNets
 
         std::vector<Unit *>::iterator begin();
         std::vector<Unit *>::iterator end();
+        std::vector<Unit *>::iterator erase(std::vector<Unit *>::iterator i);
     };
 } // namespace SimpleNets
 #endif

@@ -47,4 +47,9 @@ namespace SimpleNets
     {
         return this->units.end();
     }
+
+    std::vector<Unit *>::iterator Layer::erase(std::vector<Unit *>::iterator i)
+    {
+        return this->units.erase(i);
+    }
 } // namespace SimpleNets

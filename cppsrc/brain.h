@@ -18,13 +18,24 @@ private:
     unsigned int nextSensorIndex;
 
     // make one attempt to add a random connection from the input layer to the hidden layer
-    void TryAddRandomInputConnection();
+    bool TryAddRandomInputConnectionBySrc(size_t srcId);
+    bool TryAddRandomInputConnectionByDst(size_t dstId);
+    bool TryAddRandomInputConnection();
+
+    // make one attempt to add a random connection from the input layer to the output layer
+    bool TryAddRandomInputOutputConnectionBySrc(size_t srcId);
+    bool TryAddRandomInputOutputConnectionByDst(size_t dstId);
+    bool TryAddRandomInputOutputConnection();
 
     // make one attempt to add a random connection from one neuron in the hidden layer to another
-    void TryAddRandomHiddenConnection();
+    bool TryAddRandomHiddenConnectionBySrc(size_t srcId);
+    bool TryAddRandomHiddenConnectionByDst(size_t dstId);
+    bool TryAddRandomHiddenConnection();
 
     // make one attempt to add a random connection from the hidden layer to the output layer
-    void TryAddRandomOutputConnection();
+    bool TryAddRandomOutputConnectionBySrc(size_t srcId);
+    bool TryAddRandomOutputConnectionByDst(size_t dstId);
+    bool TryAddRandomOutputConnection();
 
 public:
     Brain();

@@ -17,11 +17,8 @@ namespace SimpleNets
         friend class Layer;
 
     private:
-        // mapping of units by ID
         std::map<size_t, Unit *> units_;
-
-        // mapping of connection by {from, to} unit IDs
-        std::map<std::pair<size_t, size_t>, Connection*> connections_;
+        std::map<std::pair<size_t, size_t>, Connection *> connections_;
 
     protected:
         // generate a unique ID for a new unit
@@ -33,6 +30,7 @@ namespace SimpleNets
         Unit *GenerateUnitFromType(neuronTypes t);
 
         const std::map<size_t, Unit *> &units();
+        const std::map<std::pair<size_t, size_t>, Connection *> &connections();
         std::vector<Layer> layers;
 
         virtual bool OnConnectionAdded(Connection *c) = 0;
@@ -54,7 +52,6 @@ namespace SimpleNets
 
         // return the size of a given layer by index
         size_t size(int index);
-
 
         // return the output of the network given the current input state
         // to be implemented by specific net types
@@ -81,7 +78,9 @@ namespace SimpleNets
         // remove the connection from a given ID to a given ID
         bool RemoveConnection(size_t fromId, size_t toId);
 
-        
+        // remove the unit with the given ID (and all its connections)
+        void RemoveUnit(size_t id);
+
         // get the weight of a connection from a given ID to a given ID
         const nn_num_t GetWeight(size_t fromId, size_t toId);
 
@@ -90,10 +89,6 @@ namespace SimpleNets
 
         // set the weight of a connection from a given ID to a given ID to a value
         void SetWeight(size_t fromId, size_t toId, nn_num_t w);
-
-
-        // void AddNeuron(size_t layer, neuronTypes t);
-        // void RemoveNeuron(std::pair<size_t, size_t> index);
     };
 } // namespace SimpleNets
 

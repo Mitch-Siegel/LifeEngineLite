@@ -1,5 +1,6 @@
 #include <queue>
 #include <stack>
+#include <algorithm>
 
 #include "dagnn.h"
 
@@ -265,6 +266,32 @@ namespace SimpleNets
         Unit *u = this->GenerateUnitFromType(t);
         this->layers[1].AddUnit(u);
         return u->Id();
+    }
+
+    void DAGNetwork::RemoveHiddenNeuron(size_t id)
+    {
+        if (this->units().count(id) == 0)
+        {
+            printf("Request to remove hidden unit with id %lu from DAGNetwork - no such unit exists\n", id);
+            exit(1);
+        }
+        Unit *u = (this->units()).at(id);
+        std::vector<Unit *>::iterator toErase;
+        if ((toErase = std::find(this->layers[1].begin(), this->layers[1].end(), u)) == this->layers[1].end())
+        {
+            printf("Request to remove unit not %lu from DAGNetwork - unit is not in the hidden layer\n", id);
+            exit(1);
+        }
+        this->layers[1].erase(toErase);
+        for (auto oc : u->OutboundConnections())
+        {
+            this->RemoveConnection(oc);
+        }
+        for (auto ic : u->InboundConnections())
+        {
+            this->RemoveConnection(ic);
+        }
+        this->RemoveUnit(id);
     }
 
     size_t DAGNetwork::AddInput()
