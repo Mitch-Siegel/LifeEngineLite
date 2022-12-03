@@ -9,6 +9,8 @@
 #include "board.h"
 #include "rng.h"
 
+#define moveCost(nCells) floor(pow(0.3 * nCells, 1.1) + 1)
+
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
 {
@@ -51,6 +53,7 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 	this->reproductionCooldown = 0;
 	this->mutability = DEFAULT_MUTABILITY;
 	this->brain = new Brain(baseBrain);
+	this->direction = randInt(0, 3);
 	for (int i = 0; i < cell_null; i++)
 	{
 		this->cellCounts[i] = 0;
@@ -182,7 +185,7 @@ Organism *Organism::Tick()
 		}
 	}
 
-	this->AddEnergy(((this->age % 6 == 0) ? this->cellCounts[cell_leaf] : 0) +
+	this->AddEnergy(((this->age % PHOTOSYNTHESIS_INTERVAL == 0) ? this->cellCounts[cell_leaf] : 0) +
 					(this->cellCounts[cell_leaf] > 0));
 
 	if (this->reproductionCooldown == 0)
@@ -255,6 +258,14 @@ bool Organism::CheckValidity()
 		return true;
 	}
 
+	if(this->cellCounts[cell_mover] == 0)
+	{
+		if(this->cellCounts[cell_touch] || this->cellCounts[cell_eye])
+		{
+			return true;
+		}
+	}
+
 	std::unordered_map<Cell *, bool> cellValidity;
 	// conduct a search on cells, only keep ones directly attached to the organism
 	std::vector<Cell *> searchQueue;
@@ -284,7 +295,7 @@ bool Organism::CheckValidity()
 	{
 		if (cellValidity[*c] == true)
 		{
-			c++;
+			++c;
 		}
 		else
 		{
@@ -419,8 +430,7 @@ void Organism::Move(int moveDirection)
 		/*
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-2
 		*/
-		int moveCost = floor(this->nCells() * 0.5) * (this->cellCounts[cell_leaf] + 1);
-		this->ExpendEnergy(moveCost);
+		this->ExpendEnergy(moveCost(this->nCells_));
 	}
 }
 
@@ -494,9 +504,7 @@ void Organism::Rotate(bool clockwise)
 		board->DeltaCells.insert(std::pair<int, int>(b->x, b->y));
 	}
 
-	int rotateCost = floor(this->nCells() * 0.5) * (this->cellCounts[cell_leaf] + 1);
-
-	this->ExpendEnergy(rotateCost);
+	this->ExpendEnergy(moveCost(this->nCells_));
 	this->direction += (clockwise ? 1 : -1);
 	if (this->direction < 0)
 	{
@@ -870,7 +878,7 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	board->replaceCellAt(x_abs, y_abs, _cell);
 	this->myCells.push_back(_cell);
 	this->nCells_++;
-	
+
 	this->OnCellAdded(_cell);
 
 	this->RecalculateStats();

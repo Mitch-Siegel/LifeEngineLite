@@ -7,25 +7,13 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
 {
     this->nextSensorIndex = 0;
 
-    for(int i = 0; i < 3; i++)
+    for (int i = 0; i < 2; i++)
     {
         this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::linear)));
     }
 
-    while (this->TryAddRandomInputConnection())
-        ;
-
-    while (this->TryAddRandomHiddenConnection())
-        ;
-
-    while (this->TryAddRandomOutputConnection())
-        ;
-
-    while (this->TryAddRandomInputOutputConnection())
-        ;
-
     int nConnections = 0;
-    while (nConnections < 10)
+    while (nConnections < 5)
     {
         switch (randInt(0, 3))
         {
@@ -328,7 +316,11 @@ unsigned int Brain::GetNewSensorIndex()
 {
     for (int i = 0; i < cell_null; i++)
     {
-        this->TryAddRandomHiddenConnectionBySrc(this->AddInput());
+        size_t inputId = this->AddInput();
+        if (randPercent(20))
+        {
+            this->TryAddRandomHiddenConnectionBySrc(inputId);
+        }
     }
     return this->nextSensorIndex++;
 }

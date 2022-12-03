@@ -245,12 +245,12 @@ void Cell_Bark::Tick()
 		return;
 	}
 
-	/*if (this->integrity < 1)
+	if (this->integrity < 1)
 	{
 		this->myOrganism->RemoveCell(this);
 		board->replaceCell(this, new Cell_Empty());
 		return;
-	}*/
+	}
 
 	int bonusEnergy = 0;
 	bool canGrow = true;
@@ -281,7 +281,7 @@ void Cell_Bark::Tick()
 	}
 
 	// any leaves attached to bark generate a bonus energy every few ticks
-	if (this->myOrganism->age % 6 == 0)
+	if (this->myOrganism->age % PHOTOSYNTHESIS_INTERVAL == 0)
 	{
 		this->myOrganism->AddEnergy(bonusEnergy);
 	}
@@ -403,7 +403,6 @@ Cell_Mover::Cell_Mover()
 
 void Cell_Mover::Tick()
 {
-	this->myOrganism->ExpendEnergy(1 + randPercent(this->myOrganism->nCells() * 4));
 }
 
 Cell_Mover *Cell_Mover::Clone()
