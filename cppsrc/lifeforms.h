@@ -338,8 +338,6 @@ class Cell_Carnivore : public Cell
 	uint8_t digestCooldown;
 
 public:
-	int8_t direction;
-
 	~Cell_Carnivore() override;
 
 	Cell_Carnivore();

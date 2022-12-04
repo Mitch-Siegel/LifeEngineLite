@@ -795,22 +795,28 @@ void Cell_Eye::Tick()
 {
 	nn_num_t cellsSeen[cell_null] = {0.0};
 	int *deltaCoords = directions[this->direction];
+	int x_checked = this->x;
+	int y_checked = this->y;
 	for (int i = 0; i < MAX_EYE_SEEING_DISTANCE; i++)
 	{
-		int x_abs = this->x + deltaCoords[0];
-		int y_abs = this->y + deltaCoords[1];
-		if (!board->boundCheckPos(x_abs, y_abs))
+		x_checked += deltaCoords[0];
+		y_checked += deltaCoords[1];
+		if (!board->boundCheckPos(x_checked, y_checked))
 		{
-			Cell *checked = board->cells[y_abs][x_abs];
+			Cell *checked = board->cells[y_checked][x_checked];
 			if (checked->type != cell_empty)
 			{
 				if (checked->myOrganism != this->myOrganism)
 				{
-					// cellsSeen[checked->type] = static_cast<nn_num_t>(MAX_EYE_SEEING_DISTANCE - i) / MAX_EYE_SEEING_DISTANCE;
-					cellsSeen[checked->type] = 1.0;
+					cellsSeen[checked->type] = static_cast<nn_num_t>(MAX_EYE_SEEING_DISTANCE - i) / MAX_EYE_SEEING_DISTANCE;
+					// cellsSeen[checked->type] = 1.0;
 				}
 				break;
 			}
+		}
+		else
+		{
+			break;
 		}
 	}
 	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsSeen);
