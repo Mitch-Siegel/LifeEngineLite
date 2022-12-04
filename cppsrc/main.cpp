@@ -153,9 +153,8 @@ private:
 		count_age,
 		count_lifespan,
 		count_mutability,
-		count_maxconviction,
-		count_rotatevschange,
-		count_turnwhenrotate,
+		count_neurons,
+		count_synapses,
 		count_raw,
 		count_null
 	};
@@ -205,7 +204,7 @@ public:
 	{
 		if (ImGui::BeginTable("OrganismStats", class_null + 1))
 		{
-			const char *rowNames[count_null] = {"Class:", "Count", "Cells", "Energy%", "Max Energy", "Age", "Lifespan", "Mutability", "Max Conviction", "Rotate vs. change"};
+			const char *rowNames[count_null + 1] = {"Class:", "Count", "Cells", "Energy%", "Max Energy", "Age%", "Lifespan", "Mutability", "Neurons", "Synapses"};
 			int row = 0;
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
@@ -291,6 +290,28 @@ public:
 			{
 				ImGui::TableSetColumnIndex(i + 1);
 				ImGui::Text("%.1f", organismStats[i][count_mutability]);
+			}
+			row++;
+
+			// neurons
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("%s", rowNames[row]);
+			for (int i = 0; i < class_null; i++)
+			{
+				ImGui::TableSetColumnIndex(i + 1);
+				ImGui::Text("%.2f", organismStats[i][count_neurons]);
+			}
+			row++;
+
+			// synapses
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("%s", rowNames[row]);
+			for (int i = 0; i < class_null; i++)
+			{
+				ImGui::TableSetColumnIndex(i + 1);
+				ImGui::Text("%.2f", organismStats[i][count_synapses]);
 			}
 
 			ImGui::EndTable();
@@ -412,6 +433,8 @@ public:
 			organismStats[thisClass][count_age] += o->age;
 			organismStats[thisClass][count_lifespan] += o->lifespan;
 			organismStats[thisClass][count_mutability] += o->mutability;
+			organismStats[thisClass][count_neurons] += o->brain->NeuronCount();
+			organismStats[thisClass][count_synapses] += o->brain->SynapseCount();
 			organismStats[thisClass][count_raw]++;
 			for (int i = 0; i < cell_null; i++)
 			{
@@ -667,20 +690,22 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	board = new Board(480, 270);
+	board = new Board(960, 480);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
 	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
-	firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
-	firstOrganism->lifespan = 5000;
+	
+	// firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
+	// firstOrganism->lifespan = 5000;
 
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->GetMaxEnergy();
 	firstOrganism->mutability = 10;
+	firstOrganism->Reproduce();
 	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
 	firstOrganism->Heal(100);
-	firstOrganism->reproductionCooldown = 10;
+	// firstOrganism->reproductionCooldown = 10;
 	firstOrganism->species = board->GetNextSpecies();
 	board->AddSpeciesMember(firstOrganism);
 

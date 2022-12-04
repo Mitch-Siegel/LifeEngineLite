@@ -46,6 +46,10 @@ public:
 
     void SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_null]);
 
+    size_t NeuronCount() {return this->units().size();};
+    
+    size_t SynapseCount() {return this->connections().size();};
+
     void Mutate();
 
     unsigned int GetNewSensorIndex();

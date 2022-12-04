@@ -13,7 +13,7 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     }
 
     int nConnections = 0;
-    while (nConnections < 5)
+    while (nConnections < 10)
     {
         switch (randInt(0, 3))
         {
@@ -177,7 +177,8 @@ void Brain::Mutate()
     // add/remove a neuron with 10% probability
     if (randPercent(10))
     {
-        if (this->size(1) > 1 && randPercent(50))
+        // 45% to remove a neuron
+        if (this->size(1) > 1 && randPercent(45))
         {
             this->RemoveUnit(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id());
         }
@@ -268,7 +269,7 @@ void Brain::Mutate()
         }
         else // add/remove connection
         {
-            if (randPercent(50) || this->connections().size() < 3) // add connection
+            if (randPercent(55) || this->connections().size() < 3) // add connection
             {
                 int nTries = 0;
                 bool couldAdd = false;

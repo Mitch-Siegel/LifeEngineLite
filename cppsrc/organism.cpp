@@ -9,7 +9,7 @@
 #include "board.h"
 #include "rng.h"
 
-#define moveCost(nCells) floor(pow(0.3 * nCells, 1.1) + 1)
+#define moveCost(nCells) floor(0.5 * nCells + 1)
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -624,7 +624,7 @@ bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 
 Organism *Organism::Reproduce()
 {
-	this->reproductionCooldown = REPRODUCTION_COOLDOWN;
+	// this->reproductionCooldown = REPRODUCTION_COOLDOWN;
 
 	int dirIndex = randInt(0, 7);
 	for (int i = 0; i < 8; i++)
@@ -639,7 +639,7 @@ Organism *Organism::Reproduce()
 			{
 				int dir_x_extra = 0;
 				int dir_y_extra = 0;
-				if (randPercent(20))
+				if (randPercent(40))
 				{
 					for (int k = 0; k < 16; k++)
 					{
@@ -743,7 +743,7 @@ Organism *Organism::Reproduce()
 					replicated->brain->Mutate();
 				}
 
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN; // + randInt(0, REPRODUCTION_COOLDOWN);
+				replicated->reproductionCooldown = 15 * replicated->nCells_; // + randInt(0, REPRODUCTION_COOLDOWN);
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->GetMaxHealth());
 				// if (replicated->cellCounts[cell_mover])
