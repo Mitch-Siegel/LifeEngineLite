@@ -72,14 +72,26 @@ class DataTracker
 {
 private:
 	int maxSamples = 0;
-	T *data;
+	T *data = nullptr;
 	int dataP = 0;
 
 public:
-	DataTracker(int maxSamples)
+	explicit DataTracker(int maxSamples)
 	{
 		this->maxSamples = maxSamples;
 		this->data = new T[maxSamples * 2];
+	}
+
+	DataTracker(const DataTracker<T> &d)
+	{
+		printf("Copy constructor of DataTracker called - not intended to be used in this way!\n");
+		exit(1);
+	}
+
+	void operator=(const DataTracker<T> &d)
+	{
+		printf("= operator of DataTracker called - not intended to be used in this way!\n");
+		exit(1);
 	}
 
 	~DataTracker()
@@ -148,26 +160,52 @@ private:
 		count_null
 	};
 	double organismStats[class_null][count_null] = {{0.0}};
+	size_t totalClassEnergies[class_null] = {0};
+
 	int classCounts[class_null] = {0};
 	double organismCellCounts[class_null][cell_null] = {{0.0}};
 	double touchSensorHaverCounts[class_null] = {0.0};
 	// static double touchSensorIntervals[class_null] = {0.0};
 	double cellSentiments[class_null][cell_null] = {{0.0}};
 
-	DataTracker<int> tickData = DataTracker<int>(10000);
-	DataTracker<int> organismCountData = DataTracker<int>(10000);
-	DataTracker<int> plantCountData = DataTracker<int>(10000);
-	DataTracker<int> herbCountData = DataTracker<int>(10000);
-	DataTracker<int> carnCountData = DataTracker<int>(10000);
-	DataTracker<int> omniCountData = DataTracker<int>(10000);
+	DataTracker<int> tickData = DataTracker<int>(2500);
+	DataTracker<double> tickDataDouble = DataTracker<double>(2500);
+
+	DataTracker<int> *classCountData[class_null + 1];
+	DataTracker<double> *classEnergyProportionData[class_null];
 
 public:
+	Stats()
+	{
+		for (int i = 0; i < class_null + 1; i++)
+		{
+			this->classCountData[i] = new DataTracker<int>(2500);
+		}
+
+		for (int i = 0; i < class_null; i++)
+		{
+			this->classEnergyProportionData[i] = new DataTracker<double>(2500);
+		}
+	}
+
+	~Stats()
+	{
+		for (int i = 0; i < class_null + 1; i++)
+		{
+			delete this->classCountData[i];
+		}
+
+		for (int i = 0; i < class_null; i++)
+		{
+			delete this->classEnergyProportionData[i];
+		}
+	}
+
 	void Display()
 	{
-		const char *classNames[class_null] = {"Plant", "Herbivore", "Carnivore", "Omnivore"};
-		const char *rowNames[count_null] = {"Class:", "Count", "Cells", "Energy%", "Max Energy", "Age", "Lifespan", "Mutability", "Max Conviction", "Rotate vs. change"};
 		if (ImGui::BeginTable("OrganismStats", class_null + 1))
 		{
+			const char *rowNames[count_null] = {"Class:", "Count", "Cells", "Energy%", "Max Energy", "Age", "Lifespan", "Mutability", "Max Conviction", "Rotate vs. change"};
 			int row = 0;
 			ImGui::TableNextRow();
 			ImGui::TableSetColumnIndex(0);
@@ -254,25 +292,87 @@ public:
 				ImGui::TableSetColumnIndex(i + 1);
 				ImGui::Text("%.1f", organismStats[i][count_mutability]);
 			}
-			row++;
 
 			ImGui::EndTable();
 		}
 
-		// ImPlot::SetNextAxesLimits(0, organismCountData.size(), 0, static_cast<double>(maxOrganisms));
-		ImPlot::SetNextAxesToFit();
-		// ImPlot::BeginPlot("Bar Graph##Line", "Day", NULL, ImVec2(-1, 0), ImPlotFlags_NoLegend | ImPlotFlags_NoBoxSelect | ImPlotFlags_AntiAliased, ImPlotAxisFlags_Time, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit)
-		if (ImPlot::BeginPlot("Organism Counts by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit))
+		static int whichGraph = 0;
+		ImGui::RadioButton("Organism Counts", &whichGraph, 0);
+		ImGui::SameLine();
+		ImGui::RadioButton("Energy info by class", &whichGraph, 1);
+		// ImGui::SameLine();
+		// ImGui::RadioButton("radio c", &whichGraph, 2);
+
+		switch (whichGraph)
 		{
-			ImPlot::PushColormap(ClassColormap);
-			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-			ImPlot::PlotLine("Plants", tickData.rawData(), plantCountData.rawData(), static_cast<int>(organismCountData.size()));
-			ImPlot::PlotLine("Herbivores", tickData.rawData(), herbCountData.rawData(), static_cast<int>(organismCountData.size()));
-			ImPlot::PlotLine("Carnivores", tickData.rawData(), carnCountData.rawData(), static_cast<int>(organismCountData.size()));
-			ImPlot::PlotLine("Omnivores", tickData.rawData(), omniCountData.rawData(), static_cast<int>(organismCountData.size()));
-			ImPlot::PopColormap();
-			ImPlot::PlotLine("Total Organisms", tickData.rawData(), organismCountData.rawData(), static_cast<int>(organismCountData.size()));
-			ImPlot::EndPlot();
+		case 0:
+		{
+			// ImPlot::SetNextAxesLimits(0, organismCountData.size(), 0, static_cast<double>(maxOrganisms));
+			ImPlot::SetNextAxesToFit();
+			// ImPlot::BeginPlot("Bar Graph##Line", "Day", NULL, ImVec2(-1, 0), ImPlotFlags_NoLegend | ImPlotFlags_NoBoxSelect | ImPlotFlags_AntiAliased, ImPlotAxisFlags_Time, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit)
+			if (ImPlot::BeginPlot("Organism Counts by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit))
+			{
+				ImPlot::PushColormap(ClassColormap);
+				ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
+				ImPlot::PlotLine("Plants", tickData.rawData(), classCountData[class_plant]->rawData(), static_cast<int>(classCountData[class_plant]->size()));
+				ImPlot::PlotLine("Herbivores", tickData.rawData(), classCountData[class_herbivore]->rawData(), static_cast<int>(classCountData[class_herbivore]->size()));
+				ImPlot::PlotLine("Carnivores", tickData.rawData(), classCountData[class_carnivore]->rawData(), static_cast<int>(classCountData[class_carnivore]->size()));
+				ImPlot::PlotLine("Omnivores", tickData.rawData(), classCountData[class_omnivore]->rawData(), static_cast<int>(classCountData[class_omnivore]->size()));
+				ImPlot::PopColormap();
+				ImPlot::PlotLine("Total Organisms", tickData.rawData(), classCountData[class_null]->rawData(), static_cast<int>(classCountData[class_null]->size()));
+				ImPlot::EndPlot();
+			}
+		}
+		break;
+
+		case 1:
+		{
+			// ImPlot::SetNextAxesToFit();
+			ImPlot::SetNextAxesToFit();
+			if (ImPlot::BeginPlot("Proportion of total energy by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect))
+			{
+				ImPlot::PushColormap(ClassColormap);
+				static double rawProportionData[2500 * class_null];
+				// const double *rawProportionData[class_null] = {nullptr};
+				for (int i = 0; i < class_null; i++)
+				{
+					size_t size = classEnergyProportionData[i]->size();
+					for(size_t j = 0; j < size; j++)
+					{
+						rawProportionData[(i * size) + j] = classEnergyProportionData[i]->rawData()[j];
+					}
+					// rawProportionData[i] = classEnergyProportionData[i]->rawData();
+				}
+				ImPlot::PlotBarGroups(classNames, rawProportionData, class_null, classEnergyProportionData[0]->size(), 0, 0, ImPlotBarGroupsFlags_Stacked);
+				
+				// ImPlot::PlotLine(classNames[i], tickDataDouble.rawData(), classEnergyProportionData[i]->rawData(), static_cast<int>(classEnergyProportionData[i]->size()));
+				ImPlot::EndPlot();
+			}
+			/*
+			size_t totalEnergy = 0;
+
+			if (ImPlot::BeginPlot("Proportion of total energy by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect))
+			{
+				ImPlot::PushColormap(ClassColormap);
+				double energies[class_null];
+				for (int i = 0; i < class_null; i++)
+				{
+					totalEnergy += totalClassEnergies[i];
+				}
+				for (int i = 0; i < class_null; i++)
+				{
+					energies[i] = totalClassEnergies[i] / static_cast<double>(totalEnergy);
+				}
+
+				ImPlot::PlotBarGroups(classNames, energies, class_null, 1, 1.0, 0, ImPlotBarGroupsFlags_Stacked);
+				ImPlot::EndPlot();
+			}
+			*/
+		}
+		break;
+		default:
+			printf("Impossible value for radio button!\n");
+			exit(1);
 		}
 	}
 
@@ -305,6 +405,8 @@ public:
 
 			organismStats[thisClass][count_cells] += o->nCells();
 			organismStats[thisClass][count_energy] += o->GetEnergy();
+
+			totalClassEnergies[thisClass] += o->GetEnergy();
 			organismStats[thisClass][count_maxenergy] += o->GetMaxEnergy();
 
 			organismStats[thisClass][count_age] += o->age;
@@ -331,11 +433,22 @@ public:
 		}
 
 		tickData.Add(board->tickCount);
-		organismCountData.Add(board->Organisms.size());
-		plantCountData.Add(classCounts[class_plant]);
-		herbCountData.Add(classCounts[class_herbivore]);
-		carnCountData.Add(classCounts[class_carnivore]);
-		omniCountData.Add(classCounts[class_omnivore]);
+		tickDataDouble.Add(static_cast<double>(board->tickCount));
+		for (int i = 0; i < class_null; i++)
+		{
+			classCountData[i]->Add(classCounts[i]);
+		}
+		classCountData[class_null]->Add(board->Organisms.size());
+
+		size_t totalEnergy = 0;
+		for (int i = 0; i < class_null; i++)
+		{
+			totalEnergy += totalClassEnergies[i];
+		}
+		for (int i = 0; i < class_null; i++)
+		{
+			classEnergyProportionData[i]->Add(totalClassEnergies[i] / static_cast<double>(totalEnergy));
+		}
 	}
 };
 Stats stats;
@@ -382,7 +495,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	{
 		w_src = (winX / scaleFactor);
 	}
-	if(w_src > board->dim_x)
+	if (w_src > board->dim_x)
 	{
 		w_src = board->dim_x;
 	}
@@ -395,7 +508,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 	{
 		h_src = (winY / scaleFactor);
 	}
-	if(h_src > board->dim_y)
+	if (h_src > board->dim_y)
 	{
 		h_src = board->dim_y;
 	}
@@ -564,7 +677,7 @@ int main(int argc, char *argv[])
 
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->GetMaxEnergy();
-	firstOrganism->mutability = 25;
+	firstOrganism->mutability = 10;
 	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
 	firstOrganism->Heal(100);
 	firstOrganism->reproductionCooldown = 10;

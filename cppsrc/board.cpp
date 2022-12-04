@@ -72,7 +72,7 @@ bool Board::Tick()
 					if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
 					{
 						Organism *grownFruit = this->createOrganism(expiringFood->x, expiringFood->y);
-						grownFruit->mutability = ((Cell_Fruit *)expiringFood)->parentMutability;
+						grownFruit->mutability = 10;
 						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
 						grownFruit->AddCell(0, 0, GenerateRandomCell());
 						Cell *secondRandomCell = GenerateRandomCell();

@@ -265,6 +265,13 @@ bool Organism::CheckValidity()
 			return true;
 		}
 	}
+	else
+	{
+		if(this->cellCounts[cell_leaf] > 0.5 * this->nCells_)
+		{
+			return true;
+		}
+	}
 
 	std::unordered_map<Cell *, bool> cellValidity;
 	// conduct a search on cells, only keep ones directly attached to the organism
