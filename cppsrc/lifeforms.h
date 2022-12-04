@@ -101,7 +101,7 @@ class Organism;
 #define ENERGY_DENSITY_MULTIPLIER 8
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define FOOD_MULTIPLIER 2.25 * ENERGY_DENSITY_MULTIPLIER
+#define FOOD_MULTIPLIER 2.0 * ENERGY_DENSITY_MULTIPLIER
 
 #define LEAF_FOOD_ENERGY 1
 #define FLOWER_FOOD_ENERGY 3
@@ -125,16 +125,16 @@ class Organism;
 #define LEAF_FLOWERING_COOLDOWN 50
 
 // whether or not a leaf is able to flower, rolled at creation
-#define LEAF_FLOWERING_ABILITY_PERCENT 50
+#define LEAF_FLOWERING_ABILITY_PERCENT 40
 
 #define PLANT_GROW_PERCENT 50
 // percent for a flower to wilt into another leaf vs just going away
 #define FLOWER_EXPAND_PERCENT 100
 
 #define BARK_GROW_COOLDOWN 30
-#define BARK_PLANT_VS_THORN 98
+#define BARK_PLANT_VS_THORN 95
 #define BARK_GROW_COST 2 * ENERGY_DENSITY_MULTIPLIER
-#define BARK_MAX_INTEGRITY 5
+#define BARK_MAX_INTEGRITY 10
 
 // max integrity for leaves which are next to a bark
 
@@ -148,7 +148,7 @@ class Organism;
 
 #define ARMOR_HEALTH_BONUS 4 * MAX_HEALTH_MULTIPLIER
 
-#define MAX_EYE_SEEING_DISTANCE 10
+#define MAX_EYE_SEEING_DISTANCE 20
 
 class Organism;
 
@@ -404,8 +404,6 @@ class Cell_Touch : public Sensor_Cell
 {
 	friend class Organism;
 	friend class Board;
-	int senseInterval;
-	int senseCooldown;
 
 public:
 	~Cell_Touch() override;
@@ -415,16 +413,12 @@ public:
 	void Tick() override;
 
 	Cell_Touch *Clone() override;
-
-	int getSenseInterval() { return this->senseInterval; };
 };
 
 class Cell_Eye : public Sensor_Cell
 {
 	friend class Organism;
 	friend class Board;
-	int senseInterval;
-	int senseCooldown;
 	int direction;
 
 public:
@@ -435,6 +429,4 @@ public:
 	void Tick() override;
 
 	Cell_Eye *Clone() override;
-
-	int getSenseInterval() { return this->senseInterval; };
 };

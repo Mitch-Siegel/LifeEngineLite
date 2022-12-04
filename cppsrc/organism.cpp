@@ -9,7 +9,7 @@
 #include "board.h"
 #include "rng.h"
 
-#define moveCost(nCells) floor(0.5 * nCells + 1)
+#define moveCost(nCells) nCells
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -154,12 +154,12 @@ Organism *Organism::Tick()
 		break;
 		case intent_forward:
 		{
-			this->Move(3);
+			this->Move(1);
 		}
 		break;
 		case intent_back:
 		{
-			this->Move(1);
+			this->Move(3);
 		}
 		break;
 		case intent_left:
@@ -258,16 +258,16 @@ bool Organism::CheckValidity()
 		return true;
 	}
 
-	if(this->cellCounts[cell_mover] == 0)
+	if (this->cellCounts[cell_mover] == 0)
 	{
-		if(this->cellCounts[cell_touch] || this->cellCounts[cell_eye])
+		if (this->cellCounts[cell_touch] || this->cellCounts[cell_eye])
 		{
 			return true;
 		}
 	}
 	else
 	{
-		if(this->cellCounts[cell_leaf] > 0.5 * this->nCells_)
+		if (this->cellCounts[cell_leaf] > 0.5 * this->nCells_)
 		{
 			return true;
 		}
@@ -512,7 +512,7 @@ void Organism::Rotate(bool clockwise)
 	}
 
 	this->ExpendEnergy(moveCost(this->nCells_));
-	this->direction += (clockwise ? 1 : -1);
+	this->direction += (clockwise ? -1 : 1);
 	if (this->direction < 0)
 	{
 		this->direction = 3;
@@ -693,6 +693,26 @@ Organism *Organism::Reproduce()
 				if (randPercent(this->mutability))
 				{
 					newSpecies = replicated->Mutate();
+					size_t parentLeafCount = this->cellCounts[cell_leaf];
+					size_t parentBarkCount = this->cellCounts[cell_bark];
+					size_t childLeafCount = replicated->cellCounts[cell_leaf];
+					size_t childBarkCount = replicated->cellCounts[cell_bark];
+					if (parentLeafCount && childLeafCount)
+					{
+						if ((childLeafCount == (parentLeafCount + 1)) ||
+							(childLeafCount == (parentLeafCount - 1)))
+						{
+							newSpecies = false;
+						}
+					}
+					if (parentBarkCount && childBarkCount)
+					{
+						if ((childBarkCount == (parentBarkCount + 1)) ||
+							(childBarkCount == (parentBarkCount - 1)))
+						{
+							newSpecies = false;
+						}
+					}
 				}
 
 				if (replicated->CheckValidity() || replicated->maxEnergy == 0)
@@ -723,14 +743,6 @@ Organism *Organism::Reproduce()
 					else if (replicated->mutability > 100)
 					{
 						replicated->mutability = 100;
-					}
-
-					for (Cell *c : this->myCells)
-					{
-						if (c->type == cell_touch)
-						{
-							static_cast<Cell_Touch *>(c)->senseInterval += randInt(-1, 1);
-						}
 					}
 				}
 				if (randPercent(this->mutability))

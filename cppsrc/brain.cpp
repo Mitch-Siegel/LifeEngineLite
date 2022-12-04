@@ -7,13 +7,13 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
 {
     this->nextSensorIndex = 0;
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < BRAIN_DEFAULT_INPUTS * 2; i++)
     {
-        this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::linear)));
+        this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
     }
 
     int nConnections = 0;
-    while (nConnections < 10)
+    while (nConnections < (BRAIN_DEFAULT_INPUTS * BRAIN_DEFAULT_INPUTS))
     {
         switch (randInt(0, 3))
         {
@@ -174,8 +174,8 @@ void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_nu
 
 void Brain::Mutate()
 {
-    // add/remove a neuron with 10% probability
-    if (randPercent(10))
+    // add/remove a neuron with 25% probability
+    if (randPercent(25))
     {
         // 45% to remove a neuron
         if (this->size(1) > 1 && randPercent(45))
@@ -184,7 +184,7 @@ void Brain::Mutate()
         }
         else
         {
-            this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::bias, SimpleNets::linear)));
+            this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
             size_t newNeuronId = this->layers[1][this->layers[1].size() - 1].Id();
 
             // generate an input for the new neuron
@@ -193,12 +193,12 @@ void Brain::Mutate()
                 // try to add an input->hidden connection first, then hidden->hidden
                 bool retry;
                 int nTries = 0;
-                while ((retry = this->TryAddRandomInputConnectionByDst(newNeuronId)) && (nTries++ < 5))
+                while ((retry = this->TryAddRandomInputConnectionByDst(newNeuronId)) && (nTries++ < 10))
                     ;
 
                 if (retry)
                 {
-                    while ((retry = this->TryAddRandomHiddenConnectionByDst(newNeuronId)) && (nTries++ < 10))
+                    while ((retry = this->TryAddRandomHiddenConnectionByDst(newNeuronId)) && (nTries++ < 20))
                         ;
                 }
             }
@@ -207,12 +207,12 @@ void Brain::Mutate()
                 // try to add an hidden->hidden connection first, then input->hidden
                 bool retry;
                 int nTries = 0;
-                while ((retry = this->TryAddRandomHiddenConnectionByDst(newNeuronId)) && (nTries++ < 5))
+                while ((retry = this->TryAddRandomHiddenConnectionByDst(newNeuronId)) && (nTries++ < 10))
                     ;
 
                 if (retry)
                 {
-                    while ((retry = this->TryAddRandomInputConnectionByDst(newNeuronId)) && (nTries++ < 10))
+                    while ((retry = this->TryAddRandomInputConnectionByDst(newNeuronId)) && (nTries++ < 20))
                         ;
                 }
             }
@@ -223,12 +223,12 @@ void Brain::Mutate()
                 // try to add an hidden->output connection first, then hidden->hidden
                 bool retry;
                 int nTries = 0;
-                while ((retry = this->TryAddRandomOutputConnectionBySrc(newNeuronId)) && (nTries++ < 5))
+                while ((retry = this->TryAddRandomOutputConnectionBySrc(newNeuronId)) && (nTries++ < 10))
                     ;
 
                 if (retry)
                 {
-                    while ((retry = this->TryAddRandomHiddenConnectionBySrc(newNeuronId)) && (nTries++ < 10))
+                    while ((retry = this->TryAddRandomHiddenConnectionBySrc(newNeuronId)) && (nTries++ < 20))
                         ;
                 }
             }
@@ -237,18 +237,18 @@ void Brain::Mutate()
                 // try to add an hidden->hidden connection first, then hidden->output
                 bool retry;
                 int nTries = 0;
-                while ((retry = this->TryAddRandomHiddenConnectionBySrc(newNeuronId)) && (nTries++ < 5))
+                while ((retry = this->TryAddRandomHiddenConnectionBySrc(newNeuronId)) && (nTries++ < 10))
                     ;
 
                 if (retry)
                 {
-                    while ((retry = this->TryAddRandomOutputConnectionBySrc(newNeuronId)) && (nTries++ < 10))
+                    while ((retry = this->TryAddRandomOutputConnectionBySrc(newNeuronId)) && (nTries++ < 20))
                         ;
                 }
             }
         }
     }
-    // add/remove/modify connection with 90% probability
+    // add/remove/modify connection with 75% probability
     else
     {
         // modify existing connection
@@ -273,7 +273,7 @@ void Brain::Mutate()
             {
                 int nTries = 0;
                 bool couldAdd = false;
-                while (!couldAdd && (nTries++ < 5))
+                while (!couldAdd && (nTries++ < 20))
                 {
                     auto fromi = this->units().begin();
                     int fromIndex = randInt(0, this->units().size() - 3);
@@ -318,10 +318,8 @@ unsigned int Brain::GetNewSensorIndex()
     for (int i = 0; i < cell_null; i++)
     {
         size_t inputId = this->AddInput();
-        if (randPercent(20))
-        {
-            this->TryAddRandomHiddenConnectionBySrc(inputId);
-        }
+        this->TryAddRandomHiddenConnectionBySrc(inputId);
+        this->TryAddRandomInputOutputConnectionBySrc(inputId);
     }
     return this->nextSensorIndex++;
 }

@@ -264,7 +264,7 @@ void Cell_Bark::Tick()
 		{
 			if (randPercent(BARK_PLANT_VS_THORN))
 			{
-				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(90));
+				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(LEAF_FLOWERING_ABILITY_PERCENT));
 			}
 			else
 			{
@@ -281,7 +281,7 @@ void Cell_Bark::Tick()
 	}
 
 	// any leaves attached to bark generate a bonus energy every few ticks
-	if (this->myOrganism->age % PHOTOSYNTHESIS_INTERVAL == 0)
+	if ((this->myOrganism->age % PHOTOSYNTHESIS_INTERVAL) == 0)
 	{
 		this->myOrganism->AddEnergy(bonusEnergy);
 	}
@@ -657,7 +657,7 @@ void Cell_Killer::Tick()
 	}
 	// base cost of 1 every few ticks
 	// then some addl cost to actually hurt stuff
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 5 == 0));
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 3 == 0));
 
 	int adjacentLeaves = 0;
 	int adjacentBark = 0;
@@ -749,17 +749,10 @@ Cell_Touch::Cell_Touch()
 {
 	this->type = cell_touch;
 	this->myOrganism = nullptr;
-	this->senseCooldown = 0;
-	this->senseInterval = randInt(0, 15);
 }
 
 void Cell_Touch::Tick()
 {
-	if (this->senseCooldown > 0)
-	{
-		this->senseCooldown--;
-		return;
-	}
 	nn_num_t cellsTouched[cell_null] = {0.0};
 	for (int i = 0; i < 4; i++)
 	{
@@ -778,7 +771,6 @@ void Cell_Touch::Tick()
 	}
 	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsTouched);
 
-	this->senseCooldown = this->senseInterval;
 }
 
 Cell_Touch *Cell_Touch::Clone()
@@ -795,18 +787,11 @@ Cell_Eye::Cell_Eye()
 {
 	this->type = cell_eye;
 	this->myOrganism = nullptr;
-	this->senseCooldown = 0;
-	this->senseInterval = randInt(0, 15);
 	this->direction = randInt(0, 3);
 }
 
 void Cell_Eye::Tick()
 {
-	if (this->senseCooldown > 0)
-	{
-		this->senseCooldown--;
-		return;
-	}
 	nn_num_t cellsSeen[cell_null] = {0.0};
 	int *deltaCoords = directions[this->direction];
 	for (int i = 0; i < MAX_EYE_SEEING_DISTANCE; i++)
@@ -820,15 +805,14 @@ void Cell_Eye::Tick()
 			{
 				if (checked->myOrganism != this->myOrganism)
 				{
-					cellsSeen[checked->type] = static_cast<nn_num_t>(MAX_EYE_SEEING_DISTANCE - i) / MAX_EYE_SEEING_DISTANCE;
+					// cellsSeen[checked->type] = static_cast<nn_num_t>(MAX_EYE_SEEING_DISTANCE - i) / MAX_EYE_SEEING_DISTANCE;
+					cellsSeen[checked->type] = 1.0;
 				}
 				break;
 			}
 		}
 	}
 	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsSeen);
-
-	this->senseCooldown = this->senseInterval;
 }
 
 Cell_Eye *Cell_Eye::Clone()

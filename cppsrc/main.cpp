@@ -358,14 +358,14 @@ public:
 				for (int i = 0; i < class_null; i++)
 				{
 					size_t size = classEnergyProportionData[i]->size();
-					for(size_t j = 0; j < size; j++)
+					for (size_t j = 0; j < size; j++)
 					{
 						rawProportionData[(i * size) + j] = classEnergyProportionData[i]->rawData()[j];
 					}
 					// rawProportionData[i] = classEnergyProportionData[i]->rawData();
 				}
 				ImPlot::PlotBarGroups(classNames, rawProportionData, class_null, classEnergyProportionData[0]->size(), 0, 0, ImPlotBarGroupsFlags_Stacked);
-				
+
 				// ImPlot::PlotLine(classNames[i], tickDataDouble.rawData(), classEnergyProportionData[i]->rawData(), static_cast<int>(classEnergyProportionData[i]->size()));
 				ImPlot::EndPlot();
 			}
@@ -418,6 +418,7 @@ public:
 			{
 				cellSentiments[i][j] = 0.0;
 			}
+			totalClassEnergies[i] = 0;
 		}
 		for (Organism *o : board->Organisms)
 		{
@@ -690,14 +691,22 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+	// SDL setup
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+	SDL_Window *window = SDL_CreateWindow("Mitch's Life Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, window_flags);
+	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+	if (renderer == NULL)
+	{
+		SDL_Log("Error creating SDL_Renderer!");
+		return 0;
+	}
+
 	board = new Board(960, 480);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
 	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
+	firstOrganism->direction = 3;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
-	
-	// firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
-	// firstOrganism->lifespan = 5000;
 
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->GetMaxEnergy();
@@ -709,15 +718,6 @@ int main(int argc, char *argv[])
 	firstOrganism->species = board->GetNextSpecies();
 	board->AddSpeciesMember(firstOrganism);
 
-	// SDL setup
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-	SDL_Window *window = SDL_CreateWindow("Mitch's Life Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, window_flags);
-	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-	if (renderer == NULL)
-	{
-		SDL_Log("Error creating SDL_Renderer!");
-		return 0;
-	}
 	// SDL_RendererInfo info;
 	// SDL_GetRendererInfo(renderer, &info);
 	// SDL_Log("Current SDL_Renderer: %s", info.name);
@@ -967,7 +967,6 @@ int main(int argc, char *argv[])
 			cellsModifiedData.Add(cellsModified);
 		}
 		ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
-
 		SDL_RenderPresent(renderer);
 
 		frameCount++;
