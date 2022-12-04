@@ -680,16 +680,16 @@ void TickMain()
 			int leftoverThisStep = static_cast<int>((1000000.0 / PIDTickrate) - micros);
 			leftoverMicros += leftoverThisStep;
 
-			if (maxSpeed)
-			{
-				targetTickrate = 9999;
-			}
-
 			pidController.Tick(leftoverMicros, micros, justEnabledAutoplay);
 
 			if (justEnabledAutoplay)
 			{
 				justEnabledAutoplay = false;
+			}
+
+			if (maxSpeed)
+			{
+				targetTickrate = 9999;
 			}
 
 			if (leftoverMicros > 1000)

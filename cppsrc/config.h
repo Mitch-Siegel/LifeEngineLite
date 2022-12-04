@@ -9,7 +9,7 @@ enum CellTypes
 	cell_bark,
 	cell_flower,
 	cell_fruit,
-	cell_herbivore_mouth,	
+	cell_herbivore_mouth,
 	cell_carnivore_mouth,
 	cell_mover,
 	cell_killer,
@@ -29,4 +29,3 @@ enum OrganismClassifications
 };
 
 extern int CellEnergyDensities[cell_null];
-

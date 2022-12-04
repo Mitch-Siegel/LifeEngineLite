@@ -105,7 +105,7 @@ const ImVec4 cellColors[cell_null] =
 		{0, 0, 0, 0},		  // empty		
 		{10, 40, 10, 255},	  // plantmass		
 		{150, 60, 60, 255},	  // biomass		
-		{30, 120, 30, 255},	  // leaf		
+		{30, 120, 30, 255},	  // leaf
 		{75, 25, 25, 255},	  // bark		
 		{50, 250, 150, 255},  // flower		
 		{200, 200, 0, 255},	  // fruit		

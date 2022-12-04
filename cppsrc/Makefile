@@ -79,6 +79,7 @@ clean:
 cleangame:
 # IMGUI_SRCS = $(basename $(wildcard $(IMGUI_VERSION)/*.cpp))
 	rm $(addprefix $(OBJDIR)/,$(GAME_OBJS))
+	rm ./lel
 
 test:
 	$(info OBJS="$(IMGUI_OBJS)")

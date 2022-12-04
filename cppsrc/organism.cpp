@@ -511,6 +511,30 @@ void Organism::Rotate(bool clockwise)
 		board->DeltaCells.insert(std::pair<int, int>(b->x, b->y));
 	}
 
+	for (Cell *c : this->myCells)
+	{
+		switch (c->type)
+		{
+		case cell_eye:
+		{
+			Cell_Eye *rotatedEye = static_cast<Cell_Eye *>(c);
+			rotatedEye->direction += (clockwise ? -1 : 1);
+			if (rotatedEye->direction < 0)
+			{
+				rotatedEye->direction = 3;
+			}
+			else if (rotatedEye->direction > 4)
+			{
+				rotatedEye->direction %= 4;
+			}
+		}
+		break;
+
+		default:
+			break;
+		}
+	}
+
 	this->ExpendEnergy(moveCost(this->nCells_));
 	this->direction += (clockwise ? -1 : 1);
 	if (this->direction < 0)
