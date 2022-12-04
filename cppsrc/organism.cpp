@@ -137,7 +137,7 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	for (uint64_t i = 0; i < this->nCells(); i++)
+	for (uint64_t i = 0; i < this->nCells_; i++)
 	{
 		this->myCells[i]->Tick();
 	}

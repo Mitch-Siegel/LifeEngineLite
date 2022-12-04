@@ -32,36 +32,70 @@ int x_off = 0;
 int y_off = 0;
 int winX, winY;
 float targetTickrate = 10;
+double PIDTickrate = 1.0;
 long int leftoverMicros = 0;
 bool autoplay = false;
+bool justEnabledAutoplay = false;
 bool maxSpeed = false;
 int ticksThisSecond = 0;
 
 class TickratePID
 {
-	float previous_error = 0.0;
-	float Kp = 0.000024;
-	float Ki = 0.0002;
-	float Kd = 0.00000001;
+	double previous_error = 0.0;
+	double integral = 0.0;
+	// float Kp = 0.000024;
+	// float Ki = 0.0002;
+	// float Kd = 0.00000001;
+	// float Kp = 0.0001;
+	double Kp = 0.00001;
+	double Ki = 0.00000001;
+	// double Ki = 0.0001;
+	double Kd = -0.0000001;
 
 public:
-	float Tick(float instanteneousMeasurement)
+	void Tick(double instanteneousMeasurement, size_t dtMicroseconds, bool ignoreIntegral)
 	{
-		if (instanteneousMeasurement == 0.0)
-		{
-			instanteneousMeasurement = 1.0;
-		}
+		/*
+		previous_error = 0
+	integral = 0
+	Start:
+	error = setpoint – input
+	integral = integral + error*dt
+	derivative = (error – previous error)/dt
+	output = Kp*error + Ki*integral + Kd*derivative
+	previous_error = error
+	wait (dt*/
 		// printf("Current instanteneous framerate: %f\n", instanteneousMeasurement);
-		float error = ((1000000.0 / targetTickrate) - instanteneousMeasurement);
-		float dt = 1.0 / targetTickrate;
-		// printf("DT is % .8f, error is % .8f\n", dt, error);
-		// printf("Error * dt is %f\n", error * dt);
-		float derivative = (error - previous_error) / dt;
-		float delta = Kp * error + Ki * (leftoverMicros + 100) + Kd * derivative;
-		// printf("P:% .8f I:% .8f D:% .8f\n", error * Kp, leftoverMicros * Ki, derivative * Kd);
-		// printf("PID Delta returned: % .8f\n\n", delta);
-		previous_error = error;
-		return delta;
+		double error = instanteneousMeasurement - (1000000.0 / targetTickrate);
+		double dt = dtMicroseconds / 1000.0;
+		if (dt == 0.0)
+		{
+			dt = 0.00001;
+		}
+
+		if (!ignoreIntegral)
+		{
+			integral += (error * dt);
+		}
+		// integral += instanteneousMeasurement;
+		// integral /= 2;
+		double derivative = (error - previous_error) / dt;
+		printf("input: %f \tE:% 7f I:% 7f D:% 7f - DT:% 8f\n", instanteneousMeasurement, (Kp * error), (Ki * integral), (Kd * derivative), dt);
+		double delta = (Kp * error) + (Ki * integral) + (Kd * derivative);
+		if (!ignoreIntegral)
+		{
+			previous_error = error;
+		}
+		else
+		{
+			previous_error = 0;
+		}
+		PIDTickrate += delta;
+		printf("PID Delta: %f\n", delta);
+		if (PIDTickrate < 1.0 || isnan(PIDTickrate))
+		{
+			PIDTickrate = 1.0;
+		}
 	}
 };
 
@@ -627,6 +661,10 @@ void TickMain()
 	{
 		if (autoplay)
 		{
+			if (justEnabledAutoplay)
+			{
+				lastFrame = std::chrono::high_resolution_clock::now();
+			}
 			if (board->Tick())
 			{
 				continue;
@@ -636,38 +674,38 @@ void TickMain()
 			{
 				stats.Update();
 			}
-			auto frameEnd = std::chrono::high_resolution_clock::now();
-			auto diff = frameEnd - lastFrame;
+			auto tickEnd = std::chrono::high_resolution_clock::now();
+			auto diff = tickEnd - lastFrame;
 			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
-			int leftoverThisStep = static_cast<int>((1000000.0 / targetTickrate) - micros);
+			int leftoverThisStep = static_cast<int>((1000000.0 / PIDTickrate) - micros);
 			leftoverMicros += leftoverThisStep;
-			// lastFrame = frameEnd;
+
+			if (maxSpeed)
+			{
+				targetTickrate = 9999;
+			}
+
+			pidController.Tick(leftoverMicros, micros, justEnabledAutoplay);
+
+			if (justEnabledAutoplay)
+			{
+				justEnabledAutoplay = false;
+			}
+
 			if (leftoverMicros > 1000)
 			{
-				if (maxSpeed)
-				{
-					targetTickrate += pidController.Tick(micros);
-				}
 				int delayDuration = leftoverMicros / 1000;
 				boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration));
 				leftoverMicros -= delayDuration * 1000;
 				auto delayEnd = std::chrono::high_resolution_clock::now();
-				auto delayDiff = delayEnd - frameEnd;
+				auto delayDiff = delayEnd - tickEnd;
 				size_t actualDelayMicros = std::chrono::duration_cast<std::chrono::microseconds>(delayDiff).count();
 				leftoverMicros -= (delayDuration * 1000) - static_cast<int>(actualDelayMicros);
 				lastFrame = delayEnd;
 			}
 			else
 			{
-				if ((leftoverMicros < -10 * (1000000.0 / targetTickrate)) || maxSpeed)
-				{
-					targetTickrate += pidController.Tick(micros);
-					if (targetTickrate < 1.0)
-					{
-						targetTickrate = 1.0;
-					}
-				}
-				lastFrame = frameEnd;
+				lastFrame = tickEnd;
 			}
 		}
 		else
@@ -906,7 +944,14 @@ int main(int argc, char *argv[])
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
 			ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
+			static bool autoplayLast;
+			autoplayLast = autoplay;
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
+			if (autoplay && (autoplay != autoplayLast))
+			{
+				justEnabledAutoplay = true;
+			}
+
 			ImGui::SliderFloat("Target tick count per frame", &targetTickrate, 1.0, 100.0, "%.0f");
 			ImGui::Checkbox("Max speed (reduces render rate)", &maxSpeed);
 			static int lastSecondTickrate = 0;
@@ -917,6 +962,7 @@ int main(int argc, char *argv[])
 				lastSecondFrameCount = frameCount;
 			}
 			ImGui::Text("%d ticks per second", lastSecondTickrate);
+			ImGui::Text("PID Targeted tickrate: %f", PIDTickrate);
 			ImGui::Text("%ld leftover microseconds", leftoverMicros);
 
 			ImGui::Text("%lu organisms in %lu species", board->Organisms.size(), board->activeSpecies().size());

@@ -383,7 +383,7 @@ public:
 
 class Sensor_Cell : public Cell
 {
-private:
+protected:
 	int brainInputIndex_;
 
 public:

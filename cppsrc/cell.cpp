@@ -188,6 +188,10 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 
 void Cell_Leaf::Tick()
 {
+	if (!this->flowering)
+	{
+		return;
+	}
 
 	if (this->flowerCooldown > 0)
 	{
@@ -196,8 +200,7 @@ void Cell_Leaf::Tick()
 	// can flower
 	else
 	{
-		if (this->flowering &&
-			this->myOrganism->GetEnergy() > (FLOWER_COST + 1) &&
+		if (this->myOrganism->GetEnergy() > (FLOWER_COST + 1) &&
 			randPercent(PLANT_GROW_PERCENT))
 		{
 			int checkDirIndex = randInt(0, 3);
@@ -209,8 +212,7 @@ void Cell_Leaf::Tick()
 				if (board->isCellOfType(x_abs, y_abs, cell_empty))
 				{
 					this->myOrganism->ExpendEnergy(FLOWER_COST);
-					Cell_Flower *newFlower = new Cell_Flower();
-					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, newFlower);
+					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
 					this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
 					return;
 				}
@@ -770,7 +772,6 @@ void Cell_Touch::Tick()
 		}
 	}
 	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsTouched);
-
 }
 
 Cell_Touch *Cell_Touch::Clone()
@@ -817,5 +818,7 @@ void Cell_Eye::Tick()
 
 Cell_Eye *Cell_Eye::Clone()
 {
-	return new Cell_Eye(*this);
+	Cell_Eye *cloned = new Cell_Eye(*this);
+	cloned->direction = this->direction;
+	return cloned;
 }
