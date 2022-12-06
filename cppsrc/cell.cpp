@@ -221,6 +221,11 @@ void Cell_Leaf::Tick()
 	}
 }
 
+const bool &Cell_Leaf::CanFlower()
+{
+	return this->flowering;
+}
+
 Cell_Leaf *Cell_Leaf::Clone()
 {
 	return new Cell_Leaf(*this);
@@ -768,7 +773,7 @@ void Cell_Touch::Tick()
 			{
 				continue;
 			}
-			cellsTouched[checked->type]++;
+			cellsTouched[checked->type] = 1.0;
 		}
 	}
 	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsTouched);

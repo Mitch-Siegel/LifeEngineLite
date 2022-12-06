@@ -244,6 +244,8 @@ public:
 
 	void Tick() override;
 
+	const bool &CanFlower();
+
 	Cell_Leaf *Clone() override;
 };
 

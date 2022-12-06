@@ -139,7 +139,21 @@ Organism *Organism::Tick()
 
 	for (uint64_t i = 0; i < this->nCells_; i++)
 	{
-		this->myCells[i]->Tick();
+		Cell *toTick = this->myCells[i];
+		switch(toTick->type)
+		{
+			case cell_leaf:
+				{
+					Cell_Leaf *leafToTick = static_cast<Cell_Leaf *>(toTick);
+					if(leafToTick->CanFlower())
+					{
+						leafToTick->Tick();
+					}
+				}
+			default:
+				toTick->Tick();
+				break;
+		}
 	}
 
 	if (this->cellCounts[cell_mover])
