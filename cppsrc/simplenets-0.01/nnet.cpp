@@ -20,12 +20,14 @@ namespace SimpleNets
 
         for (Layer l : n.layers)
         {
-            Layer newL = Layer(this, false);
+            this->layers.push_back(Layer(this, false));
+
+            // Layer newL = Layer(this, false);
             for (auto u = l.begin(); u != l.end(); ++u)
             {
-                newL.AddUnit(this->units_[(*u)->Id()]);
+                this->layers.back().AddUnit(this->units_[(*u)->Id()]);
             }
-            this->layers.push_back(newL);
+            // this->layers.push_back(newL);
         }
 
         for (auto c : n.connections_)
@@ -102,6 +104,10 @@ namespace SimpleNets
         case linear:
             u = new Units::Linear(id);
             break;
+
+        default:
+            printf("Unexpected type %d in NeuralNet::GenerateUnitFromType\n", t);
+            exit(1);
         }
         this->units_[id] = u;
         return u;

@@ -90,36 +90,28 @@ namespace SimpleNets
     void DAGNetwork::GeneratePostNumbers()
     {
         size_t post = 0;
-        this->postNumbers.clear();
+        this->postNumbers_.clear();
         std::stack<Unit *> exploreStack;
-        Layer &ol = this->layers.back();
-        for (auto u = ol.begin(); u != ol.end(); ++u)
+        for (auto u : this->units())
         {
-            exploreStack.push(*u);
+            exploreStack.push(u.second);
         }
         std::set<Unit *> visited;
 
         while (exploreStack.size() > 0)
         {
             Unit *j = exploreStack.top();
-            if (visited.count(j) == 0)
+            postNumbers_[post++] = j->Id();
+            exploreStack.pop();
+            visited.insert(j);
+
+            for (auto c : j->OutboundConnections())
             {
-                for (auto c : j->InboundConnections())
+                Unit *i = c->to;
+                if (visited.count(i) == 0)
                 {
-                    Unit *i = c->from;
                     exploreStack.push(i);
                 }
-            }
-
-            if (visited.count(j))
-            {
-                exploreStack.pop();
-                postNumbers[post] = j;
-                post++;
-            }
-            else
-            {
-                visited.insert(j);
             }
         }
     }
@@ -254,10 +246,15 @@ namespace SimpleNets
     {
         this->GeneratePostNumbers();
         printf("POST numbers for DAGNetwork:\n");
-        for (auto p : this->postNumbers)
+        for (auto p : this->postNumbers_)
         {
-            printf("POST %lu: Unit %lu\n", p.first, p.second->Id());
+            printf("POST %lu: Unit %lu\n", p.first, p.second);
         }
+    }
+
+    const std::map<size_t, size_t> &DAGNetwork::PostNumbers()
+    {
+        return this->postNumbers_;
     }
 
     size_t DAGNetwork::AddNeuron(neuronTypes t)

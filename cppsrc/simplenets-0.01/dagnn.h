@@ -11,7 +11,7 @@ namespace SimpleNets
         void UpdateWeights(nn_num_t learningRate);
         void Recalculate();
 
-        std::map<size_t, Unit *> postNumbers;
+        std::map<size_t, size_t> postNumbers_; // mapping from POST number to unit ID
 
         void GeneratePostNumbers();
 
@@ -35,6 +35,8 @@ namespace SimpleNets
         nn_num_t Output() override;
 
         void PrintPOSTNumbers();
+
+        const std::map<size_t, size_t> &PostNumbers();
 
         size_t AddNeuron(neuronTypes t);
 

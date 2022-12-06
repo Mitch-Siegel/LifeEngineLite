@@ -14,6 +14,7 @@ enum Intent
 
 class Brain : private SimpleNets::DAGNetwork
 {
+    friend class OrganismView;
 private:
     unsigned int nextSensorIndex;
 
