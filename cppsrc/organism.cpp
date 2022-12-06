@@ -523,7 +523,7 @@ void Organism::Rotate(bool clockwise)
 			{
 				rotatedEye->direction = 3;
 			}
-			else if (rotatedEye->direction > 4)
+			else if (rotatedEye->direction > 3)
 			{
 				rotatedEye->direction %= 4;
 			}

@@ -173,7 +173,16 @@ inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 {
 	SetColorForCell(r, c);
 	SDL_RenderDrawPoint(r, x, y);
-	// SDL_RenderDrawPoint(r, x + (x_off / scaleFactor), y + (y_off / scaleFactor));
+	if (c->type == cell_eye)
+	{
+		Cell_Eye *thisEye = static_cast<Cell_Eye *>(c);
+		SDL_RenderSetScale(r, 1.0, 1.0);
+		int *eyeDirection = directions[thisEye->Direction()];
+		SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
+		SDL_RenderDrawPoint(r, (3 * x) + 1, (3 * y) + 1);
+		SDL_RenderDrawPoint(r, (3 * x) + eyeDirection[0] + 1, (3 * y) + eyeDirection[1] + 1);
+		SDL_RenderSetScale(r, 3.0, 3.0);
+	}
 }
 
 class Stats
@@ -520,7 +529,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 	if (boardBuf == nullptr)
 	{
 		boardBuf = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888,
-									 SDL_TEXTUREACCESS_TARGET, board->dim_x, board->dim_y);
+									 SDL_TEXTUREACCESS_TARGET, board->dim_x * 3, board->dim_y * 3);
 	}
 
 	int x_src, y_src, w_src, h_src;
@@ -570,6 +579,8 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 	{
 		h_src = board->dim_y;
 	}
+	w_src *= 3;
+	h_src *= 3;
 
 	w_dst = w_src * scaleFactor;
 	h_dst = h_src * scaleFactor;
@@ -606,6 +617,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 
 	// draw to board buffer instead of backbuffer
 	SDL_SetRenderTarget(r, boardBuf);
+	SDL_RenderSetScale(r, 3.0, 3.0);
 	size_t cellsModified = 0;
 
 	if (forceRedraw)
@@ -640,6 +652,7 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 		}
 		board->DeltaCells.clear();
 	}
+	SDL_RenderSetScale(r, 1.0, 1.0);
 
 	board->ReleaseMutex();
 	forceRedraw = false;
@@ -710,6 +723,25 @@ void TickMain()
 	}
 }
 
+void testOrganism(Organism *o)
+{
+	static int counter = 0;
+	// while (true)
+	// {
+	// RenderBoard(renderer, 0, true);
+	// firstOrganism->Rotate(true);
+	// boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+	// }
+	if (++counter % 2 == 0)
+	{
+		o->Rotate(true);
+	}
+	else
+	{
+		o->Move(3);
+	}
+}
+
 #define BOARD_X 192
 #define BOARD_Y 192
 int main(int argc, char *argv[])
@@ -735,14 +767,13 @@ int main(int argc, char *argv[])
 	}
 
 	// board = new Board(960, 480);
-	board = new Board(500, 250);
+	board = new Board(250, 250);
 	// board = new Board(20, 20);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
 	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->direction = 3;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
-
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->GetMaxEnergy();
 	firstOrganism->mutability = 10;
@@ -851,8 +882,8 @@ int main(int argc, char *argv[])
 					{
 						if (abs(totalDrag_x) < scaleFactor && abs(totalDrag_y) < scaleFactor)
 						{
-							int cell_x = (event.button.x - x_off) / scaleFactor;
-							int cell_y = (event.button.y - y_off) / scaleFactor;
+							int cell_x = (event.button.x - x_off) / (scaleFactor * 3);
+							int cell_y = (event.button.y - y_off) / (scaleFactor * 3);
 							if (!board->boundCheckPos(cell_x, cell_y))
 							{
 								Organism *clickedOrganism = board->cells[cell_y][cell_x]->myOrganism;

@@ -188,8 +188,8 @@ void Brain::Mutate()
         }
         else
         {
-            this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
-            size_t newNeuronId = this->layers[1][this->layers[1].size() - 1].Id();
+            
+            size_t newNeuronId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
 
             // generate an input for the new neuron
             if (randPercent(50))
@@ -322,7 +322,7 @@ unsigned int Brain::GetNewSensorIndex()
     for (int i = 0; i < cell_null; i++)
     {
         size_t inputId = this->AddInput();
-        if (randPercent(10))
+        if (randPercent(25))
         {
             if (randPercent(50))
             {

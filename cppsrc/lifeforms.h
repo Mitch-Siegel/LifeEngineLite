@@ -426,5 +426,7 @@ public:
 
 	void Tick() override;
 
+	int Direction();
+
 	Cell_Eye *Clone() override;
 };

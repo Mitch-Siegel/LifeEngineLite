@@ -822,6 +822,11 @@ void Cell_Eye::Tick()
 	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsSeen);
 }
 
+int Cell_Eye::Direction()
+{
+	return this->direction;
+}
+
 Cell_Eye *Cell_Eye::Clone()
 {
 	Cell_Eye *cloned = new Cell_Eye(*this);
