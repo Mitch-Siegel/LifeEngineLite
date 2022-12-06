@@ -766,9 +766,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	// board = new Board(960, 480);
-	board = new Board(250, 250);
-	// board = new Board(20, 20);
+	board = new Board(384, 216);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
 	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);

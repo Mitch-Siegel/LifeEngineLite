@@ -17,6 +17,7 @@ public:
 };*/
 
 #ifndef CellColormap
+extern const ImVec4 cellColors[cell_null];
 extern ImPlotColormap CellColormap;
 extern ImPlotColormap ClassColormap;
 extern const char *cellNames[cell_null];

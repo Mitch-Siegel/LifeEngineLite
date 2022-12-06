@@ -125,7 +125,7 @@ class Organism;
 #define LEAF_FLOWERING_COOLDOWN 50
 
 // whether or not a leaf is able to flower, rolled at creation
-#define LEAF_FLOWERING_ABILITY_PERCENT 40
+#define LEAF_FLOWERING_ABILITY_PERCENT 45
 
 #define PLANT_GROW_PERCENT 50
 // percent for a flower to wilt into another leaf vs just going away

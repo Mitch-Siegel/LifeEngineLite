@@ -248,7 +248,18 @@ void OrganismView::OnFrame()
         sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
         dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
         dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
-        dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));
+        ImU32 inputColor;
+        if(row > 6)
+        {
+            const ImVec4 &thisCellColor = cellColors[(row - 6) % cell_null];
+
+            inputColor = IM_COL32(thisCellColor.x, thisCellColor.y, thisCellColor.z, activation * 255);
+        }
+        else
+        {
+            inputColor = IM_COL32(255, 255, 255, activation * 255);
+        }
+        dl->AddCircleFilled(thisPos, (diameter / 2) - 1, inputColor);
     }
 
     yStepThisCol = (static_cast<float>(maxY) / this->outputs.size()) * diameter * yStepMultiplier;
