@@ -322,15 +322,23 @@ unsigned int Brain::GetNewSensorIndex()
     for (int i = 0; i < cell_null; i++)
     {
         size_t inputId = this->AddInput();
-        if (randPercent(25))
+        if (randPercent(35))
         {
             if (randPercent(50))
             {
-                this->TryAddRandomHiddenConnectionBySrc(inputId);
+                if(this->TryAddRandomInputConnectionBySrc(inputId))
+                {
+                    printf("that shouldn't have happened\n");
+                    exit(1);
+                }
             }
             else
             {
-                this->TryAddRandomInputOutputConnectionBySrc(inputId);
+                if(this->TryAddRandomInputOutputConnectionBySrc(inputId))
+                {
+                    printf("that shouldn't have happened\n");
+                    exit(1);
+                }
             }
         }
     }

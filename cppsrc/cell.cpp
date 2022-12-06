@@ -350,7 +350,7 @@ void Cell_Flower::Tick()
 			{
 				if (randPercent(FLOWER_EXPAND_PERCENT))
 				{
-					this->myOrganism->ReplaceCell(this, new Cell_Leaf(25));
+					this->myOrganism->ReplaceCell(this, new Cell_Leaf(100));
 				}
 				else
 				{

@@ -213,116 +213,126 @@ void OrganismView::OnFrame()
         ImGui::EndTable();
     }
 
-    // if (ImGui::BeginChild("brain"))
-    // {
-    std::map<size_t, ImVec2> positionsByPost;
-    auto dl = ImGui::GetWindowDrawList();
-    static const int diameter = 30;
-    static const float yStepMultiplier = 1.5;
-    size_t maxY = this->inputs.size();
-    size_t maxX = this->graph.size() + 2;
-    if (this->outputs.size() > maxY)
+    if (ImGui::BeginChild("brain"))
     {
-        maxY = this->outputs.size();
-    }
-
-    for (size_t col = 0; col < this->graph.size(); col++)
-    {
-        size_t thisY = this->graph[col].size();
-        if (thisY > maxY)
+        ImVec2 basePos = ImGui::GetWindowPos();
+        std::map<size_t, ImVec2>
+            positionsByPost;
+        auto dl = ImGui::GetWindowDrawList();
+        static const int diameter = 30;
+        static const float yStepMultiplier = 1.5;
+        size_t maxY = this->inputs.size();
+        size_t maxX = this->graph.size() + 2;
+        if (this->outputs.size() > maxY)
         {
-            maxY = thisY;
+            maxY = this->outputs.size();
         }
-    }
 
-    dl->AddRectFilled(ImVec2(0.0, 0.0), ImVec2((maxX * 5.0) * diameter, (maxY * yStepMultiplier) * (diameter + yStepMultiplier)), IM_COL32(0, 0, 0, 255));
-
-    // draw input layer
-    float yStepThisCol = (static_cast<float>(maxY) / this->inputs.size()) * diameter * yStepMultiplier;
-    for (size_t row = 0; row < this->inputs.size(); row++)
-    {
-        ImVec2 thisPos(5.0 * static_cast<float>(0 * diameter) + diameter / 2, (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
-        size_t thisPost = this->inputs[row];
-        positionsByPost[thisPost] = thisPos;
-        float activation = this->units[this->idsByPost[thisPost]]->Activation();
-        sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
-        dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
-        dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
-        ImU32 inputColor;
-        if(row > 6)
+        for (size_t col = 0; col < this->graph.size(); col++)
         {
-            const ImVec4 &thisCellColor = cellColors[(row - 6) % cell_null];
-
-            inputColor = IM_COL32(thisCellColor.x, thisCellColor.y, thisCellColor.z, activation * 255);
+            size_t thisY = this->graph[col].size();
+            if (thisY > maxY)
+            {
+                maxY = thisY;
+            }
         }
-        else
-        {
-            inputColor = IM_COL32(255, 255, 255, activation * 255);
-        }
-        dl->AddCircleFilled(thisPos, (diameter / 2) - 1, inputColor);
-    }
 
-    yStepThisCol = (static_cast<float>(maxY) / this->outputs.size()) * diameter * yStepMultiplier;
-    for (size_t row = 0; row < this->outputs.size(); row++)
-    {
-        ImVec2 thisPos(5.0 * static_cast<float>((maxX - 1) * diameter) + diameter / 2, (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
-        size_t thisPost = this->outputs[row];
-        positionsByPost[thisPost] = thisPos;
-        float activation = this->units[this->idsByPost[thisPost]]->Activation();
-        sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
-        dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
-        dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
-        dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));
-    }
+        dl->AddRectFilled(ImVec2(basePos.x + 0.0, basePos.y + 0.0), ImVec2(basePos.x + ((maxX * 5.0) * diameter), basePos.y + ((maxY * yStepMultiplier) * (diameter + yStepMultiplier))), IM_COL32(0, 0, 0, 255));
 
-    for (size_t col = 0; col < this->graph.size(); col++)
-    {
-        auto coli = this->graph[col].begin();
-        yStepThisCol = (static_cast<float>(maxY) / this->graph[col].size()) * diameter * yStepMultiplier;
-        for (size_t row = 0; row < this->graph[col].size(); row++)
+        // draw input layer
+        float yStepThisCol = (static_cast<float>(maxY) / this->inputs.size()) * diameter * yStepMultiplier;
+        for (size_t row = 0; row < this->inputs.size(); row++)
         {
-            ImVec2 thisPos(5.0 * static_cast<float>((col + 1) * diameter) + diameter / 2, (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
-            size_t thisPost = *coli++;
+            ImVec2 thisPos(basePos.x + 5.0 * static_cast<float>(0 * diameter) + diameter / 2,
+                           basePos.y + (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
+
+            size_t thisPost = this->inputs[row];
             positionsByPost[thisPost] = thisPos;
             float activation = this->units[this->idsByPost[thisPost]]->Activation();
             sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
-            dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
+            dl->AddText(ImVec2(thisPos.x - (diameter / 1.8),
+                               thisPos.y + (diameter / 2)),
+                        IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
+            dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
+            ImU32 inputColor;
+            if (row > 6)
+            {
+                const ImVec4 &thisCellColor = cellColors[(row - 6) % cell_null];
+
+                inputColor = IM_COL32(thisCellColor.x, thisCellColor.y, thisCellColor.z, activation * 255);
+            }
+            else
+            {
+                inputColor = IM_COL32(255, 255, 255, activation * 255);
+            }
+            dl->AddCircleFilled(thisPos, (diameter / 2) - 1, inputColor);
+        }
+
+        yStepThisCol = (static_cast<float>(maxY) / this->outputs.size()) * diameter * yStepMultiplier;
+        for (size_t row = 0; row < this->outputs.size(); row++)
+        {
+            ImVec2 thisPos(basePos.x + 5.0 * static_cast<float>((maxX - 1) * diameter) + diameter / 2,
+                           basePos.y + (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
+            size_t thisPost = this->outputs[row];
+            positionsByPost[thisPost] = thisPos;
+            float activation = this->units[this->idsByPost[thisPost]]->Activation();
+            sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
+            dl->AddText(ImVec2(thisPos.x - (diameter / 1.8),
+                               thisPos.y + (diameter / 2)),
+                        IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
             dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
             dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));
-            // Brain *b = this->myOrganism->brain;
-            // b->units()
-            // dl->AddCircleFilled(thisPos, diameter / 2, )
-            // ImGui::TableNextRow();
         }
-    }
 
-    for (auto cbp : this->connectionsByPost)
-    {
-        for (auto destVertex : cbp.second)
+        for (size_t col = 0; col < this->graph.size(); col++)
         {
-            ImVec2 src = positionsByPost[cbp.first];
-            ImVec2 dst = positionsByPost[destVertex.first];
-            float dist = sqrt(pow(dst.x - src.x, 2) + pow(dst.y - src.y, 2));
-            ImVec2 unitSlopeVec((dst.x - src.x) / dist, (dst.y - src.y) / dist);
-            src.x += unitSlopeVec.x * (diameter / 2);
-            src.y += unitSlopeVec.y * (diameter / 2);
-            dst.x -= unitSlopeVec.x * (diameter / 2);
-            dst.y -= unitSlopeVec.y * (diameter / 2);
-            dl->PathLineTo(src);
-            dl->PathLineTo(dst);
-            ImU32 edgeColor = (destVertex.second > 0.0) ? IM_COL32(0, 255.0 * destVertex.second, 0, 255) : IM_COL32(-255.0 * destVertex.second, 0, 0, 255);
-            dl->PathStroke(edgeColor, 0, 1.0);
-            // ImVec2 origin(dst.x - 0.9 * src.x)
-            ImVec2 otherTPtStart(dst.x - (10.0 * unitSlopeVec.x), dst.y - (10.0 * unitSlopeVec.y));
-            ImVec2 orthogonalSlopeVec(unitSlopeVec.y, -1.0 * unitSlopeVec.x);
-            dl->AddTriangleFilled(dst,
-                                  ImVec2(otherTPtStart.x + (5.0 * orthogonalSlopeVec.x), otherTPtStart.y + (5.0 * orthogonalSlopeVec.y)),
-                                  ImVec2(otherTPtStart.x - (5.0 * orthogonalSlopeVec.x), otherTPtStart.y - (5.0 * orthogonalSlopeVec.y)),
-                                  edgeColor);
+            auto coli = this->graph[col].begin();
+            yStepThisCol = (static_cast<float>(maxY) / this->graph[col].size()) * diameter * yStepMultiplier;
+            for (size_t row = 0; row < this->graph[col].size(); row++)
+            {
+                ImVec2 thisPos(basePos.x + 5.0 * static_cast<float>((col + 1) * diameter) + diameter / 2,
+                               basePos.y + (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
+                size_t thisPost = *coli++;
+                positionsByPost[thisPost] = thisPos;
+                float activation = this->units[this->idsByPost[thisPost]]->Activation();
+                sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
+                dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
+                dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
+                dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));
+                // Brain *b = this->myOrganism->brain;
+                // b->units()
+                // dl->AddCircleFilled(thisPos, diameter / 2, )
+                // ImGui::TableNextRow();
+            }
         }
+
+        for (auto cbp : this->connectionsByPost)
+        {
+            for (auto destVertex : cbp.second)
+            {
+                ImVec2 src = positionsByPost[cbp.first];
+                ImVec2 dst = positionsByPost[destVertex.first];
+                float dist = sqrt(pow(dst.x - src.x, 2) + pow(dst.y - src.y, 2));
+                ImVec2 unitSlopeVec((dst.x - src.x) / dist, (dst.y - src.y) / dist);
+                src.x += (unitSlopeVec.x * (diameter / 2)) + 1;
+                src.y += (unitSlopeVec.y * (diameter / 2)) + 1;
+                dst.x -= (unitSlopeVec.x * (diameter / 2)) + 1;
+                dst.y -= (unitSlopeVec.y * (diameter / 2)) + 1;
+                dl->PathLineTo(src);
+                dl->PathLineTo(dst);
+                ImU32 edgeColor = (destVertex.second > 0.0) ? IM_COL32(0, 255.0 * destVertex.second, 0, 255) : IM_COL32(-255.0 * destVertex.second, 0, 0, 255);
+                dl->PathStroke(edgeColor, 0, 1.0);
+                // ImVec2 origin(dst.x - 0.9 * src.x)
+                ImVec2 otherTPtStart(dst.x - (10.0 * unitSlopeVec.x), dst.y - (10.0 * unitSlopeVec.y));
+                ImVec2 orthogonalSlopeVec(unitSlopeVec.y, -1.0 * unitSlopeVec.x);
+                dl->AddTriangleFilled(dst,
+                                      ImVec2(otherTPtStart.x + (5.0 * orthogonalSlopeVec.x), otherTPtStart.y + (5.0 * orthogonalSlopeVec.y)),
+                                      ImVec2(otherTPtStart.x - (5.0 * orthogonalSlopeVec.x), otherTPtStart.y - (5.0 * orthogonalSlopeVec.y)),
+                                      edgeColor);
+            }
+        }
+        ImGui::EndChild();
     }
-    // ImGui::EndChild();
-    // }
 
     // ImGui::SetWindowSize(size);
 

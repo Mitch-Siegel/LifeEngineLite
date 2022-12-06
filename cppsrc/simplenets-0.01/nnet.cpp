@@ -203,6 +203,10 @@ namespace SimpleNets
     // error condition determined by specific net implementations in the OnConnectionAdded function
     bool NeuralNet::AddConnection(Unit *from, Unit *to, nn_num_t w)
     {
+        if(this->connections_.count({from->Id(), to->Id()}) > 0)
+        {
+            return true;
+        }
         Connection *c = new Connection(from, to, w);
         this->connections_[{from->Id(), to->Id()}] = c;
         from->AddConnection(c);
