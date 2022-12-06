@@ -54,7 +54,6 @@ public:
 class Board
 {
 private:
-    boost::mutex mutex;
     unsigned int nextSpecies;
 
     class Food_Slot
@@ -83,6 +82,8 @@ private:
     std::vector<uint32_t> activeSpecies_;
 
 public:
+    boost::mutex mutex;
+
     uint64_t tickCount;
     int dim_x, dim_y;
     std::vector<std::vector<Cell *>> cells;
@@ -131,8 +132,7 @@ public:
 
     const SpeciesInfo &GetSpeciesInfo(uint32_t species);
 
-    const std::vector<uint32_t> &activeSpecies() {return this->activeSpecies_;};
+    const std::vector<uint32_t> &activeSpecies() { return this->activeSpecies_; };
 
-     void RecordEvolvedFrom(Organism* evolvedFrom, Organism* evolvedTo);
-
+    void RecordEvolvedFrom(Organism *evolvedFrom, Organism *evolvedTo);
 };

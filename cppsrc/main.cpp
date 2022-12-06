@@ -4,6 +4,9 @@
 #include <vector>
 #include <chrono>
 #include <boost/thread.hpp>
+#include <boost/interprocess/sync/interprocess_condition.hpp>
+#include <boost/interprocess/sync/interprocess_semaphore.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <SDL2/SDL.h>
 #include "imgui.h"
@@ -22,6 +25,11 @@
 #define MIN_EXTRA_MICROS 100
 static volatile int running = 1;
 Board *board = nullptr;
+
+boost::mutex renderMutex;
+bool doneRendering = false;
+boost::condition_variable renderCondition;
+// boost::interprocess::interprocess_semaphore renderSemaphore(2);
 void intHandler(int dummy)
 {
 	running = 0;
@@ -32,13 +40,13 @@ int x_off = 0;
 int y_off = 0;
 int winX, winY;
 float targetTickrate = 10;
-double PIDTickrate = 1.0;
+// double PIDTickrate = 1.0;
 long int leftoverMicros = 0;
 bool autoplay = false;
-bool justEnabledAutoplay = false;
+// bool justEnabledAutoplay = false;
 bool maxSpeed = false;
 int ticksThisSecond = 0;
-
+/*
 class TickratePID
 {
 	double previous_error = 0.0;
@@ -55,16 +63,7 @@ class TickratePID
 public:
 	void Tick(double instanteneousMeasurement, size_t dtMicroseconds, bool ignoreIntegral)
 	{
-		/*
-		previous_error = 0
-	integral = 0
-	Start:
-	error = setpoint – input
-	integral = integral + error*dt
-	derivative = (error – previous error)/dt
-	output = Kp*error + Ki*integral + Kd*derivative
-	previous_error = error
-	wait (dt*/
+
 		// printf("Current instanteneous framerate: %f\n", instanteneousMeasurement);
 		double error = instanteneousMeasurement - (1000000.0 / targetTickrate);
 		double dt = dtMicroseconds / 1000.0;
@@ -101,7 +100,7 @@ public:
 };
 
 TickratePID pidController;
-
+*/
 template <class T>
 class DataTracker
 {
@@ -513,7 +512,7 @@ public:
 Stats stats;
 
 bool forceRedraw = false;
-float RenderBoard(SDL_Renderer *r, size_t frameNum)
+float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 {
 	// we'll use this texture as a seperate backbuffer
 	static SDL_Texture *boardBuf = nullptr;
@@ -590,9 +589,9 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 
 	/*
 	 * don't bother waiting around for the mutex if trying to run at max speed
-	 * waiting for the mutex will decrease the frame rate and this kick down the tick speed from the PID controller
+	 * waiting for the mutex will decrease the frame rate, we will use the condvar to guarantee an update every so often
 	 */
-	if (!maxSpeed)
+	if (forceMutex)
 	{
 		board->GetMutex();
 	}
@@ -651,21 +650,15 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum)
 
 void TickMain()
 {
-	if (board == nullptr)
-	{
-		printf("TickMain called with null board!\nBoard must be instantiated first!\n");
-		return;
-	}
-
 	auto lastFrame = std::chrono::high_resolution_clock::now();
+	boost::mutex::scoped_lock lock(renderMutex);
 	while (running)
 	{
 		if (autoplay)
 		{
-			if (justEnabledAutoplay)
-			{
-				lastFrame = std::chrono::high_resolution_clock::now();
-			}
+			while (!doneRendering)
+				renderCondition.wait(lock);
+
 			if (board->Tick())
 			{
 				continue;
@@ -678,31 +671,32 @@ void TickMain()
 			auto tickEnd = std::chrono::high_resolution_clock::now();
 			auto diff = tickEnd - lastFrame;
 			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
-			int leftoverThisStep = static_cast<int>((1000000.0 / PIDTickrate) - micros);
-			leftoverMicros += leftoverThisStep;
-
-			pidController.Tick(leftoverMicros, micros, justEnabledAutoplay);
-
-			if (justEnabledAutoplay)
+			if (!maxSpeed)
 			{
-				justEnabledAutoplay = false;
-			}
+				int leftoverThisStep = static_cast<int>((1000000.0 / targetTickrate) - micros);
+				leftoverMicros += leftoverThisStep;
 
-			if (maxSpeed)
-			{
-				targetTickrate = PIDTickrate * 2;
-			}
+				// pidController.Tick(leftoverMicros, micros, justEnabledAutoplay);
 
-			if (leftoverMicros > 1000)
-			{
-				int delayDuration = leftoverMicros / 1000;
-				boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration));
-				leftoverMicros -= delayDuration * 1000;
-				auto delayEnd = std::chrono::high_resolution_clock::now();
-				auto delayDiff = delayEnd - tickEnd;
-				size_t actualDelayMicros = std::chrono::duration_cast<std::chrono::microseconds>(delayDiff).count();
-				leftoverMicros -= (delayDuration * 1000) - static_cast<int>(actualDelayMicros);
-				lastFrame = delayEnd;
+				if (leftoverMicros > 1000)
+				{
+					int delayDuration = leftoverMicros / 1000;
+					boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration));
+					leftoverMicros -= delayDuration * 1000;
+					auto delayEnd = std::chrono::high_resolution_clock::now();
+					auto delayDiff = delayEnd - tickEnd;
+					size_t actualDelayMicros = std::chrono::duration_cast<std::chrono::microseconds>(delayDiff).count();
+					leftoverMicros -= (delayDuration * 1000) - static_cast<int>(actualDelayMicros);
+					lastFrame = delayEnd;
+				}
+				else
+				{
+					if (leftoverMicros < -10000)
+					{
+						leftoverMicros = -10000;
+					}
+					lastFrame = tickEnd;
+				}
 			}
 			else
 			{
@@ -947,13 +941,7 @@ int main(int argc, char *argv[])
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
 			ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
-			static bool autoplayLast;
-			autoplayLast = autoplay;
 			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
-			if (autoplay && (autoplay != autoplayLast))
-			{
-				justEnabledAutoplay = true;
-			}
 
 			ImGui::SliderFloat("Target tick count per frame", &targetTickrate, 1.0, 100.0, "%.0f");
 			ImGui::Checkbox("Max speed (reduces render rate)", &maxSpeed);
@@ -965,7 +953,6 @@ int main(int argc, char *argv[])
 				lastSecondFrameCount = frameCount;
 			}
 			ImGui::Text("%d ticks per second", lastSecondTickrate);
-			ImGui::Text("PID Targeted tickrate: %f", PIDTickrate);
 			ImGui::Text("%ld leftover microseconds", leftoverMicros);
 
 			ImGui::Text("%lu organisms in %lu species", board->Organisms.size(), board->activeSpecies().size());
@@ -1009,8 +996,20 @@ int main(int argc, char *argv[])
 		SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
 		SDL_RenderClear(renderer);
 
-		// only force mutex acquisition if not running at max speed
-		float cellsModified = RenderBoard(renderer, frameCount);
+		float cellsModified;
+		// only make the tick thread wait if not running at max speed
+		if (!maxSpeed || (frameCount % 30 == 0))
+		{
+			doneRendering = false;
+			cellsModified = RenderBoard(renderer, frameCount, true);
+			doneRendering = true;
+			renderCondition.notify_all();
+		}
+		else
+		{
+			cellsModified = RenderBoard(renderer, frameCount, false);
+		}
+
 		if (cellsModified >= 0.0)
 		{
 			cellsModifiedData.Add(cellsModified);
