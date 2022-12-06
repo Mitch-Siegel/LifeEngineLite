@@ -235,6 +235,8 @@ void OrganismView::OnFrame()
         }
     }
 
+    dl->AddRectFilled(ImVec2(0.0, 0.0), ImVec2((maxX * 5.0) * diameter, (maxY * yStepMultiplier) * (diameter + yStepMultiplier)), IM_COL32(0, 0, 0, 255));
+
     // draw input layer
     float yStepThisCol = (static_cast<float>(maxY) / this->inputs.size()) * diameter * yStepMultiplier;
     for (size_t row = 0; row < this->inputs.size(); row++)
@@ -290,20 +292,21 @@ void OrganismView::OnFrame()
             ImVec2 src = positionsByPost[cbp.first];
             ImVec2 dst = positionsByPost[destVertex.first];
             float dist = sqrt(pow(dst.x - src.x, 2) + pow(dst.y - src.y, 2));
-            ImVec2 angle((dst.x - src.x) / dist, (dst.y - src.y) / dist);
-            src.x += angle.x * (diameter / 2);
-            src.y += angle.y * (diameter / 2);
-            dst.x -= angle.x * (diameter / 2);
-            dst.y -= angle.y * (diameter / 2);
+            ImVec2 unitSlopeVec((dst.x - src.x) / dist, (dst.y - src.y) / dist);
+            src.x += unitSlopeVec.x * (diameter / 2);
+            src.y += unitSlopeVec.y * (diameter / 2);
+            dst.x -= unitSlopeVec.x * (diameter / 2);
+            dst.y -= unitSlopeVec.y * (diameter / 2);
             dl->PathLineTo(src);
             dl->PathLineTo(dst);
             ImU32 edgeColor = (destVertex.second > 0.0) ? IM_COL32(0, 255.0 * destVertex.second, 0, 255) : IM_COL32(-255.0 * destVertex.second, 0, 0, 255);
             dl->PathStroke(edgeColor, 0, 1.0);
             // ImVec2 origin(dst.x - 0.9 * src.x)
-            ImVec2 otherTPts(dst.x - (10.0 * angle.x), dst.y - (10.0 * angle.y));
+            ImVec2 otherTPtStart(dst.x - (10.0 * unitSlopeVec.x), dst.y - (10.0 * unitSlopeVec.y));
+            ImVec2 orthogonalSlopeVec(unitSlopeVec.y, -1.0 * unitSlopeVec.x);
             dl->AddTriangleFilled(dst,
-                                  ImVec2(otherTPts.x + abs(10.0 * angle.y), otherTPts.y + abs(10.0 * angle.x)),
-                                  ImVec2(otherTPts.x - abs(10.0 * angle.y), otherTPts.y - abs(10.0 * angle.x)),
+                                  ImVec2(otherTPtStart.x + (5.0 * orthogonalSlopeVec.x), otherTPtStart.y + (5.0 * orthogonalSlopeVec.y)),
+                                  ImVec2(otherTPtStart.x - (5.0 * orthogonalSlopeVec.x), otherTPtStart.y - (5.0 * orthogonalSlopeVec.y)),
                                   edgeColor);
         }
     }
