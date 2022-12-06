@@ -7,13 +7,17 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
 {
     this->nextSensorIndex = 0;
 
-    for (int i = 0; i < BRAIN_DEFAULT_INPUTS * 2; i++)
+    for (int i = 0; i < 3; i++)
     {
-        this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+        size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+        while (this->TryAddRandomInputConnectionByDst(newId))
+            ;
+        while (this->TryAddRandomOutputConnectionBySrc(newId))
+            ;
     }
 
     int nConnections = 0;
-    while (nConnections < (BRAIN_DEFAULT_INPUTS * BRAIN_DEFAULT_INPUTS))
+    while (nConnections < 4)
     {
         switch (randInt(0, 3))
         {
@@ -177,8 +181,8 @@ void Brain::Mutate()
     // add/remove a neuron with 25% probability
     if (randPercent(25))
     {
-        // 45% to remove a neuron
-        if (this->size(1) > 1 && randPercent(45))
+        // 50% to remove a neuron
+        if (this->size(1) > 1 && randPercent(50))
         {
             this->RemoveUnit(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id());
         }
@@ -269,7 +273,7 @@ void Brain::Mutate()
         }
         else // add/remove connection
         {
-            if (randPercent(55) || this->connections().size() < 3) // add connection
+            if (randPercent(50) || this->connections().size() < 3) // add connection
             {
                 int nTries = 0;
                 bool couldAdd = false;
@@ -318,8 +322,17 @@ unsigned int Brain::GetNewSensorIndex()
     for (int i = 0; i < cell_null; i++)
     {
         size_t inputId = this->AddInput();
-        this->TryAddRandomHiddenConnectionBySrc(inputId);
-        this->TryAddRandomInputOutputConnectionBySrc(inputId);
+        if (randPercent(10))
+        {
+            if (randPercent(50))
+            {
+                this->TryAddRandomHiddenConnectionBySrc(inputId);
+            }
+            else
+            {
+                this->TryAddRandomInputOutputConnectionBySrc(inputId);
+            }
+        }
     }
     return this->nextSensorIndex++;
 }

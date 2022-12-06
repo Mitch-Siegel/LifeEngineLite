@@ -67,38 +67,32 @@ void OrganismView::VisualizeBrain()
     }
     printf("\n%lu units, %lu post numbers, %lu connections\n", this->myOrganism->brain->units().size(), this->myOrganism->brain->PostNumbers().size(), this->myOrganism->brain->connections().size());
 
-    auto units = this->myOrganism->brain->units();
-    std::map<size_t, size_t> idsByPost = this->myOrganism->brain->PostNumbers();
-    std::map<size_t, size_t> postsById;
+    this->units = this->myOrganism->brain->units();
+    this->idsByPost = this->myOrganism->brain->PostNumbers();
     // postsByUnit.clear();
-    for (auto ibp : idsByPost)
+    for (auto ibp : this->idsByPost)
     {
-        postsById[ibp.second] = ibp.first;
+        this->postsById[ibp.second] = ibp.first;
     }
-    printf("PBI size after generation: %lu\n", postsById.size());
+    printf("PBI size after generation: %lu\n", this->postsById.size());
     // for (auto pbu : postsByUnit)
     // {
     // printf("unit%lu : POST %lu\n", pbu.first->Id(), pbu.second);
-    // }
+    // }postsById
 
-    for (auto ibp : idsByPost)
+    for (auto ibp : this->idsByPost)
     {
         for (auto c : units[ibp.second]->OutboundConnections())
         {
-            this->connectionsByPost[postsById[c->from->Id()]].push_back({postsById[c->to->Id()], this->myOrganism->brain->GetWeight(c->from->Id(), c->to->Id())});
+            this->connectionsByPost[this->postsById[c->from->Id()]].push_back({this->postsById[c->to->Id()], this->myOrganism->brain->GetWeight(c->from->Id(), c->to->Id())});
         }
     }
     this->graph.push_back(std::set<size_t>());
-    this->graph.push_back(std::set<size_t>());
-    // set up inputs as the first layer
-    for (size_t i = 0; i < this->myOrganism->brain->size(0); i++)
-    {
-        this->graph[0].insert(postsById[(*this->myOrganism->brain)[0][i].Id()]);
-    }
-    // put all hidden nodes into the second layer to start
+
+    // put all hidden nodes into the graph to start
     for (size_t i = 0; i < this->myOrganism->brain->size(1); i++)
     {
-        this->graph[1].insert(postsById[(*this->myOrganism->brain)[1][i].Id()]);
+        this->graph[0].insert(this->postsById[(*this->myOrganism->brain)[1][i].Id()]);
     }
 
     // push problem vertices into the next layer
@@ -119,25 +113,35 @@ void OrganismView::VisualizeBrain()
                 if (this->graph[columnIndex].count(toId))
                 {
                     // figure out if the edge will have to be drawn through other vertices, push vertices to next layer to eliminate these collisions
-                    auto postDriver = postNum;
-                    while ((postDriver != this->graph[columnIndex].end()) && (*postDriver != toId))
-                    {
-                        ++postDriver;
-                    }
-                    size_t erasedPost = *postDriver++;
+                    // auto postDriver = postNum;
+                    // while ((postDriver != this->graph[columnIndex].end()) && (*postDriver != toId))
+                    // {
+                    // ++postDriver;
+                    // }
+                    // size_t erasedPost = *postDriver++;
                     // should be able to be more greedy with this - only move the problematic vertex to next layer
-                    this->graph[columnIndex].erase(erasedPost);
-                    this->graph[columnIndex + 1].insert(erasedPost);
-                    postNum = postDriver;
+                    // this->graph[columnIndex].erase(erasedPost);
+                    this->graph[columnIndex].erase(toId);
+                    this->graph[columnIndex + 1].insert(toId);
+                    // postNum = postDriver;
                 }
             }
         }
     }
 
-    // make the output layer its own layer
-    for (size_t i = 0; i < this->myOrganism->brain->size(2); i++)
     {
-        this->graph.back().insert(postsById[(*this->myOrganism->brain)[2][i].Id()]);
+        // set up input layer
+        size_t nInputs = this->myOrganism->brain->size(0);
+        for (size_t i = 0; i < nInputs; i++)
+        {
+            this->inputs.push_back(this->postsById[(*this->myOrganism->brain)[0][i].Id()]);
+        }
+        size_t nOutputs = this->myOrganism->brain->size(2);
+        // set up output layer
+        for (size_t i = 0; i < nOutputs; i++)
+        {
+            this->outputs.push_back(this->postsById[(*this->myOrganism->brain)[2][i].Id()]);
+        }
     }
 
     for (size_t i = 0; i < this->graph.size(); i++)
@@ -145,7 +149,7 @@ void OrganismView::VisualizeBrain()
         printf("LAYER %lu\n", i);
         for (auto j : this->graph[i])
         {
-            printf("\tPOST %lu for unit %lu - connected to ", j, idsByPost[j]);
+            printf("\tPOST %lu for unit %lu - connected to ", j, this->idsByPost[j]);
             for (auto c : this->connectionsByPost[j])
             {
                 printf("%lu ", c.first);
@@ -213,8 +217,15 @@ void OrganismView::OnFrame()
     // {
     std::map<size_t, ImVec2> positionsByPost;
     auto dl = ImGui::GetWindowDrawList();
-    static const int diameter = 50;
-    size_t maxY = 0;
+    static const int diameter = 30;
+    static const float yStepMultiplier = 1.5;
+    size_t maxY = this->inputs.size();
+    size_t maxX = this->graph.size() + 2;
+    if (this->outputs.size() > maxY)
+    {
+        maxY = this->outputs.size();
+    }
+
     for (size_t col = 0; col < this->graph.size(); col++)
     {
         size_t thisY = this->graph[col].size();
@@ -223,23 +234,55 @@ void OrganismView::OnFrame()
             maxY = thisY;
         }
     }
-    // ImGui::SetWindowSize(ImVec2(this->graph.size() * diameter, maxY * diameter));
+
+    // draw input layer
+    float yStepThisCol = (static_cast<float>(maxY) / this->inputs.size()) * diameter * yStepMultiplier;
+    for (size_t row = 0; row < this->inputs.size(); row++)
+    {
+        ImVec2 thisPos(5.0 * static_cast<float>(0 * diameter) + diameter / 2, (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
+        size_t thisPost = this->inputs[row];
+        positionsByPost[thisPost] = thisPos;
+        float activation = this->units[this->idsByPost[thisPost]]->Activation();
+        sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
+        dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
+        dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
+        dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));
+    }
+
+    yStepThisCol = (static_cast<float>(maxY) / this->outputs.size()) * diameter * yStepMultiplier;
+    for (size_t row = 0; row < this->outputs.size(); row++)
+    {
+        ImVec2 thisPos(5.0 * static_cast<float>((maxX - 1) * diameter) + diameter / 2, (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
+        size_t thisPost = this->outputs[row];
+        positionsByPost[thisPost] = thisPos;
+        float activation = this->units[this->idsByPost[thisPost]]->Activation();
+        sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
+        dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
+        dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
+        dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));
+    }
 
     for (size_t col = 0; col < this->graph.size(); col++)
     {
         auto coli = this->graph[col].begin();
-        ImGui::TableNextColumn();
-        float yStepThisCol = (static_cast<float>(maxY) / this->graph[col].size()) * diameter * 2.0;
+        yStepThisCol = (static_cast<float>(maxY) / this->graph[col].size()) * diameter * yStepMultiplier;
         for (size_t row = 0; row < this->graph[col].size(); row++)
         {
-            ImVec2 thisPos(5.0 * static_cast<float>(col * diameter) + diameter / 2, (row * yStepThisCol) + (diameter / 2));
-            positionsByPost[*coli++] = thisPos;
+            ImVec2 thisPos(5.0 * static_cast<float>((col + 1) * diameter) + diameter / 2, (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
+            size_t thisPost = *coli++;
+            positionsByPost[thisPost] = thisPos;
+            float activation = this->units[this->idsByPost[thisPost]]->Activation();
+            sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
+            dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
             dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
+            dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));
+            // Brain *b = this->myOrganism->brain;
+            // b->units()
+            // dl->AddCircleFilled(thisPos, diameter / 2, )
             // ImGui::TableNextRow();
         }
-        dl->AddDrawCmd();
-        dl->ChannelsMerge();
     }
+
     for (auto cbp : this->connectionsByPost)
     {
         for (auto destVertex : cbp.second)
@@ -259,8 +302,8 @@ void OrganismView::OnFrame()
             // ImVec2 origin(dst.x - 0.9 * src.x)
             ImVec2 otherTPts(dst.x - (10.0 * angle.x), dst.y - (10.0 * angle.y));
             dl->AddTriangleFilled(dst,
-                                  ImVec2(otherTPts.x + abs(5.0 * angle.y), otherTPts.y + abs(5.0 * angle.x)),
-                                  ImVec2(otherTPts.x - abs(5.0 * angle.y), otherTPts.y - abs(5.0 * angle.x)),
+                                  ImVec2(otherTPts.x + abs(10.0 * angle.y), otherTPts.y + abs(10.0 * angle.x)),
+                                  ImVec2(otherTPts.x - abs(10.0 * angle.y), otherTPts.y - abs(10.0 * angle.x)),
                                   edgeColor);
         }
     }
