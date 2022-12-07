@@ -35,7 +35,7 @@ void intHandler(int dummy)
 	running = 0;
 }
 
-float scaleFactor = 4.0;
+float scaleFactor = 1.0;
 float x_off = 0.0;
 float y_off = 0.0;
 int winSizeX, winSizeY;
@@ -601,8 +601,9 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 	SDL_Rect srcRect = {static_cast<int>(x_src), static_cast<int>(y_src), static_cast<int>(w_src), static_cast<int>(h_src)};
 	SDL_Rect dstRect = {static_cast<int>(x_dst), static_cast<int>(y_dst), static_cast<int>(w_dst), static_cast<int>(h_dst)};
 
-	printf("Src rect: %.1f:%.1f %.1fx%.1f\n", x_src, y_src, w_src, h_src);
-	printf("Dst rect: %.1f:%.1f %.1fx%.1f\n\n", x_dst, y_dst, w_dst, h_dst);
+	// printf("scalefactor = %f\n", trueScaleFactor);
+	// printf("Src rect: %.1f:%.1f %.1fx%.1f\n", x_src, y_src, w_src, h_src);
+	// printf("Dst rect: %.1f:%.1f %.1fx%.1f\n\n", x_dst, y_dst, w_dst, h_dst);
 
 	if ((board->DeltaCells.size() == 0 && !forceRedraw) ||
 		(leftoverMicros < 0))
@@ -856,17 +857,18 @@ int main(int argc, char *argv[])
 						forceRedraw = true;
 						// x_off -= mouse_x / scaleFactor;
 						// y_off -= mouse_y / scaleFactor;
-						scaleFactor += (1.0 / 3.0);
+						scaleFactor += (1.0 / 27.0);
 					}
 					// scroll down
 					else if (event.wheel.y < 0)
 					{
-						if (scaleFactor > (1.0 / 3.0))
-						{
 							forceRedraw = true;
 							// x_off += mouse_x / scaleFactor;
 							// y_off += mouse_y / scaleFactor;
-							scaleFactor -= (1.0 / 3.0);
+							scaleFactor -= (1.0 / 27.0);
+						if(scaleFactor < (1.0 / 27.0))
+						{
+							scaleFactor = (1.0 / 27.0);
 						}
 					}
 				}
@@ -893,12 +895,14 @@ int main(int argc, char *argv[])
 					{
 						if (abs(totalDrag_x) < scaleFactor && abs(totalDrag_y) < scaleFactor)
 						{
-							int cell_x = (static_cast<float>(event.button.x) + (x_off)) / (scaleFactor * 3);
-							int cell_y = (static_cast<float>(event.button.y) + (y_off)) / (scaleFactor * 3);
-							printf("clicked %d, %d\n", cell_x, cell_y);
-							if (!board->boundCheckPos(cell_x, cell_y))
+							float cell_x = ((static_cast<float>(event.button.x) / 3) + (x_off / 3)) / (scaleFactor * 3.0);
+							float cell_y = ((static_cast<float>(event.button.y) / 3) + (y_off / 3)) / (scaleFactor * 3.0);
+							int cell_x_int = cell_x;
+							int cell_y_int = cell_y;
+
+							if (!board->boundCheckPos(cell_x_int, cell_y_int))
 							{
-								Organism *clickedOrganism = board->cells[cell_y][cell_x]->myOrganism;
+								Organism *clickedOrganism = board->cells[cell_y_int][cell_x_int]->myOrganism;
 								if (clickedOrganism != nullptr)
 								{
 									board->GetMutex();
