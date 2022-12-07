@@ -36,9 +36,9 @@ void intHandler(int dummy)
 }
 
 float scaleFactor = 4.0;
-int x_off = 0;
-int y_off = 0;
-int winX, winY;
+float x_off = 0.0;
+float y_off = 0.0;
+int winSizeX, winSizeY;
 float targetTickrate = 10;
 // double PIDTickrate = 1.0;
 long int leftoverMicros = 0;
@@ -532,64 +532,77 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 									 SDL_TEXTUREACCESS_TARGET, board->dim_x * 3, board->dim_y * 3);
 	}
 
-	int x_src, y_src, w_src, h_src;
-	int x_dst, y_dst, w_dst, h_dst;
+	float trueScaleFactor = (scaleFactor * 3);
 
-	x_src = x_off / scaleFactor;
-	y_src = y_off / scaleFactor;
+	int boardBufDim_x = board->dim_x * 3;
+	int boardBufDim_y = board->dim_y * 3;
 
-	x_dst = 0;
-	y_dst = 0;
-	w_dst = winX;
-	h_dst = winY;
+	float winSizeXF = winSizeX;
+	float winSizeYF = winSizeY;
 
-	if (x_src < 0)
+	if ((x_off + winSizeXF) / trueScaleFactor >= (boardBufDim_x))
+	{
+		x_off = (boardBufDim_x * trueScaleFactor) - winSizeXF;
+	}
+
+	if (x_off < 0)
+	{
+		x_off = 0;
+	}
+
+	if ((y_off + winSizeYF) / trueScaleFactor >= (boardBufDim_y))
+	{
+		y_off = (boardBufDim_y * trueScaleFactor) - winSizeYF;
+	}
+
+	if (y_off < 0)
+	{
+		y_off = 0;
+	}
+
+	float x_src, y_src, w_src, h_src;
+	float x_dst, y_dst, w_dst, h_dst;
+
+	x_src = x_off / trueScaleFactor;
+	y_src = y_off / trueScaleFactor;
+
+	x_dst = 0.0;
+	y_dst = 0.0;
+	w_dst = winSizeX;
+	h_dst = winSizeY;
+
+	if (x_src < 0.0)
 	{
 		// w_src += (x_src / scaleFactor);
-		x_src = 0;
+		x_src = 0.0;
 	}
 
-	if (y_src < 0)
+	if (y_src < 0.0)
 	{
 		// h_src += (y_src / scaleFactor);
-		y_src = 0;
-	}
-	if (board->dim_x * scaleFactor <= winX)
-	{
-		w_src = (winX - x_src) / scaleFactor;
-	}
-	else
-	{
-		w_src = (winX / scaleFactor);
-	}
-	if (w_src > board->dim_x)
-	{
-		w_src = board->dim_x;
+		y_src = 0.0;
 	}
 
-	if (board->dim_y * scaleFactor <= winY)
+	w_src = (winSizeXF / trueScaleFactor);
+	if (w_src > boardBufDim_x)
 	{
-		h_src = (winY - y_src) / scaleFactor;
+		w_src = boardBufDim_x;
 	}
-	else
+
+	h_src = (winSizeYF / trueScaleFactor);
+	if (h_src > boardBufDim_y)
 	{
-		h_src = (winY / scaleFactor);
+		h_src = boardBufDim_y;
 	}
-	if (h_src > board->dim_y)
-	{
-		h_src = board->dim_y;
-	}
-	w_src *= 3;
-	h_src *= 3;
 
-	w_dst = w_src * scaleFactor;
-	h_dst = h_src * scaleFactor;
+	w_dst = w_src * (trueScaleFactor);
+	h_dst = h_src * (trueScaleFactor);
 
-	// forceRedraw = true;
-	SDL_Rect srcRect = {x_src, y_src, w_src, h_src};
-	SDL_Rect dstRect = {x_dst, y_dst, w_dst, h_dst};
+	SDL_Rect srcRect = {static_cast<int>(x_src), static_cast<int>(y_src), static_cast<int>(w_src), static_cast<int>(h_src)};
+	SDL_Rect dstRect = {static_cast<int>(x_dst), static_cast<int>(y_dst), static_cast<int>(w_dst), static_cast<int>(h_dst)};
 
-	// printf("Mapping  % 3d,% 3d, % 3dx% 3d\n@(%2.0f)x to % 3d,% 3d, % 3dx% 3d\n\n", x_src, y_src, w_src, h_src, scaleFactor, x_dst, y_dst, w_dst, h_dst);
+	printf("Src rect: %.1f:%.1f %.1fx%.1f\n", x_src, y_src, w_src, h_src);
+	printf("Dst rect: %.1f:%.1f %.1fx%.1f\n\n", x_dst, y_dst, w_dst, h_dst);
 
 	if ((board->DeltaCells.size() == 0 && !forceRedraw) ||
 		(leftoverMicros < 0))
@@ -625,13 +638,13 @@ float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 		// SDL_RenderClear(r);
 		for (int y = 0; y < board->dim_y; y++)
 		{
-			if (y + (y_off / scaleFactor) < 0 || ((y - board->dim_y) * scaleFactor) + y_off > winY)
+			if (y + (y_off / scaleFactor) < 0 || ((y - board->dim_y) * scaleFactor) + y_off > winSizeY)
 			{
 				continue;
 			}
 			for (int x = 0; x < board->dim_x; x++)
 			{
-				if (x + (x_off / scaleFactor) < 0 || ((x - board->dim_x) * scaleFactor) + x_off > winX)
+				if (x + (x_off / scaleFactor) < 0 || ((x - board->dim_x) * scaleFactor) + x_off > winSizeX)
 				{
 					continue;
 				}
@@ -806,7 +819,7 @@ int main(int argc, char *argv[])
 	int mouse_y = 0;
 
 	boost::thread renderThread{TickMain};
-	SDL_GetWindowSize(window, &winX, &winY);
+	SDL_GetWindowSize(window, &winSizeX, &winSizeY);
 	// Main loop
 	bool done = false;
 	static size_t frameCount = 0;
@@ -843,17 +856,17 @@ int main(int argc, char *argv[])
 						forceRedraw = true;
 						// x_off -= mouse_x / scaleFactor;
 						// y_off -= mouse_y / scaleFactor;
-						scaleFactor++;
+						scaleFactor += (1.0 / 3.0);
 					}
 					// scroll down
 					else if (event.wheel.y < 0)
 					{
-						if (scaleFactor > 1)
+						if (scaleFactor > (1.0 / 3.0))
 						{
 							forceRedraw = true;
 							// x_off += mouse_x / scaleFactor;
 							// y_off += mouse_y / scaleFactor;
-							scaleFactor--;
+							scaleFactor -= (1.0 / 3.0);
 						}
 					}
 				}
@@ -880,8 +893,9 @@ int main(int argc, char *argv[])
 					{
 						if (abs(totalDrag_x) < scaleFactor && abs(totalDrag_y) < scaleFactor)
 						{
-							int cell_x = (event.button.x - x_off) / (scaleFactor * 3);
-							int cell_y = (event.button.y - y_off) / (scaleFactor * 3);
+							int cell_x = (static_cast<float>(event.button.x) + (x_off)) / (scaleFactor * 3);
+							int cell_y = (static_cast<float>(event.button.y) + (y_off)) / (scaleFactor * 3);
+							printf("clicked %d, %d\n", cell_x, cell_y);
 							if (!board->boundCheckPos(cell_x, cell_y))
 							{
 								Organism *clickedOrganism = board->cells[cell_y][cell_x]->myOrganism;
@@ -917,7 +931,7 @@ int main(int argc, char *argv[])
 			}
 			else if (event.type == SDL_WINDOWEVENT_SIZE_CHANGED || event.type == SDL_WINDOWEVENT)
 			{
-				SDL_GetWindowSize(window, &winX, &winY);
+				SDL_GetWindowSize(window, &winSizeX, &winSizeY);
 			}
 			if (mouse1Held)
 			{
@@ -964,8 +978,8 @@ int main(int argc, char *argv[])
 		{
 			ImGui::Begin("Hello, world!");
 			ImGui::Text("This is some useful text.");
-			ImGui::Text("Viewport offset: %d,%d", x_off, y_off);
-			ImGui::Text("Window dimensions: %d,%d", winX, winY);
+			ImGui::Text("Viewport offset: %.0f,%.0f", x_off, y_off);
+			ImGui::Text("Window dimensions: %d,%d", winSizeX, winSizeY);
 			ImGui::Checkbox("Detailed Stats", &showDetailedStats);
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
