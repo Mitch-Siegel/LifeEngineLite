@@ -59,27 +59,27 @@ private:
     class Food_Slot
     {
     private:
-        std::vector<Spoilable_Cell *> cells;
+        std::set<Spoilable_Cell *> cells;
 
     public:
         int ticksUntilSpoil;
 
         explicit Food_Slot(int _ticksUntilSpoil) { this->ticksUntilSpoil = _ticksUntilSpoil; }
 
-        void push_back(Spoilable_Cell *c) { this->cells.push_back(c); };
+        void insert(Spoilable_Cell *c) { this->cells.insert(c); };
 
-        std::vector<Spoilable_Cell *>::iterator erase(std::vector<Spoilable_Cell *>::iterator element) { return this->cells.erase(element); }
+        std::set<Spoilable_Cell *>::iterator erase(std::set<Spoilable_Cell *>::iterator element) { return this->cells.erase(element); }
 
-        std::vector<Spoilable_Cell *>::iterator begin() { return this->cells.begin(); }
+        std::set<Spoilable_Cell *>::iterator begin() { return this->cells.begin(); }
 
-        std::vector<Spoilable_Cell *>::iterator end() { return this->cells.end(); }
+        std::set<Spoilable_Cell *>::iterator end() { return this->cells.end(); }
     };
 
     std::map<uint64_t, Food_Slot *> FoodCells;
 
     std::map<uint32_t, SpeciesInfo> species;
 
-    std::vector<uint32_t> activeSpecies_;
+    std::set<uint32_t> activeSpecies_;
 
 public:
     boost::mutex mutex;
@@ -90,7 +90,7 @@ public:
 
     std::set<std::pair<int, int>> DeltaCells;
 
-    std::vector<Organism *> Organisms;
+    std::set<Organism *> Organisms;
 
     Board(const int _dim_x, const int _dim_y);
 
@@ -132,7 +132,7 @@ public:
 
     const SpeciesInfo &GetSpeciesInfo(uint32_t species);
 
-    const std::vector<uint32_t> &activeSpecies() { return this->activeSpecies_; };
+    const std::set<uint32_t> &activeSpecies() { return this->activeSpecies_; };
 
     void RecordEvolvedFrom(Organism *evolvedFrom, Organism *evolvedTo);
 };

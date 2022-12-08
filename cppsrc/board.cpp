@@ -16,7 +16,7 @@ Board::Board(const int _dim_x, const int _dim_y)
 	this->nextSpecies = 1;
 	this->dim_x = _dim_x;
 	this->dim_y = _dim_y;
-	this->Organisms = std::vector<Organism *>();
+	this->Organisms = std::set<Organism *>();
 
 	for (int y = 0; y < _dim_y; y++)
 	{
@@ -57,7 +57,7 @@ bool Board::Tick()
 			Food_Slot *thisSlot = sloti->second;
 			// don't drive the iterator because the replacecell() calls for each food cell will delete the elements
 			// an overridden version of the replacecell specifying whether or not to do the delete would save the std::find's worth of time
-			for (std::vector<Spoilable_Cell *>::iterator c = thisSlot->begin(); c != thisSlot->end(); ++c)
+			for (std::set<Spoilable_Cell *>::iterator c = thisSlot->begin(); c != thisSlot->end(); ++c)
 			{
 				Spoilable_Cell *expiringFood = *c;
 				switch (expiringFood->type)
@@ -127,30 +127,32 @@ bool Board::Tick()
 			sloti->second->ticksUntilSpoil--;
 			newFoodCells[sloti->first - 1] = sloti->second;
 		}
-		// this->FoodCells[foodVectorI.first] = nullptr;
-
-		// printf("%lu\n", foodVectorI.first);
 	}
 	this->FoodCells = newFoodCells;
 
-	for (uint64_t i = 0; i < this->Organisms.size(); i++)
+	for(auto organismi = this->Organisms.begin(); organismi != this->Organisms.end();)
 	{
-		if (!this->Organisms[i]->alive)
+		auto nextOrganism = organismi;
+		nextOrganism++;
+
+		Organism *thisOrganism = *organismi;
+
+	
+		if (!thisOrganism->alive)
 		{
-			Organism *toRemove = this->Organisms[i];
-			this->Organisms.erase(this->Organisms.begin() + i);
-			delete toRemove;
-			i--;
+			this->Organisms.erase(thisOrganism);
+			delete thisOrganism;
 		}
 		else
 		{
-			Organism *replicated = this->Organisms[i]->Tick();
-
+			Organism *replicated = thisOrganism->Tick();
 			if (replicated != nullptr)
 			{
-				Organisms.push_back(replicated);
+				Organisms.insert(replicated);
 			}
 		}
+
+		organismi = nextOrganism;
 	}
 
 	this->ReleaseMutex();
@@ -228,7 +230,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 			thisFoodSlot = this->FoodCells[s->TicksUntilSpoil()];
 		}
 		s->attachTicksUntilSpoil(&thisFoodSlot->ticksUntilSpoil);
-		thisFoodSlot->push_back(s);
+		thisFoodSlot->insert(s);
 	}
 
 	break;
@@ -275,7 +277,7 @@ void Board::replaceCellAt_NoTrackReplacedFood(const int _x, const int _y, Cell *
 			thisFoodSlot = this->FoodCells[s->TicksUntilSpoil()];
 		}
 		s->attachTicksUntilSpoil(&thisFoodSlot->ticksUntilSpoil);
-		thisFoodSlot->push_back(s);
+		thisFoodSlot->insert(s);
 	}
 
 	break;
@@ -312,7 +314,7 @@ void Board::swapCellAtIndex(int _x, int _y, Cell *a)
 Organism *Board::createOrganism(const int _x, const int _y)
 {
 	Organism *newOrganism = new Organism(_x, _y);
-	this->Organisms.push_back(newOrganism);
+	this->Organisms.insert(newOrganism);
 	return newOrganism;
 }
 
@@ -326,7 +328,7 @@ void Board::AddSpeciesMember(Organism *o)
 	int s = o->species;
 	if (this->species[s].count == 0)
 	{
-		this->activeSpecies_.push_back(s);
+		this->activeSpecies_.insert(s);
 		this->species[s].classification = o->Classify();
 	}
 	this->species[s].count++;
@@ -341,12 +343,7 @@ void Board::RemoveSpeciesMember(unsigned int species)
 	this->species[species].count--;
 	if (this->species[species].count == 0)
 	{
-		auto i = this->activeSpecies_.begin();
-		while (*i != species)
-		{
-			i++;
-		}
-		this->activeSpecies_.erase(i);
+		this->activeSpecies_.erase(species);
 	}
 }
 

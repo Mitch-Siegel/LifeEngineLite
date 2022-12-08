@@ -17,7 +17,7 @@ Organism::Organism(int center_x, int center_y)
 	this->x = center_x;
 	this->y = center_y;
 	this->species = 0;
-	this->myCells = std::vector<Cell *>();
+	this->myCells = std::set<Cell *>();
 	this->maxHealth = 0;
 	this->currentHealth = this->maxHealth;
 	this->currentEnergy = 0;
@@ -41,7 +41,7 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 	this->x = center_x;
 	this->y = center_y;
 	this->species = 0;
-	this->myCells = std::vector<Cell *>();
+	this->myCells = std::set<Cell *>();
 	this->maxHealth = 0;
 	this->currentHealth = this->maxHealth;
 	this->currentEnergy = 0;
@@ -68,9 +68,9 @@ Organism::~Organism()
 void Organism::Die()
 {
 	board->RemoveSpeciesMember(this->species);
-	for (uint64_t i = 0; i < this->nCells(); i++)
+	for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 	{
-		Cell *thisCell = this->myCells[i];
+		Cell *thisCell = *celli;
 		Cell *replacedWith = nullptr;
 		switch (thisCell->type)
 		{
@@ -117,9 +117,9 @@ void Organism::Die()
 
 void Organism::Remove()
 {
-	for (uint64_t i = 0; i < this->nCells(); i++)
+	for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 	{
-		Cell *thisCell = this->myCells[i];
+		Cell *thisCell = *celli;
 		board->replaceCellAt(thisCell->x, thisCell->y, new Cell_Empty());
 	}
 	this->alive = false;
@@ -137,23 +137,27 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	for (uint64_t i = 0; i < this->nCells_; i++)
+	for (auto celli = this->myCells.begin(); celli != this->myCells.end();)
 	{
-		Cell *toTick = this->myCells[i];
-		switch(toTick->type)
+		// drive the iterator like this to prevent it from breaking if the cell's Tick() results in it being removed
+		auto next = celli;
+		next++;
+		Cell *toTick = *celli;
+		switch (toTick->type)
 		{
-			case cell_leaf:
-				{
-					Cell_Leaf *leafToTick = static_cast<Cell_Leaf *>(toTick);
-					if(leafToTick->CanFlower())
-					{
-						leafToTick->Tick();
-					}
-				}
-			default:
-				toTick->Tick();
-				break;
+		case cell_leaf:
+		{
+			Cell_Leaf *leafToTick = static_cast<Cell_Leaf *>(toTick);
+			if (leafToTick->CanFlower())
+			{
+				leafToTick->Tick();
+			}
 		}
+		default:
+			toTick->Tick();
+			break;
+		}
+		celli = next;
 	}
 
 	if (this->cellCounts[cell_mover])
@@ -228,10 +232,11 @@ void Organism::RecalculateStats()
 		cellCounts[i] = 0;
 	}
 
-	for (uint64_t i = 0; i < this->nCells(); i++)
+	for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 	{
-		cellCounts[this->myCells[i]->type]++;
-		calculatedMaxEnergy += CellEnergyDensities[this->myCells[i]->type];
+		Cell *thisCell = *celli;
+		cellCounts[thisCell->type]++;
+		calculatedMaxEnergy += CellEnergyDensities[thisCell->type];
 	}
 	calculatedMaxEnergy *= ENERGY_DENSITY_MULTIPLIER;
 	if (calculatedMaxEnergy < 0)
@@ -312,7 +317,7 @@ bool Organism::CheckValidity()
 		}
 	}
 
-	for (std::vector<Cell *>::iterator c = this->myCells.begin(); c != this->myCells.end();)
+	for (std::set<Cell *>::iterator c = this->myCells.begin(); c != this->myCells.end();)
 	{
 		if (cellValidity[*c] == true)
 		{
@@ -416,11 +421,10 @@ void Organism::Move(int moveDirection)
 		};
 		std::vector<MovedCell> moves;
 
-		// first pass - pick up all cells and replace with empties
-		for (uint64_t i = 0; i < this->nCells(); i++)
+		for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 		{
-			// pick up the cell we are moving
-			Cell *movedCell = this->myCells[i];
+			Cell *movedCell = *celli;
+
 			// put an empty in its position
 			Cell *filler = new Cell_Empty();
 			filler->x = movedCell->x;
@@ -619,9 +623,9 @@ uint64_t Organism::GetMaxEnergy()
 // returns true if possible, false if not
 bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 {
-	for (uint64_t i = 0; i < this->nCells(); i++)
+	for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 	{
-		Cell *thisCell = this->myCells[i];
+		Cell *thisCell = *celli;
 
 		int newCellX_rel = thisCell->x - this->x;
 		int newCellY_rel = thisCell->y - this->y;
@@ -640,9 +644,9 @@ bool Organism::CanOccupyPosition(int _x_abs, int _y_abs)
 
 bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 {
-	for (uint64_t i = 0; i < this->nCells(); i++)
+	for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 	{
-		Cell *thisCell = this->myCells[i];
+		Cell *thisCell = *celli;
 
 		int newCellX_rel = thisCell->x - this->x;
 		int newCellY_rel = thisCell->y - this->y;
@@ -697,9 +701,9 @@ Organism *Organism::Reproduce()
 				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra, *this->brain);
 				replicated->direction = this->direction;
 				replicated->mutability = this->mutability;
-				for (uint64_t k = 0; k < this->nCells(); k++)
+				for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 				{
-					Cell *thisCell = this->myCells[k];
+					Cell *thisCell = *celli;
 					switch (thisCell->type)
 					{
 					case cell_flower:
@@ -824,9 +828,13 @@ bool Organism::Mutate()
 	// change existing cell
 	if (this->nCells() > 1 && randPercent(30))
 	{
-		int switchedIndex = randInt(0, this->nCells() - 1);
-
-		Cell *toReplace = this->myCells[switchedIndex];
+		int switchedIndex = randInt(0, this->nCells() - 2);
+		auto switchedIterator = this->myCells.begin();
+		for(int i = 0; i < switchedIndex; i++)
+		{
+			++switchedIterator;
+		}
+		Cell *toReplace = *switchedIterator;
 		Cell *replacedWith = GenerateRandomCell();
 		while (replacedWith->type == toReplace->type)
 		{
@@ -842,7 +850,13 @@ bool Organism::Mutate()
 		// remove a cell
 		if (this->nCells() > 2 && randPercent(50) && !allLeaves)
 		{
-			Cell *toRemove = this->myCells[randInt(0, this->nCells() - 1)];
+			int removedIndex = randInt(0, this->nCells() - 2);
+			auto removedIterator = this->myCells.begin();
+			for(int i = 0; i < removedIndex; i++)
+			{
+				++removedIterator;
+			}
+			Cell *toRemove = *removedIterator;
 			this->RemoveCell(toRemove);
 			board->replaceCell(toRemove, new Cell_Empty());
 			return true;
@@ -933,7 +947,7 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	_cell->y = y_abs;
 	_cell->myOrganism = this;
 	board->replaceCellAt(x_abs, y_abs, _cell);
-	this->myCells.push_back(_cell);
+	this->myCells.insert(_cell);
 	this->nCells_++;
 
 	this->OnCellAdded(_cell);
@@ -943,13 +957,12 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 
 void Organism::RemoveCell(Cell *_myCell)
 {
-	std::vector<Cell *>::iterator cellIterator = std::find(this->myCells.begin(), this->myCells.end(), _myCell);
-	if (cellIterator == this->myCells.end())
+	if (this->myCells.count(_myCell) == 0)
 	{
 		std::cerr << "Bad call to remove cell with _myCell not from this organism!" << std::endl;
 		exit(1);
 	}
-	this->myCells.erase(cellIterator);
+	this->myCells.erase(_myCell);
 	this->RecalculateStats();
 	this->nCells_--;
 }
@@ -958,7 +971,7 @@ void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 {
 	this->RemoveCell(_myCell);
 	_newCell->myOrganism = this;
-	this->myCells.push_back(_newCell);
+	this->myCells.insert(_newCell);
 	this->nCells_++;
 	// int x_rel = _myCell->x - this->x;
 	// int y_rel = _myCell->y - this->y;

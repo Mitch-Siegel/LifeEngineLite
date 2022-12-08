@@ -1,7 +1,7 @@
 #include "config.h"
 #include "brain.h"
 
-#include <vector>
+#include <set>
 #include <cstdint>
 
 #pragma once
@@ -17,7 +17,7 @@ class Organism
 private:
 	uint64_t currentHealth, maxHealth;
 	uint64_t currentEnergy, maxEnergy;
-	std::vector<Cell *> myCells;
+	std::set<Cell *> myCells;
 	uint64_t nCells_;
 
 public:
