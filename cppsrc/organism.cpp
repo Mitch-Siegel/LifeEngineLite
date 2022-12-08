@@ -603,17 +603,17 @@ void Organism::AddEnergy(uint64_t n)
 	}
 }
 
-uint64_t Organism::GetMaxHealth()
+const uint64_t &Organism::MaxHealth()
 {
 	return this->maxHealth;
 }
 
-uint64_t Organism::GetEnergy()
+const uint64_t &Organism::Energy()
 {
 	return this->currentEnergy;
 }
 
-uint64_t Organism::GetMaxEnergy()
+const uint64_t &Organism::MaxEnergy()
 {
 	return this->maxEnergy;
 }
@@ -797,7 +797,7 @@ Organism *Organism::Reproduce()
 
 				replicated->reproductionCooldown = 15 * replicated->nCells_; // + randInt(0, REPRODUCTION_COOLDOWN);
 				replicated->RecalculateStats();
-				replicated->Heal(replicated->GetMaxHealth());
+				replicated->Heal(replicated->MaxHealth());
 				// if (replicated->cellCounts[cell_mover])
 				// {
 				// replicated->brain->Mutate();

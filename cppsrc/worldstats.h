@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <map>
 
 #include "config.h"
 #include "datatracker.h"
@@ -29,11 +30,21 @@ private:
 	double organismCellCounts[class_null][cell_null] = {{0.0}};
 	double touchSensorHaverCounts[class_null] = {0.0};
 
+	// x-axis for tick values
 	DataTracker<int> tickData = DataTracker<int>(2500);
 	DataTracker<double> tickDataDouble = DataTracker<double>(2500);
 
+	// history of number of class members by class
 	DataTracker<int> *classCountData[class_null + 1];
+
+	// history of proportion of energy total for each class
 	DataTracker<double> *classEnergyProportionData[class_null];
+
+	// history of number of active species
+	DataTracker<int> activeSpeciesData = DataTracker<int>(2500);
+
+	// mapping from number of species members to count of species with this many members
+	std::map<int, int> nSpeciesBySize;
 
 	void DisplayGeneralInfoTable();
 

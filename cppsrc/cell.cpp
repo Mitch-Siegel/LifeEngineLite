@@ -200,7 +200,7 @@ void Cell_Leaf::Tick()
 	// can flower
 	else
 	{
-		if (this->myOrganism->GetEnergy() > (FLOWER_COST + 1) &&
+		if (this->myOrganism->Energy() > (FLOWER_COST + 1) &&
 			randPercent(PLANT_GROW_PERCENT))
 		{
 			int checkDirIndex = randInt(0, 3);
@@ -267,7 +267,7 @@ void Cell_Bark::Tick()
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board->isCellOfType(x_abs, y_abs, cell_empty) && canGrow && this->myOrganism->GetEnergy() > BARK_GROW_COST)
+		if (board->isCellOfType(x_abs, y_abs, cell_empty) && canGrow && this->myOrganism->Energy() > BARK_GROW_COST)
 		{
 			if (randPercent(BARK_PLANT_VS_THORN))
 			{
@@ -324,7 +324,7 @@ void Cell_Flower::Tick()
 	else
 	{
 		bool couldBloom = false;
-		if (this->myOrganism->GetEnergy() > FLOWER_BLOOM_COST)
+		if (this->myOrganism->Energy() > FLOWER_BLOOM_COST)
 		{
 			int checkDirIndex = randInt(0, 3);
 			for (int i = 0; i < 4; i++)

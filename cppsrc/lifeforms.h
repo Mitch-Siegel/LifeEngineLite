@@ -98,11 +98,11 @@ public:
 
 	void ReplaceCell(Cell *_myCell, Cell *_newCell);
 
-	uint64_t GetMaxHealth();
+	const uint64_t &MaxHealth();
 
-	uint64_t GetEnergy();
+	const uint64_t &Energy();
 
-	uint64_t GetMaxEnergy();
+	const uint64_t &MaxEnergy();
 
 	void Damage(uint64_t n);
 

@@ -155,6 +155,8 @@ void WorldStats::DisplayHistoryGraphs()
 	ImGui::RadioButton("Organism Counts", &this->whichGraph, 0);
 	ImGui::SameLine();
 	ImGui::RadioButton("Energy info by class", &this->whichGraph, 1);
+	ImGui::SameLine();
+	ImGui::RadioButton("Number of species", &this->whichGraph, 2);
 
 	switch (this->whichGraph)
 	{
@@ -203,6 +205,33 @@ void WorldStats::DisplayHistoryGraphs()
 		}
 	}
 	break;
+
+	case 2:
+	{
+		ImPlot::SetNextAxesToFit();
+
+		// if (ImPlot::BeginPlot("Organism Counts by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit))
+		// {
+			// ImPlot::PlotLine("asdf", tickData.rawData(), this->activeSpeciesData.rawData(), static_cast<int>(activeSpeciesData.size()));
+			// ImPlot::EndPlot();
+		// }
+		if (ImPlot::BeginPlot("Sizes of currently active species", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit))
+		{
+			ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
+			std::vector<int> x(this->nSpeciesBySize.size());
+			std::vector<int> y(this->nSpeciesBySize.size());
+			auto mapIterator = nSpeciesBySize.begin();
+			for(size_t i = 0; i < this->nSpeciesBySize.size(); i++)
+			{
+				x[i] = mapIterator->first;
+				y[i] = mapIterator->second;
+			}
+			ImPlot::PlotHistogram2D("", x.data(), y.data(), x.size());
+			ImPlot::EndPlot();
+		}
+	}
+	break;
+
 	default:
 		printf("Impossible value for radio button!\n");
 		exit(1);
@@ -240,10 +269,12 @@ void WorldStats::Update(Board *board)
 		this->classCounts[thisClass]++;
 
 		this->organismStats[thisClass][count_cells] += o->nCells();
-		this->organismStats[thisClass][count_energy] += o->GetEnergy();
 
-		this->totalClassEnergies[thisClass] += o->GetEnergy();
-		this->organismStats[thisClass][count_maxenergy] += o->GetMaxEnergy();
+		size_t thisEnergy = o->Energy();
+		this->organismStats[thisClass][count_energy] += thisEnergy;
+		this->totalClassEnergies[thisClass] += thisEnergy;
+
+		this->organismStats[thisClass][count_maxenergy] += o->MaxEnergy();
 
 		this->organismStats[thisClass][count_age] += o->age;
 		this->organismStats[thisClass][count_lifespan] += o->lifespan;
@@ -286,5 +317,14 @@ void WorldStats::Update(Board *board)
 	for (int i = 0; i < class_null; i++)
 	{
 		this->classEnergyProportionData[i]->Add(totalClassEnergies[i] / static_cast<double>(totalEnergy));
+	}
+
+	this->activeSpeciesData.Add(board->activeSpecies().size());
+
+	nSpeciesBySize.clear();
+	for(uint32_t species : board->activeSpecies())
+	{
+		const SpeciesInfo &info = board->GetSpeciesInfo(species);
+		nSpeciesBySize[info.count]++;
 	}
 }

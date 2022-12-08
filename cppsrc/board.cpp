@@ -100,8 +100,8 @@ bool Board::Tick()
 							this->AddSpeciesMember(grownFruit);
 							grownFruit->RecalculateStats();
 							grownFruit->lifespan = grownFruit->nCells() * LIFESPAN_MULTIPLIER;
-							grownFruit->AddEnergy(randInt(grownFruit->GetMaxEnergy() / 2, grownFruit->GetMaxEnergy()));
-							grownFruit->Heal(grownFruit->GetMaxHealth());
+							grownFruit->AddEnergy(randInt(grownFruit->MaxEnergy() / 2, grownFruit->MaxEnergy()));
+							grownFruit->Heal(grownFruit->MaxHealth());
 
 							grownFruit->reproductionCooldown = 0;
 						}

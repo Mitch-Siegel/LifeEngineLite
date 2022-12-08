@@ -315,10 +315,10 @@ int main(int argc, char *argv[])
 	firstOrganism->direction = 3;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
 	firstOrganism->RecalculateStats();
-	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->GetMaxEnergy();
+	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->MaxEnergy();
 	firstOrganism->mutability = 10;
 	firstOrganism->Reproduce();
-	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
+	firstOrganism->AddEnergy(firstOrganism->MaxEnergy());
 	firstOrganism->Heal(100);
 	// firstOrganism->reproductionCooldown = 10;
 	// organism will be species 0 instance 0 by default

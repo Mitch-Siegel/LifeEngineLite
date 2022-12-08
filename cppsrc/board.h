@@ -31,11 +31,18 @@ struct SDL_Texture;
 class SpeciesInfo
 {
 public:
+    // which species is this
     uint32_t number;
+    // the unique ID which will be assigned to the next member
     uint32_t nextID;
+    // what species this species evolved from
     uint32_t evolvedFrom;
+    // how many concurrently living members this species had at its peak
     uint32_t peakCount;
+    // how many currently living members this species has
     uint32_t count;
+
+    // list of species which this species has evolved into
     std::vector<uint32_t> evolvedInto;
 
     enum OrganismClassifications classification;
