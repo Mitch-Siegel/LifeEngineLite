@@ -30,7 +30,6 @@ Board *board = nullptr;
 boost::mutex renderMutex;
 bool doneRendering = false;
 boost::condition_variable renderCondition;
-// boost::interprocess::interprocess_semaphore renderSemaphore(2);
 void intHandler(int dummy)
 {
 	running = 0;
@@ -41,67 +40,10 @@ float x_off = 0.0;
 float y_off = 0.0;
 int winSizeX, winSizeY;
 float targetTickrate = 10;
-// double PIDTickrate = 1.0;
 long int leftoverMicros = 0;
 bool autoplay = false;
-// bool justEnabledAutoplay = false;
 bool maxSpeed = false;
 int ticksThisSecond = 0;
-/*
-class TickratePID
-{
-	double previous_error = 0.0;
-	double integral = 0.0;
-	// float Kp = 0.000024;
-	// float Ki = 0.0002;
-	// float Kd = 0.00000001;
-	// float Kp = 0.0001;
-	double Kp = 0.00001;
-	double Ki = 0.00000001;
-	// double Ki = 0.0001;
-	double Kd = -0.0000001;
-
-public:
-	void Tick(double instanteneousMeasurement, size_t dtMicroseconds, bool ignoreIntegral)
-	{
-
-		// printf("Current instanteneous framerate: %f\n", instanteneousMeasurement);
-		double error = instanteneousMeasurement - (1000000.0 / targetTickrate);
-		double dt = dtMicroseconds / 1000.0;
-		if (dt == 0.0)
-		{
-			dt = 0.00001;
-		}
-
-		if (!ignoreIntegral)
-		{
-			integral += (error * dt);
-			integral /= 2.0;
-		}
-		// integral += instanteneousMeasurement;
-		// integral /= 2;
-		double derivative = (error - previous_error) / dt;
-		printf("input: %f \tE:% 7f I:% 7f D:% 7f - DT:% 8f\n", instanteneousMeasurement, (Kp * error), (Ki * integral), (Kd * derivative), dt);
-		double delta = (Kp * error) + (Ki * integral) + (Kd * derivative);
-		if (!ignoreIntegral)
-		{
-			previous_error = error;
-		}
-		else
-		{
-			previous_error = 0;
-		}
-		PIDTickrate += delta;
-		printf("PID Delta: %f\n", delta);
-		if (PIDTickrate < 1.0 || isnan(PIDTickrate))
-		{
-			PIDTickrate = 1.0;
-		}
-	}
-};
-
-TickratePID pidController;
-*/
 
 inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 {
@@ -118,341 +60,6 @@ inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 		SDL_RenderSetScale(r, 3.0, 3.0);
 	}
 }
-
-class Stats
-{
-private:
-	enum Counts
-	{
-		count_cells,
-		count_energy,
-		count_maxenergy,
-		count_age,
-		count_lifespan,
-		count_mutability,
-		count_neurons,
-		count_synapses,
-		count_raw,
-		count_null
-	};
-	double organismStats[class_null][count_null] = {{0.0}};
-	size_t totalClassEnergies[class_null] = {0};
-
-	int classCounts[class_null] = {0};
-	double organismCellCounts[class_null][cell_null] = {{0.0}};
-	double touchSensorHaverCounts[class_null] = {0.0};
-	// static double touchSensorIntervals[class_null] = {0.0};
-	double cellSentiments[class_null][cell_null] = {{0.0}};
-
-	DataTracker<int> tickData = DataTracker<int>(2500);
-	DataTracker<double> tickDataDouble = DataTracker<double>(2500);
-
-	DataTracker<int> *classCountData[class_null + 1];
-	DataTracker<double> *classEnergyProportionData[class_null];
-
-public:
-	Stats()
-	{
-		for (int i = 0; i < class_null + 1; i++)
-		{
-			this->classCountData[i] = new DataTracker<int>(2500);
-		}
-
-		for (int i = 0; i < class_null; i++)
-		{
-			this->classEnergyProportionData[i] = new DataTracker<double>(2500);
-		}
-	}
-
-	~Stats()
-	{
-		for (int i = 0; i < class_null + 1; i++)
-		{
-			delete this->classCountData[i];
-		}
-
-		for (int i = 0; i < class_null; i++)
-		{
-			delete this->classEnergyProportionData[i];
-		}
-	}
-
-	void Display()
-	{
-		if (ImGui::BeginTable("OrganismStats", class_null + 1))
-		{
-			const char *rowNames[count_null + 1] = {"Class:", "Count", "Cells", "Energy%", "Max Energy", "Age%", "Lifespan", "Mutability", "Neurons", "Synapses"};
-			int row = 0;
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%s", classNames[i]);
-			}
-			row++;
-
-			// organism counts
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%d", classCounts[i]);
-			}
-			row++;
-
-			// cell counts
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%.1f", organismStats[i][count_cells]);
-			}
-			row++;
-
-			// energy %
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%.0f%%", 100.0 * (organismStats[i][count_energy] / organismStats[i][count_maxenergy]));
-			}
-			row++;
-
-			// max energy
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%.0f", organismStats[i][count_maxenergy]);
-			}
-			row++;
-
-			// age
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%.0f", 100.0 * (organismStats[i][count_age] / organismStats[i][count_lifespan]));
-			}
-			row++;
-
-			// lifespan
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%.0f", organismStats[i][count_lifespan]);
-			}
-			row++;
-
-			// mutability
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%.1f", organismStats[i][count_mutability]);
-			}
-			row++;
-
-			// neurons
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%.2f", organismStats[i][count_neurons]);
-			}
-			row++;
-
-			// synapses
-			ImGui::TableNextRow();
-			ImGui::TableSetColumnIndex(0);
-			ImGui::Text("%s", rowNames[row]);
-			for (int i = 0; i < class_null; i++)
-			{
-				ImGui::TableSetColumnIndex(i + 1);
-				ImGui::Text("%.2f", organismStats[i][count_synapses]);
-			}
-
-			ImGui::EndTable();
-		}
-
-		static int whichGraph = 0;
-		ImGui::RadioButton("Organism Counts", &whichGraph, 0);
-		ImGui::SameLine();
-		ImGui::RadioButton("Energy info by class", &whichGraph, 1);
-		// ImGui::SameLine();
-		// ImGui::RadioButton("radio c", &whichGraph, 2);
-
-		switch (whichGraph)
-		{
-		case 0:
-		{
-			// ImPlot::SetNextAxesLimits(0, organismCountData.size(), 0, static_cast<double>(maxOrganisms));
-			ImPlot::SetNextAxesToFit();
-			// ImPlot::BeginPlot("Bar Graph##Line", "Day", NULL, ImVec2(-1, 0), ImPlotFlags_NoLegend | ImPlotFlags_NoBoxSelect | ImPlotFlags_AntiAliased, ImPlotAxisFlags_Time, ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit)
-			if (ImPlot::BeginPlot("Organism Counts by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit))
-			{
-				ImPlot::PushColormap(ClassColormap);
-				ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
-				ImPlot::PlotLine("Plants", tickData.rawData(), classCountData[class_plant]->rawData(), static_cast<int>(classCountData[class_plant]->size()));
-				ImPlot::PlotLine("Herbivores", tickData.rawData(), classCountData[class_herbivore]->rawData(), static_cast<int>(classCountData[class_herbivore]->size()));
-				ImPlot::PlotLine("Carnivores", tickData.rawData(), classCountData[class_carnivore]->rawData(), static_cast<int>(classCountData[class_carnivore]->size()));
-				ImPlot::PlotLine("Omnivores", tickData.rawData(), classCountData[class_omnivore]->rawData(), static_cast<int>(classCountData[class_omnivore]->size()));
-				ImPlot::PopColormap();
-				ImPlot::PlotLine("Total Organisms", tickData.rawData(), classCountData[class_null]->rawData(), static_cast<int>(classCountData[class_null]->size()));
-				ImPlot::EndPlot();
-			}
-		}
-		break;
-
-		case 1:
-		{
-			// ImPlot::SetNextAxesToFit();
-			ImPlot::SetNextAxesToFit();
-			if (ImPlot::BeginPlot("Proportion of total energy by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect))
-			{
-				ImPlot::PushColormap(ClassColormap);
-				static double rawProportionData[2500 * class_null];
-				// const double *rawProportionData[class_null] = {nullptr};
-				for (int i = 0; i < class_null; i++)
-				{
-					size_t size = classEnergyProportionData[i]->size();
-					for (size_t j = 0; j < size; j++)
-					{
-						rawProportionData[(i * size) + j] = classEnergyProportionData[i]->rawData()[j];
-					}
-					// rawProportionData[i] = classEnergyProportionData[i]->rawData();
-				}
-				ImPlot::PlotBarGroups(classNames, rawProportionData, class_null, classEnergyProportionData[0]->size(), 0, 0, ImPlotBarGroupsFlags_Stacked);
-
-				// ImPlot::PlotLine(classNames[i], tickDataDouble.rawData(), classEnergyProportionData[i]->rawData(), static_cast<int>(classEnergyProportionData[i]->size()));
-				ImPlot::EndPlot();
-			}
-			/*
-			size_t totalEnergy = 0;
-
-			if (ImPlot::BeginPlot("Proportion of total energy by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect))
-			{
-				ImPlot::PushColormap(ClassColormap);
-				double energies[class_null];
-				for (int i = 0; i < class_null; i++)
-				{
-					totalEnergy += totalClassEnergies[i];
-				}
-				for (int i = 0; i < class_null; i++)
-				{
-					energies[i] = totalClassEnergies[i] / static_cast<double>(totalEnergy);
-				}
-
-				ImPlot::PlotBarGroups(classNames, energies, class_null, 1, 1.0, 0, ImPlotBarGroupsFlags_Stacked);
-				ImPlot::EndPlot();
-			}
-			*/
-		}
-		break;
-		default:
-			printf("Impossible value for radio button!\n");
-			exit(1);
-		}
-	}
-
-	void Update()
-	{
-		board->GetMutex();
-		for (int i = 0; i < class_null; i++)
-		{
-			for (int j = 0; j < count_null; j++)
-			{
-				organismStats[i][j] = 0.0;
-			}
-			classCounts[i] = 0;
-			for (int j = 0; j < class_null; j++)
-			{
-				organismCellCounts[i][j] = 0.0;
-			}
-
-			// touchSensorIntervals[i] = 0.0;
-
-			for (int j = 0; j < cell_null; j++)
-			{
-				cellSentiments[i][j] = 0.0;
-			}
-			totalClassEnergies[i] = 0;
-		}
-		for (Organism *o : board->Organisms)
-		{
-			enum OrganismClassifications thisClass = board->GetSpeciesInfo(o->species).classification;
-			classCounts[thisClass]++;
-
-			organismStats[thisClass][count_cells] += o->nCells();
-			organismStats[thisClass][count_energy] += o->GetEnergy();
-
-			totalClassEnergies[thisClass] += o->GetEnergy();
-			organismStats[thisClass][count_maxenergy] += o->GetMaxEnergy();
-
-			organismStats[thisClass][count_age] += o->age;
-			organismStats[thisClass][count_lifespan] += o->lifespan;
-			organismStats[thisClass][count_mutability] += o->mutability;
-			organismStats[thisClass][count_neurons] += o->brain->NeuronCount();
-			organismStats[thisClass][count_synapses] += o->brain->SynapseCount();
-			organismStats[thisClass][count_raw]++;
-			for (int i = 0; i < cell_null; i++)
-			{
-				organismCellCounts[thisClass][i] += o->cellCounts[i];
-			}
-			if (o->cellCounts[cell_touch] > 0)
-			{
-				touchSensorHaverCounts[thisClass]++;
-			}
-		}
-		board->ReleaseMutex();
-		for (int i = 0; i < class_null; i++)
-		{
-			int thisClassSize = classCounts[i];
-			for (int j = 0; j < count_null; j++)
-			{
-				organismStats[i][j] /= thisClassSize;
-			}
-		}
-
-		tickData.Add(board->tickCount);
-		tickDataDouble.Add(static_cast<double>(board->tickCount));
-		for (int i = 0; i < class_null; i++)
-		{
-			classCountData[i]->Add(classCounts[i]);
-		}
-		classCountData[class_null]->Add(board->Organisms.size());
-
-		size_t totalEnergy = 0;
-		for (int i = 0; i < class_null; i++)
-		{
-			totalEnergy += totalClassEnergies[i];
-		}
-		for (int i = 0; i < class_null; i++)
-		{
-			classEnergyProportionData[i]->Add(totalClassEnergies[i] / static_cast<double>(totalEnergy));
-		}
-	}
-};
-Stats stats;
 
 bool forceRedraw = false;
 float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
@@ -625,10 +232,6 @@ void TickMain()
 				continue;
 			}
 			ticksThisSecond++;
-			if (board->tickCount % 10 == 0)
-			{
-				stats.Update();
-			}
 			auto tickEnd = std::chrono::high_resolution_clock::now();
 			auto diff = tickEnd - lastFrame;
 			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
@@ -668,25 +271,6 @@ void TickMain()
 		{
 			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 		}
-	}
-}
-
-void testOrganism(Organism *o)
-{
-	static int counter = 0;
-	// while (true)
-	// {
-	// RenderBoard(renderer, 0, true);
-	// firstOrganism->Rotate(true);
-	// boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-	// }
-	if (++counter % 2 == 0)
-	{
-		o->Rotate(true);
-	}
-	else
-	{
-		o->Move(3);
 	}
 }
 
@@ -939,10 +523,9 @@ int main(int argc, char *argv[])
 
 		{
 			ImGui::Begin("Hello, world!");
-			ImGui::Text("This is some useful text.");
 			ImGui::Text("Viewport offset: %.0f,%.0f", x_off, y_off);
 			ImGui::Text("Window dimensions: %d,%d", winSizeX, winSizeY);
-			ImGui::Checkbox("Detailed Stats", &showDetailedStats);
+			ImGui::Checkbox("Detailed Organism Makeup Stats", &showDetailedStats);
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
 			ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
@@ -961,7 +544,7 @@ int main(int argc, char *argv[])
 			ImGui::Text("%ld leftover microseconds", leftoverMicros);
 
 			ImGui::Text("%lu organisms in %lu species", board->Organisms.size(), board->activeSpecies().size());
-			stats.Display();
+			board->stats.Display();
 
 			if (showDetailedStats)
 			{

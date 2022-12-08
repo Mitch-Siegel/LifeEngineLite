@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
+#pragma once
 template <class T>
 class DataTracker
 {

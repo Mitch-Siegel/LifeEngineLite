@@ -23,7 +23,7 @@ GAME_OBJS = $(GAME_SRCS:%=%.o)
 CFLAGS_NOWARNINGS = -g -O2
 CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall -I./simplenets-0.01
 
-OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) $(SIMPLENETS_OBJS) main.o organismview.o detailedstats.o organism.o cell.o board.o rng.o brain.o util.o datatracker.o
+OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) $(SIMPLENETS_OBJS) main.o organismview.o detailedstats.o organism.o cell.o board.o rng.o brain.o util.o datatracker.o worldstats.o
 
 programs: lel
 
@@ -52,23 +52,10 @@ $(OBJDIR)/%.o: $(SIMPLENETS_VERSION)/%.cpp
 
 $(OBJDIR)/%.o: %.cpp
 # @echo game file:
-	$(CC) -c $(CFLAGS_WARNINGS) -o $@ $<
+	$(CC) -c $(CFLAGS_WARNINGS) -o $@ $< -I./imgui-1.88 -I./implot-0.14
 
-#this is horrible and I should put a stop to it
 $(OBJDIR)/main.o: main.cpp
 	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./imgui-1.88/backends -I./implot-0.14 -o $@ $<
-
-$(OBJDIR)/util.o: util.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./implot-0.14 -o $@ $<
-
-$(OBJDIR)/organismview.o: organismview.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./implot-0.14 -o $@ $<
-
-$(OBJDIR)/detailedstats.o: detailedstats.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -I./imgui-1.88 -I./implot-0.14 -o $@ $<
-
-$(OBJDIR)/organism.o: organism.cpp
-	$(CC) -c $(CFLAGS_WARNINGS) -o $@ $<
 
 
 

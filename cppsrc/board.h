@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "lifeforms.h"
+#include "worldstats.h"
 
 class GameWindow;
 
@@ -92,6 +93,8 @@ public:
 
     std::set<Organism *> Organisms;
 
+    WorldStats stats;
+
     Board(const int _dim_x, const int _dim_y);
 
     ~Board();
@@ -103,8 +106,6 @@ public:
     inline void ReleaseMutex() { this->mutex.unlock(); }
 
     bool Tick();
-
-    void Stats();
 
     bool boundCheckPos(const int _x, const int _y);
 

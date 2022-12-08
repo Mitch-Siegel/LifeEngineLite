@@ -1,11 +1,12 @@
 #include "board.h"
-#include "lifeforms.h"
-#include "rng.h"
 
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <algorithm>
 #include <chrono>
+
+#include "lifeforms.h"
+#include "rng.h"
 
 int directions[8][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
 extern Board *board;
@@ -48,7 +49,6 @@ bool Board::Tick()
 	{
 		return true;
 	}
-	this->tickCount++;
 	std::map<uint64_t, Board::Food_Slot *> newFoodCells;
 	for (std::map<uint64_t, Board::Food_Slot *>::iterator sloti = this->FoodCells.begin(); sloti != this->FoodCells.end(); ++sloti)
 	{
@@ -154,6 +154,12 @@ bool Board::Tick()
 
 		organismi = nextOrganism;
 	}
+
+	if(this->tickCount % 10 == 0)
+	{
+		this->stats.Update(this);
+	}
+	this->tickCount++;
 
 	this->ReleaseMutex();
 	return false;
