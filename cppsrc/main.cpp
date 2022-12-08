@@ -20,6 +20,7 @@
 #include "organismview.h"
 #include "detailedstats.h"
 #include "rng.h"
+#include "datatracker.h"
 #include "util.h"
 
 #define MIN_EXTRA_MICROS 100
@@ -35,7 +36,7 @@ void intHandler(int dummy)
 	running = 0;
 }
 
-float scaleFactor = 1.0;
+float scaleFactor = (1.0 / 3.0);
 float x_off = 0.0;
 float y_off = 0.0;
 int winSizeX, winSizeY;
@@ -101,73 +102,6 @@ public:
 
 TickratePID pidController;
 */
-template <class T>
-class DataTracker
-{
-private:
-	int maxSamples = 0;
-	T *data = nullptr;
-	int dataP = 0;
-
-public:
-	explicit DataTracker(int maxSamples)
-	{
-		this->maxSamples = maxSamples;
-		this->data = new T[maxSamples * 2];
-	}
-
-	DataTracker(const DataTracker<T> &d)
-	{
-		printf("Copy constructor of DataTracker called - not intended to be used in this way!\n");
-		exit(1);
-	}
-
-	void operator=(const DataTracker<T> &d)
-	{
-		printf("= operator of DataTracker called - not intended to be used in this way!\n");
-		exit(1);
-	}
-
-	~DataTracker()
-	{
-		delete[] this->data;
-	}
-
-	void Add(T value)
-	{
-		this->data[this->dataP] = value;
-		if (++this->dataP >= (maxSamples * 2))
-		{
-			for (int i = 0; i < maxSamples; i++)
-			{
-				this->data[i] = this->data[i + this->maxSamples];
-			}
-			this->dataP = maxSamples;
-		}
-	}
-
-	T const *rawData()
-	{
-		int dataStartP = dataP - maxSamples;
-		if (dataStartP < 0)
-		{
-			dataStartP = 0;
-		}
-		return data + dataStartP;
-	}
-
-	size_t size()
-	{
-		if (dataP > maxSamples)
-		{
-			return maxSamples;
-		}
-		else
-		{
-			return dataP;
-		}
-	}
-};
 
 inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 {
