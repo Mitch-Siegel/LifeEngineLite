@@ -6,57 +6,31 @@
 #include "lifeforms.h"
 #include "util.h"
 
-#define ORGANISM_VIEWER_SCALE_FACTOR 32.0
+#define ORGANISM_VIEWER_SCALE_FACTOR 10
 
 OrganismView::OrganismView(Organism *o, SDL_Renderer *r)
 {
     this->myOrganism = o;
-    this->mySpecies = o->species;
+    this->myIdentifier = o->Identifier();
+    // this->mySpecies = o->species;
     for (int i = 0; i < cell_null; i++)
     {
         this->cellCounts[i] = o->cellCounts[i];
     }
-    // memcpy(this->cellCounts, o->cellCounts, cell_null * sizeof(uint64_t));
+    this->allowUpdates = true;
     this->nCells = o->nCells();
-    int maxX = 1;
-    int maxY = 1;
-    int organismX = o->x;
-    int organismY = o->y;
-    for (Cell *c : o->myCells)
-    {
-        int x_rel = c->x - organismX;
-        int y_rel = c->y - organismY;
-
-        if (abs(x_rel) > maxX)
-            maxX = abs(x_rel);
-        if (abs(y_rel) > maxY)
-            maxY = abs(y_rel);
-    }
-    this->dim_x = (maxX * 2) + 1;
-    this->dim_y = (maxY * 2) + 1;
-    this->t = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
-                                this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR, this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR);
-
-    SDL_SetRenderTarget(r, this->t);
-    SDL_RenderSetScale(r, ORGANISM_VIEWER_SCALE_FACTOR, ORGANISM_VIEWER_SCALE_FACTOR);
-    SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
-    for (Cell *c : o->myCells)
-    {
-        SetColorForCell(r, c);
-        int x_rel = c->x - o->x;
-        int y_rel = c->y - o->y;
-        SDL_RenderDrawPoint(r, x_rel + maxX, y_rel + maxY);
-    }
-    SDL_RenderSetScale(r, 1.0, 1.0);
-    SDL_SetRenderTarget(r, nullptr);
 
     this->open = true;
-    sprintf(this->name, "Organism Viewer (%p)", o);
-    this->VisualizeBrain();
+    sprintf(this->name, "Organism Viewer {Species %u, Member %u}", o->Identifier().Species(), o->Identifier().MemberID());
+    this->texture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
+                                      1, 1);
+    this->scaledTexture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
+                                            1 * ORGANISM_VIEWER_SCALE_FACTOR, ORGANISM_VIEWER_SCALE_FACTOR);
+    this->SetUpBrainVisualization();
 }
 
 // graph theory OwO
-void OrganismView::VisualizeBrain()
+void OrganismView::SetUpBrainVisualization()
 {
     // this->myOrganism->brain->Dump();
 
@@ -159,8 +133,78 @@ void OrganismView::VisualizeBrain()
     }
 }
 
-void OrganismView::OnFrame()
+void OrganismView::DrawOrganism(SDL_Renderer *r)
 {
+    int maxX = 1;
+    int maxY = 1;
+    int organismX = this->myOrganism->x;
+    int organismY = this->myOrganism->y;
+    for (Cell *c : this->myOrganism->myCells)
+    {
+        int x_rel = c->x - organismX;
+        int y_rel = c->y - organismY;
+
+        if (abs(x_rel) > maxX)
+            maxX = abs(x_rel);
+        if (abs(y_rel) > maxY)
+            maxY = abs(y_rel);
+    }
+    this->dim_x = ((maxX * 2) + 1) * 3;
+    this->dim_y = ((maxY * 2) + 1) * 3;
+    int existingW, existingH;
+    SDL_QueryTexture(this->texture, nullptr, nullptr, &existingW, &existingH);
+    if ((existingW != this->dim_x * 3) || (existingH != this->dim_y * 3))
+    {
+        printf("resize view texture\n");
+        SDL_DestroyTexture(this->texture);
+        SDL_DestroyTexture(this->scaledTexture);
+        this->texture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
+                                          this->dim_x, this->dim_y);
+        this->scaledTexture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
+                                                (this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR), (this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR));
+    }
+
+    SDL_SetRenderTarget(r, this->texture);
+    // SDL_RenderSetScale(r, ORGANISM_VIEWER_SCALE_FACTOR, ORGANISM_VIEWER_SCALE_FACTOR);
+    SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
+    SDL_RenderSetScale(r, 3.0, 3.0);
+    for (Cell *c : this->myOrganism->myCells)
+    {
+        // SetColorForCell(r, c);
+        int x_rel = c->x - this->myOrganism->x;
+        int y_rel = c->y - this->myOrganism->y;
+        DrawCell(r, c, x_rel + maxX, y_rel + maxY);
+        // SDL_RenderDrawPoint(r, x_rel + maxX, y_rel + maxY);
+    }
+    SDL_SetRenderTarget(r, this->scaledTexture);
+    SDL_Rect srcRect = {0, 0, this->dim_x, this->dim_y};
+    SDL_Rect dstRect = {0, 0, this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR, this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR};
+    SDL_RenderCopy(r, this->texture, &srcRect, &dstRect);
+    SDL_RenderSetScale(r, 1.0, 1.0);
+    SDL_SetRenderTarget(r, nullptr);
+}
+
+void OrganismView::Update(SDL_Renderer *r)
+{
+    for (auto u : this->units)
+    {
+        activationsByPost[postsById[u.first]] = u.second->Activation();
+    }
+    this->DrawOrganism(r);
+}
+
+void OrganismView::DisableUpdates()
+{
+    this->allowUpdates = false;
+}
+
+void OrganismView::OnFrame(SDL_Renderer *r)
+{
+    if (this->allowUpdates)
+    {
+        this->Update(r);
+    }
+
     ImGui::Begin(this->name, nullptr, 0);
     // ImGui::SetWindowSize(ImVec2(240, 1000));
 
@@ -169,7 +213,16 @@ void OrganismView::OnFrame()
         printf("window closed!\n");
         this->open = false;
     }
-    ImGui::Image(this->t, ImVec2(this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR, this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR));
+    // ImGui::Text("Organism is currently: %s", (this->allowUpdates ? "alive" : "dead"));
+    if (this->allowUpdates)
+    {
+        ImGui::Text("%lu ticks of lifespan left", this->myOrganism->lifespan - this->myOrganism->age);
+    }
+    else
+    {
+        ImGui::Text("Organism no longer exists");
+    }
+    ImGui::Image(this->scaledTexture, ImVec2(this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR, this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR));
     // ImGui::Text("Test text");
 
     // ImVec2 size;
@@ -248,7 +301,8 @@ void OrganismView::OnFrame()
 
             size_t thisPost = this->inputs[row];
             positionsByPost[thisPost] = thisPos;
-            float activation = this->units[this->idsByPost[thisPost]]->Activation();
+
+            float activation = this->activationsByPost[thisPost];
             sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
             dl->AddText(ImVec2(thisPos.x - (diameter / 1.8),
                                thisPos.y + (diameter / 2)),
@@ -275,7 +329,7 @@ void OrganismView::OnFrame()
                            basePos.y + (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
             size_t thisPost = this->outputs[row];
             positionsByPost[thisPost] = thisPos;
-            float activation = this->units[this->idsByPost[thisPost]]->Activation();
+            float activation = this->activationsByPost[thisPost];
             sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
             dl->AddText(ImVec2(thisPos.x - (diameter / 1.8),
                                thisPos.y + (diameter / 2)),
@@ -294,15 +348,11 @@ void OrganismView::OnFrame()
                                basePos.y + (row * yStepThisCol) + ((yStepThisCol + diameter) / 2));
                 size_t thisPost = *coli++;
                 positionsByPost[thisPost] = thisPos;
-                float activation = this->units[this->idsByPost[thisPost]]->Activation();
+                float activation = this->activationsByPost[thisPost];
                 sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
                 dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
                 dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
                 dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));
-                // Brain *b = this->myOrganism->brain;
-                // b->units()
-                // dl->AddCircleFilled(thisPos, diameter / 2, )
-                // ImGui::TableNextRow();
             }
         }
 
@@ -341,5 +391,5 @@ void OrganismView::OnFrame()
 
 OrganismView::~OrganismView()
 {
-    SDL_DestroyTexture(this->t);
+    SDL_DestroyTexture(this->texture);
 }

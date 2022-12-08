@@ -6,6 +6,40 @@
 
 #pragma once
 
+class OrganismIdentifier
+{
+private:
+	uint32_t memberID_;
+	uint32_t species_;
+
+public:
+
+	OrganismIdentifier()
+	{
+		this->species_ = 0;
+		this->memberID_ = 0;
+	}
+
+	OrganismIdentifier(uint32_t species)
+	{
+		this->species_ = species;
+		this->memberID_ = 0;
+	}
+
+	const uint32_t &Species() const {return this->species_;};
+
+	const uint32_t &MemberID() const {return this->memberID_;};
+
+	void SetMemberID(uint32_t newID) { this->memberID_ = newID;};
+
+
+	bool operator<(const OrganismIdentifier &b) const
+	{
+		return ((static_cast<uint64_t>(this->species_) << 32) + this->memberID_) <
+			   ((static_cast<uint64_t>(b.species_) << 32) + b.memberID_);
+	}
+};
+
 class Cell;
 class OrganismView;
 
@@ -19,12 +53,13 @@ private:
 	uint64_t currentEnergy, maxEnergy;
 	std::set<Cell *> myCells;
 	uint64_t nCells_;
+	OrganismIdentifier identifier_;
 
 public:
 	int x = -1;
 	int y = -1;
 	int direction;
-	unsigned int species;
+
 	uint64_t age;
 	int mutability;
 	bool alive;
@@ -86,6 +121,8 @@ public:
 	bool Mutate();
 
 	enum OrganismClassifications Classify();
+
+	const OrganismIdentifier &Identifier() { return this->identifier_; };
 };
 
 class Organism;

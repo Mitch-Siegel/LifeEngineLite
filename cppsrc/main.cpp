@@ -26,6 +26,7 @@
 #define MIN_EXTRA_MICROS 100
 static volatile int running = 1;
 Board *board = nullptr;
+std::map<OrganismIdentifier, std::unique_ptr<OrganismView>> activeOrganismViews;
 
 boost::mutex renderMutex;
 bool doneRendering = false;
@@ -45,21 +46,6 @@ bool autoplay = false;
 bool maxSpeed = false;
 int ticksThisSecond = 0;
 
-inline void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
-{
-	SetColorForCell(r, c);
-	SDL_RenderDrawPoint(r, x, y);
-	if (c->type == cell_eye)
-	{
-		Cell_Eye *thisEye = static_cast<Cell_Eye *>(c);
-		SDL_RenderSetScale(r, 1.0, 1.0);
-		int *eyeDirection = directions[thisEye->Direction()];
-		SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
-		SDL_RenderDrawPoint(r, (3 * x) + 1, (3 * y) + 1);
-		SDL_RenderDrawPoint(r, (3 * x) + eyeDirection[0] + 1, (3 * y) + eyeDirection[1] + 1);
-		SDL_RenderSetScale(r, 3.0, 3.0);
-	}
-}
 
 bool forceRedraw = false;
 float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
@@ -335,7 +321,7 @@ int main(int argc, char *argv[])
 	firstOrganism->AddEnergy(firstOrganism->GetMaxEnergy());
 	firstOrganism->Heal(100);
 	// firstOrganism->reproductionCooldown = 10;
-	firstOrganism->species = board->GetNextSpecies();
+	// organism will be species 0 instance 0 by default
 	board->AddSpeciesMember(firstOrganism);
 
 	// SDL_RendererInfo info;
@@ -367,7 +353,7 @@ int main(int argc, char *argv[])
 	bool done = false;
 	static size_t frameCount = 0;
 	static size_t lastSecondFrameCount = frameCount;
-	std::vector<std::unique_ptr<OrganismView>> activeOrganismViews;
+
 	while (!done)
 	{
 		frameRateData.Add(ImGui::GetIO().Framerate);
@@ -437,21 +423,21 @@ int main(int argc, char *argv[])
 					{
 						if (abs(totalDrag_x) < scaleFactor && abs(totalDrag_y) < scaleFactor)
 						{
+							board->GetMutex();
+
 							float cell_x = ((static_cast<float>(event.button.x) / 3) + (x_off / 3)) / (scaleFactor * 3.0);
 							float cell_y = ((static_cast<float>(event.button.y) / 3) + (y_off / 3)) / (scaleFactor * 3.0);
 							int cell_x_int = cell_x;
 							int cell_y_int = cell_y;
-
 							if (!board->boundCheckPos(cell_x_int, cell_y_int))
 							{
 								Organism *clickedOrganism = board->cells[cell_y_int][cell_x_int]->myOrganism;
-								if (clickedOrganism != nullptr)
+								if (clickedOrganism != nullptr && (activeOrganismViews.count(clickedOrganism->Identifier()) == 0))
 								{
-									board->GetMutex();
-									activeOrganismViews.push_back(std::make_unique<OrganismView>(clickedOrganism, renderer));
-									board->ReleaseMutex();
+									activeOrganismViews[clickedOrganism->Identifier()] = (std::make_unique<OrganismView>(clickedOrganism, renderer));
 								}
 							}
+							board->ReleaseMutex();
 						}
 						mouse1Held = false;
 					}
@@ -527,9 +513,21 @@ int main(int argc, char *argv[])
 			ImGui::Text("Window dimensions: %d,%d", winSizeX, winSizeY);
 			ImGui::Checkbox("Detailed Organism Makeup Stats", &showDetailedStats);
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
-			ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
-			ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
-			ImGui::Checkbox("Autoplay (ENTER):", &autoplay);
+
+			/*
+			ImPlot::SetNextAxesToFit();
+			if (ImPlot::BeginPlot("Renderer Stats"))
+			{
+				ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
+				// ImPlot::PlotLine("Frame Rate", frameRateData.rawData(), frameRateData.size());
+				// ImPlot::PlotLine("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
+				ImPlot::EndPlot();
+			}
+			// ImGui::PlotLines("Frame Times", frameRateData.rawData(), frameRateData.size());
+			// ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
+			*/
+			ImGui::PlotLines("Frame Rate", frameRateData.rawData(), frameRateData.size());
+			ImGui::Checkbox("Autoplay (SPACE):", &autoplay);
 
 			ImGui::SliderFloat("Target tick count per frame", &targetTickrate, 1.0, 100.0, "%.0f");
 			ImGui::Checkbox("Max speed (reduces render rate)", &maxSpeed);
@@ -566,18 +564,25 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		for (auto ovi = activeOrganismViews.begin(); ovi != activeOrganismViews.end(); ++ovi)
+		doneRendering = false;
+		board->GetMutex();
+		for (auto organismViewi = activeOrganismViews.begin(); organismViewi != activeOrganismViews.end();)
 		{
-			if (!(*ovi)->isOpen())
+			auto next = organismViewi;
+			++next;
+			if (!(organismViewi->second->isOpen()))
 			{
-				activeOrganismViews.erase(ovi);
-				ovi--;
+				activeOrganismViews.erase(organismViewi->first);
 			}
 			else
 			{
-				(*ovi)->OnFrame();
+				organismViewi->second->OnFrame(renderer);
 			}
+			organismViewi = next;
 		}
+		board->ReleaseMutex();
+		doneRendering = true;
+			renderCondition.notify_all();
 
 		// Rendering
 		ImGui::Render();

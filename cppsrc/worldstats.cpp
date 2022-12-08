@@ -236,7 +236,7 @@ void WorldStats::Update(Board *board)
 	// iterate all organisms, add their info to the stats
 	for (Organism *o : board->Organisms)
 	{
-		enum OrganismClassifications thisClass = board->GetSpeciesInfo(o->species).classification;
+		enum OrganismClassifications thisClass = board->GetSpeciesInfo(o->Identifier().Species()).classification;
 		this->classCounts[thisClass]++;
 
 		this->organismStats[thisClass][count_cells] += o->nCells();

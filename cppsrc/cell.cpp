@@ -649,7 +649,7 @@ void Cell_Killer::Tick()
 			Cell *adjacent = board->cells[abs_y][abs_x];
 			if (adjacent->myOrganism != nullptr)
 			{
-				if (adjacent->myOrganism != this->myOrganism && adjacent->myOrganism->species != this->myOrganism->species)
+				if (adjacent->myOrganism != this->myOrganism && adjacent->myOrganism->Identifier().Species() != this->myOrganism->Identifier().Species())
 				{
 					// still expend the energy to try and hit armor
 					// but if directly contacting armor, do no damage

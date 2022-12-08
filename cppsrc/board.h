@@ -32,6 +32,7 @@ class SpeciesInfo
 {
 public:
     uint32_t number;
+    uint32_t nextID;
     uint32_t evolvedFrom;
     uint32_t peakCount;
     uint32_t count;
@@ -44,12 +45,15 @@ public:
     SpeciesInfo()
     {
         this->number = 0;
+        this->nextID = 0;
         this->evolvedFrom = 0;
         this->peakCount = 0;
         this->count = 0;
         this->classification = class_null;
         this->example = nullptr;
     };
+
+    uint32_t GetNextId() { return this->nextID++; };
 };
 
 class Board

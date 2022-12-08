@@ -16,7 +16,6 @@ Organism::Organism(int center_x, int center_y)
 {
 	this->x = center_x;
 	this->y = center_y;
-	this->species = 0;
 	this->myCells = std::set<Cell *>();
 	this->maxHealth = 0;
 	this->currentHealth = this->maxHealth;
@@ -40,7 +39,6 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 {
 	this->x = center_x;
 	this->y = center_y;
-	this->species = 0;
 	this->myCells = std::set<Cell *>();
 	this->maxHealth = 0;
 	this->currentHealth = this->maxHealth;
@@ -67,7 +65,7 @@ Organism::~Organism()
 
 void Organism::Die()
 {
-	board->RemoveSpeciesMember(this->species);
+	board->RemoveSpeciesMember(this->identifier_.Species());
 	for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 	{
 		Cell *thisCell = *celli;
@@ -765,13 +763,13 @@ Organism *Organism::Reproduce()
 
 				if (newSpecies)
 				{
-					replicated->species = board->GetNextSpecies();
+					replicated->identifier_ = OrganismIdentifier(board->GetNextSpecies());
 					board->AddSpeciesMember(replicated);
 					board->RecordEvolvedFrom(this, replicated);
 				}
 				else
 				{
-					replicated->species = this->species;
+					replicated->identifier_ = OrganismIdentifier(this->identifier_.Species());
 					board->AddSpeciesMember(replicated);
 				}
 

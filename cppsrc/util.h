@@ -31,3 +31,5 @@ extern const double cellXs_double[cell_null];
 void AddImPlotColorMap();
 
 void SetColorForCell(SDL_Renderer *r, Cell *c);
+
+void DrawCell(SDL_Renderer *r, Cell *c, int x, int y);

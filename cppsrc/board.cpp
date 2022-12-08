@@ -7,9 +7,10 @@
 
 #include "lifeforms.h"
 #include "rng.h"
+#include "organismview.h"
 
 int directions[8][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
-extern Board *board;
+extern std::map<OrganismIdentifier, std::unique_ptr<OrganismView>> activeOrganismViews;
 
 Board::Board(const int _dim_x, const int _dim_y)
 {
@@ -45,7 +46,7 @@ Board::~Board()
 // returns false if did tick, true if couldn't acquire mutex
 bool Board::Tick()
 {
-	if(!this->TryGetMutex())
+	if (!this->TryGetMutex())
 	{
 		return true;
 	}
@@ -95,7 +96,7 @@ bool Board::Tick()
 
 						if (!grownFruit->CheckValidity())
 						{
-							grownFruit->species = this->GetNextSpecies();
+							grownFruit->identifier_ = OrganismIdentifier(this->GetNextSpecies());
 							this->AddSpeciesMember(grownFruit);
 							grownFruit->RecalculateStats();
 							grownFruit->lifespan = grownFruit->nCells() * LIFESPAN_MULTIPLIER;
@@ -130,16 +131,19 @@ bool Board::Tick()
 	}
 	this->FoodCells = newFoodCells;
 
-	for(auto organismi = this->Organisms.begin(); organismi != this->Organisms.end();)
+	for (auto organismi = this->Organisms.begin(); organismi != this->Organisms.end();)
 	{
 		auto nextOrganism = organismi;
 		nextOrganism++;
 
 		Organism *thisOrganism = *organismi;
 
-	
 		if (!thisOrganism->alive)
 		{
+			if (activeOrganismViews.count(thisOrganism->Identifier()) > 0)
+			{
+				activeOrganismViews[thisOrganism->Identifier()]->DisableUpdates();
+			}
 			this->Organisms.erase(thisOrganism);
 			delete thisOrganism;
 		}
@@ -155,7 +159,7 @@ bool Board::Tick()
 		organismi = nextOrganism;
 	}
 
-	if(this->tickCount % 10 == 0)
+	if (this->tickCount % 10 == 0)
 	{
 		this->stats.Update(this);
 	}
@@ -331,7 +335,7 @@ unsigned int Board::GetNextSpecies()
 
 void Board::AddSpeciesMember(Organism *o)
 {
-	int s = o->species;
+	int s = o->identifier_.Species();
 	if (this->species[s].count == 0)
 	{
 		this->activeSpecies_.insert(s);
@@ -342,6 +346,7 @@ void Board::AddSpeciesMember(Organism *o)
 	{
 		this->species[s].peakCount = this->species[s].count;
 	}
+	o->identifier_.SetMemberID(this->species[s].GetNextId());
 }
 
 void Board::RemoveSpeciesMember(unsigned int species)
@@ -358,8 +363,8 @@ const SpeciesInfo &Board::GetSpeciesInfo(uint32_t species)
 	return this->species[species];
 }
 
-void Board::RecordEvolvedFrom(Organism* evolvedFrom, Organism* evolvedTo)
+void Board::RecordEvolvedFrom(Organism *evolvedFrom, Organism *evolvedTo)
 {
-	this->species[evolvedFrom->species].evolvedInto.push_back(evolvedTo->species);
-	this->species[evolvedTo->species].evolvedFrom = evolvedFrom->species;
+	this->species[evolvedFrom->identifier_.Species()].evolvedInto.push_back(evolvedTo->identifier_.Species());
+	this->species[evolvedTo->identifier_.Species()].evolvedFrom = evolvedFrom->identifier_.Species();
 }

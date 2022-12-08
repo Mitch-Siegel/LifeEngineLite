@@ -184,3 +184,20 @@ void SetColorForCell(SDL_Renderer *r, Cell *c)
 		SDL_SetRenderDrawColor(r, thisColor.x, thisColor.y, thisColor.z, thisColor.w);
 	}
 }
+
+void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
+{
+	SetColorForCell(r, c);
+	SDL_RenderDrawPoint(r, x, y);
+	if (c->type == cell_eye)
+	{
+		Cell_Eye *thisEye = static_cast<Cell_Eye *>(c);
+		SDL_RenderSetScale(r, 1.0, 1.0);
+		int *eyeDirection = directions[thisEye->Direction()];
+		SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
+		SDL_RenderDrawPoint(r, (3 * x) + 1, (3 * y) + 1);
+		SDL_RenderDrawPoint(r, (3 * x) + eyeDirection[0] + 1, (3 * y) + eyeDirection[1] + 1);
+		SDL_RenderSetScale(r, 3.0, 3.0);
+	}
+}
+
