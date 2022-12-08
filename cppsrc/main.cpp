@@ -690,10 +690,34 @@ void testOrganism(Organism *o)
 	}
 }
 
-#define BOARD_X 192
-#define BOARD_Y 192
 int main(int argc, char *argv[])
 {
+	int board_x = 0;
+	int board_y = 0;
+	int thisOpt;
+	while ((thisOpt = getopt(argc, argv, "w:h:")) != -1)
+	{
+		printf("%c\n", thisOpt);
+		switch (thisOpt)
+		{
+		case 'w':
+			board_x = atoi(optarg);
+			break;
+
+		case 'h':
+			board_y = atoi(optarg);
+			break;
+
+		default:
+			printf("use -w and -h to set board dimensions");
+			exit(1);
+		}
+	}
+	if (board_x == 0 || board_y == 0)
+	{
+		printf("Please specify board width and height with -w and -h flags!\n");
+		exit(1);
+	}
 	DataTracker<float> frameRateData(500);
 	DataTracker<float> cellsModifiedData(250);
 	SDL_Init(SDL_INIT_VIDEO);
@@ -714,7 +738,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	board = new Board(384, 216);
+	board = new Board(board_x, board_y);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
 	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
@@ -796,11 +820,11 @@ int main(int argc, char *argv[])
 					// scroll down
 					else if (event.wheel.y < 0)
 					{
-							forceRedraw = true;
-							// x_off += mouse_x / scaleFactor;
-							// y_off += mouse_y / scaleFactor;
-							scaleFactor -= (1.0 / 27.0);
-						if(scaleFactor < (1.0 / 27.0))
+						forceRedraw = true;
+						// x_off += mouse_x / scaleFactor;
+						// y_off += mouse_y / scaleFactor;
+						scaleFactor -= (1.0 / 27.0);
+						if (scaleFactor < (1.0 / 27.0))
 						{
 							scaleFactor = (1.0 / 27.0);
 						}
