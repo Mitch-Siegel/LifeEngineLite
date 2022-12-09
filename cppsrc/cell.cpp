@@ -676,7 +676,7 @@ void Cell_Killer::Tick()
 	}
 	// base cost of 1 every few ticks
 	// then some addl cost to actually hurt stuff
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (1.0 / 4.0));
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (1.0 / 6.0));
 
 	int adjacentLeaves = 0;
 	int adjacentBark = 0;

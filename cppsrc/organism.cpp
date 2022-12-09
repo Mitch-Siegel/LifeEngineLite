@@ -918,8 +918,8 @@ Organism *Organism::Reproduce()
 					replicated->brain->Mutate();
 				}
 
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * sqrt(static_cast<float>(replicated->maxEnergy) / replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
-				this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * sqrt(static_cast<float>(this->maxEnergy) / this->nCells_);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(static_cast<float>(replicated->maxEnergy) / replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
+				this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(static_cast<float>(this->maxEnergy) / this->nCells_);
 
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->MaxHealth());

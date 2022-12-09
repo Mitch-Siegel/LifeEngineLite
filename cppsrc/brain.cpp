@@ -15,8 +15,7 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
 {
     this->nextSensorIndex = 0;
     this->freeWill = 0.0;
-    // for (int i = 0; i < 3; i++)
-    // {
+    /*
     size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
     int nInputs = randInt(1, this->size(0) / 2);
     while (nInputs -= !this->TryAddRandomInputConnectionByDst(newId))
@@ -25,18 +24,15 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     int nOutputs = randInt(1, this->size(2) / 2);
     while (nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newId))
         ;
-    // }
 
     if (randPercent(50))
     {
         while (this->TryAddRandomInputOutputConnection())
             ;
     }
-
-    /*for (int i = 0; i < 2; i++)
-    {
-        this->AddRandomHiddenNeuron();
-    }*/
+    */
+    while (this->TryAddRandomInputOutputConnection())
+        ;
 }
 
 Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
@@ -46,53 +42,65 @@ Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
 
 bool Brain::TryAddRandomInputConnectionBySrc(size_t srcId)
 {
+    if(this->size(1) == 0)
+    {
+        return true;
+    }
     return this->AddConnection(srcId,
-                               this->layers[1][randInt(0, this->layers[1].size() - 1)].Id(),
+                               this->layers[1][randInt(0, this->size(1) - 1)].Id(),
                                randFloat(-1.0, 1.0));
 }
 
 bool Brain::TryAddRandomInputConnectionByDst(size_t dstId)
 {
-    return this->AddConnection(this->layers[0][randInt(0, this->layers[0].size() - 1)].Id(),
+    return this->AddConnection(this->layers[0][randInt(0, this->size(0) - 1)].Id(),
                                dstId,
                                randFloat(-1.0, 1.0));
 }
 
 bool Brain::TryAddRandomInputConnection()
 {
-    return this->TryAddRandomInputConnectionByDst(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id());
+    if(this->size(1) == 0)
+    {
+        return true;
+    }
+    return this->TryAddRandomInputConnectionByDst(this->layers[1][randInt(0, this->size(1) - 1)].Id());
 }
 
 bool Brain::TryAddRandomInputOutputConnectionBySrc(size_t srcId)
 {
     return this->AddConnection(srcId,
-                               this->layers[2][randInt(0, this->layers[2].size() - 1)].Id(),
+                               this->layers[2][randInt(0, this->size(2) - 1)].Id(),
                                randFloat(-1.0, 1.0));
 }
 
 bool Brain::TryAddRandomInputOutputConnectionByDst(size_t dstId)
 {
-    return this->AddConnection(this->layers[0][randInt(0, this->layers[0].size() - 1)].Id(),
+    return this->AddConnection(this->layers[0][randInt(0, this->size(0) - 1)].Id(),
                                dstId,
                                randFloat(-1.0, 1.0));
 }
 
 bool Brain::TryAddRandomInputOutputConnection()
 {
-    return this->TryAddRandomInputOutputConnectionByDst(this->layers[2][randInt(0, this->layers[2].size() - 1)].Id());
+    return this->TryAddRandomInputOutputConnectionByDst(this->layers[2][randInt(0, this->size(2) - 1)].Id());
 }
 
 bool Brain::TryAddRandomHiddenConnectionBySrc(size_t srcId)
 {
-    size_t dstId;
-    if (this->layers[1].size() > 1 ||
-        ((this->layers[1].size() > 0) && this->layers[1][0].Id() != srcId))
+    if(this->size(1) == 0)
     {
-        size_t dstIndex = randInt(0, this->layers[1].size() - 1);
+        return true;
+    }
+    size_t dstId;
+    if (this->size(1) > 1 ||
+        ((this->size(1) > 0) && this->layers[1][0].Id() != srcId))
+    {
+        size_t dstIndex = randInt(0, this->size(1) - 1);
         // this is a bit janky because it just rerolls until it doesn't collide
         while ((dstId = this->layers[1][dstIndex].Id()) == srcId)
         {
-            dstIndex = randInt(0, this->layers[1].size() - 1);
+            dstIndex = randInt(0, this->size(1) - 1);
         }
 
         return this->AddConnection(srcId,
@@ -104,15 +112,19 @@ bool Brain::TryAddRandomHiddenConnectionBySrc(size_t srcId)
 
 bool Brain::TryAddRandomHiddenConnectionByDst(size_t dstId)
 {
-    size_t srcId;
-    if (this->layers[1].size() > 1 ||
-        ((this->layers[1].size() > 0) && this->layers[1][0].Id() != dstId))
+    if(this->size(1) == 0)
     {
-        size_t srcIndex = randInt(0, this->layers[1].size() - 1);
+        return true;
+    }
+    size_t srcId;
+    if (this->size(1) > 1 ||
+        ((this->size(1) > 0) && this->layers[1][0].Id() != dstId))
+    {
+        size_t srcIndex = randInt(0, this->size(1) - 1);
         // this is a bit janky because it just rerolls until it doesn't collide
         while ((srcId = this->layers[1][srcIndex].Id()) == dstId)
         {
-            srcIndex = randInt(0, this->layers[1].size() - 1);
+            srcIndex = randInt(0, this->size(1) - 1);
         }
 
         return this->AddConnection(srcId,
@@ -124,26 +136,35 @@ bool Brain::TryAddRandomHiddenConnectionByDst(size_t dstId)
 
 bool Brain::TryAddRandomHiddenConnection()
 {
-    return this->TryAddRandomHiddenConnectionByDst(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id());
+    if(this->size(1) == 0)
+    {
+        return true;
+    }
+
+    return this->TryAddRandomHiddenConnectionByDst(this->layers[1][randInt(0, this->size(1) - 1)].Id());
 }
 
 bool Brain::TryAddRandomOutputConnectionBySrc(size_t srcId)
 {
     return this->AddConnection(srcId,
-                               this->layers[2][randInt(0, this->layers[2].size() - 1)].Id(),
+                               this->layers[2][randInt(0, this->size(2) - 1)].Id(),
                                randFloat(-1.0, 1.0));
 }
 
 bool Brain::TryAddRandomOutputConnectionByDst(size_t dstId)
 {
-    return this->AddConnection(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id(),
+    if (this->size(1) == 0)
+    {
+        return true;
+    }
+    return this->AddConnection(this->layers[1][randInt(0, this->size(1) - 1)].Id(),
                                dstId,
                                randFloat(-1.0, 1.0));
 }
 
 bool Brain::TryAddRandomOutputConnection()
 {
-    return this->TryAddRandomOutputConnectionByDst(this->layers[2][randInt(0, this->layers[2].size() - 1)].Id());
+    return this->TryAddRandomOutputConnectionByDst(this->layers[2][randInt(0, this->size(2) - 1)].Id());
 }
 
 void Brain::SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion)
@@ -179,7 +200,7 @@ void Brain::AddRandomHiddenNeuron()
     // determine this neuron's inputs (input layer vs hidden layer)
     if (randPercent(50))
     {
-        int nInputs = randInt(1, floor(sqrt(this->layers[0].size())));
+        int nInputs = randInt(1, floor(sqrt(this->size(0))));
         while (nInputs > 0)
         {
             nInputs -= !this->TryAddRandomInputConnectionByDst(newNeuronId);
@@ -187,7 +208,7 @@ void Brain::AddRandomHiddenNeuron()
     }
     else
     {
-        int nInputs = randInt(1, floor(sqrt(this->layers[1].size())));
+        int nInputs = randInt(1, floor(sqrt(this->size(1))));
         while (nInputs > 0)
         {
             nInputs -= !this->TryAddRandomHiddenConnectionByDst(newNeuronId);
@@ -198,7 +219,7 @@ void Brain::AddRandomHiddenNeuron()
     // determine this neuron's outputs (input layer vs output layer)
     if (randPercent(50) && !usedHidden)
     {
-        int nOutputs = randInt(1, floor(sqrt(this->layers[1].size())));
+        int nOutputs = randInt(1, floor(sqrt(this->size(1))));
         while (nOutputs > 0)
         {
             nOutputs -= !this->TryAddRandomHiddenConnectionBySrc(newNeuronId);
@@ -206,7 +227,7 @@ void Brain::AddRandomHiddenNeuron()
     }
     else
     {
-        int nOutputs = randInt(1, floor(sqrt(this->layers[2].size())));
+        int nOutputs = randInt(1, floor(sqrt(this->size(2))));
         while (nOutputs > 0)
         {
             nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newNeuronId);
@@ -222,7 +243,7 @@ void Brain::Mutate()
         // less likely to remove a neuron than add
         if (this->size(1) > 1 && randPercent(40))
         {
-            this->RemoveUnit(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id());
+            this->RemoveUnit(this->layers[1][randInt(0, this->size(1) - 1)].Id());
         }
         else
         {
@@ -301,7 +322,7 @@ unsigned int Brain::GetNewSensorIndex()
     // determine the new internal neuron's outputs (input layer vs output layer)
     if (randPercent(50))
     {
-        int nOutputs = randInt(1, floor(sqrt(this->layers[1].size())));
+        int nOutputs = randInt(1, floor(sqrt(this->size(1))));
         while (nOutputs > 0)
         {
             nOutputs -= !this->TryAddRandomHiddenConnectionBySrc(newInternalID);
@@ -309,14 +330,13 @@ unsigned int Brain::GetNewSensorIndex()
     }
     else
     {
-        int nOutputs = randInt(1, floor(sqrt(this->layers[2].size())));
+        int nOutputs = randInt(1, floor(sqrt(this->size(2))));
         while (nOutputs > 0)
         {
             nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newInternalID);
         }
     }
-    
-    
+
     for (int i = 0; i < cell_null; i++)
     {
         size_t inputId = this->AddInput();
