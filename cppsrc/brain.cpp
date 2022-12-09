@@ -26,6 +26,7 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     while (nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newId))
         ;
     // }
+
     if (randPercent(50))
     {
         while (this->TryAddRandomInputOutputConnection())
@@ -295,25 +296,53 @@ void Brain::Mutate()
 
 unsigned int Brain::GetNewSensorIndex()
 {
+
+    size_t newInternalID = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+    // determine the new internal neuron's outputs (input layer vs output layer)
+    if (randPercent(50))
+    {
+        int nOutputs = randInt(1, floor(sqrt(this->layers[1].size())));
+        while (nOutputs > 0)
+        {
+            nOutputs -= !this->TryAddRandomHiddenConnectionBySrc(newInternalID);
+        }
+    }
+    else
+    {
+        int nOutputs = randInt(1, floor(sqrt(this->layers[2].size())));
+        while (nOutputs > 0)
+        {
+            nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newInternalID);
+        }
+    }
+    
+    
     for (int i = 0; i < cell_null; i++)
     {
         size_t inputId = this->AddInput();
-        if (randPercent(35))
+        if (randPercent(60))
         {
-            if (randPercent(90))
+            if (randPercent(60))
             {
-                if (this->TryAddRandomInputConnectionBySrc(inputId))
-                {
-                    printf("that shouldn't have happened\n");
-                    exit(1);
-                }
+                this->AddConnection(inputId, newInternalID, randFloat(-1.0, 1.0));
             }
             else
             {
-                if (this->TryAddRandomInputOutputConnectionBySrc(inputId))
+                if (randPercent(90))
                 {
-                    printf("that shouldn't have happened\n");
-                    exit(1);
+                    if (this->TryAddRandomInputConnectionBySrc(inputId))
+                    {
+                        printf("that shouldn't have happened\n");
+                        exit(1);
+                    }
+                }
+                else
+                {
+                    if (this->TryAddRandomInputOutputConnectionBySrc(inputId))
+                    {
+                        printf("that shouldn't have happened\n");
+                        exit(1);
+                    }
                 }
             }
         }

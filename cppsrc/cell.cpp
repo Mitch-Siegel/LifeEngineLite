@@ -587,10 +587,7 @@ void Cell_Carnivore::Tick()
 	bool couldEat = false;
 	int gainedEnergy = 0;
 	bool valid = false;
-	if (this->myOrganism->cellCounts[cell_mover] == 0 && this->myOrganism->nCells() > 1)
-	{
-		this->myOrganism->ExpendEnergy(randInt(2 * ENERGY_DENSITY_MULTIPLIER, 4 * ENERGY_DENSITY_MULTIPLIER));
-	}
+
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)
 	{

@@ -61,6 +61,9 @@ private:
 	// remove any cells which aren't directly connected to the organism
 	void VerifyCellConnectedness();
 
+	// figure out what a killed cell should become based on the parameters of this organism
+	void ReplaceKilledCell(Cell *replaced);
+
 public:
 	int x = -1;
 	int y = -1;
@@ -140,7 +143,7 @@ class Organism;
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .8
 
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.5
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 5
 
 #define LIFESPAN_MULTIPLIER 35
 #define ENERGY_DENSITY_MULTIPLIER 8

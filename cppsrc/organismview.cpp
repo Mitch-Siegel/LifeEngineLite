@@ -188,6 +188,12 @@ void OrganismView::OnFrame(SDL_Renderer *r)
     if (this->allowUpdates)
     {
         ImGui::Text("%lu ticks of lifespan left", this->myOrganism->lifespan - this->myOrganism->age);
+        uint64_t energy = this->myOrganism->Energy();
+        uint64_t maxEnergy = this->myOrganism->MaxEnergy();
+        ImGui::Text("%lu/%lu energy (%.2f%%)", energy,
+                    maxEnergy,
+                    100.0 * static_cast<float>(energy) / maxEnergy);
+        ImGui::Text("Reproduction cooldown: %d", this->myOrganism->reproductionCooldown);
     }
     else
     {

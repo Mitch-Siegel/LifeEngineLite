@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (sqrt(pow(2 * nCells, 1.5)))
+#define moveCost(nCells) (sqrt(pow(4 * nCells, 1.5)))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -65,51 +65,55 @@ Organism::~Organism()
 	delete this->brain;
 }
 
+void Organism::ReplaceKilledCell(Cell *replaced)
+{
+	Cell *replacedWith = nullptr;
+	switch (replaced->type)
+	{
+	case cell_null:
+	case cell_empty:
+	case cell_biomass:
+	case cell_plantmass:
+	case cell_fruit:
+		std::cerr << "Wrong cell type " << replaced->type << " contained within organism!" << std::endl;
+		exit(1);
+
+	case cell_leaf:
+	case cell_flower:
+	case cell_bark:
+		replacedWith = new Cell_Plantmass();
+		break;
+
+	case cell_armor:
+	case cell_killer:
+		if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_bark]) >= this->nCells() * 0.25)
+		{
+			replacedWith = new Cell_Plantmass();
+		}
+		else
+		{
+			replacedWith = new Cell_Biomass();
+		}
+
+		break;
+
+	case cell_mover:
+	case cell_herbivore_mouth:
+	case cell_carnivore_mouth:
+	case cell_touch:
+	case cell_eye:
+		replacedWith = new Cell_Biomass();
+		break;
+	}
+	board->replaceCell(replaced, replacedWith);
+}
+
 void Organism::Die()
 {
 	board->RemoveSpeciesMember(this->identifier_.Species());
 	for (auto celli = this->myCells.begin(); celli != this->myCells.end(); ++celli)
 	{
-		Cell *thisCell = *celli;
-		Cell *replacedWith = nullptr;
-		switch (thisCell->type)
-		{
-		case cell_null:
-		case cell_empty:
-		case cell_biomass:
-		case cell_plantmass:
-		case cell_fruit:
-			std::cerr << "Wrong cell type " << thisCell->type << " contained within organism!" << std::endl;
-			exit(1);
-
-		case cell_leaf:
-		case cell_flower:
-		case cell_bark:
-			replacedWith = new Cell_Plantmass();
-			break;
-
-		case cell_armor:
-		case cell_killer:
-			if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_bark]) >= this->nCells() * 0.25)
-			{
-				replacedWith = new Cell_Plantmass();
-			}
-			else
-			{
-				replacedWith = new Cell_Biomass();
-			}
-
-			break;
-
-		case cell_mover:
-		case cell_herbivore_mouth:
-		case cell_carnivore_mouth:
-		case cell_touch:
-		case cell_eye:
-			replacedWith = new Cell_Biomass();
-			break;
-		}
-		board->replaceCell(thisCell, replacedWith);
+		this->ReplaceKilledCell(*celli);
 	}
 	this->myCells.clear();
 	this->alive = false;
@@ -217,7 +221,7 @@ Organism *Organism::Tick()
 
 	this->AddEnergy((static_cast<float>(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL) + (this->cellCounts[cell_leaf] > 0));
 
-	this->ExpendEnergy(this->cellCounts[cell_herbivore_mouth]);
+	this->ExpendEnergy(this->cellCounts[cell_herbivore_mouth] + (this->cellCounts[cell_carnivore_mouth] * 2));
 
 	if (this->reproductionCooldown == 0)
 	{
@@ -276,7 +280,7 @@ void Organism::RecalculateStats()
 		this->currentEnergy = this->maxEnergy;
 	}
 }
-			#include "organismview.h"
+#include "organismview.h"
 
 void Organism::VerifyCellConnectedness()
 {
@@ -317,15 +321,15 @@ void Organism::VerifyCellConnectedness()
 		}
 	}
 
-	
-	if(unconnectedCells.size())
+	if (unconnectedCells.size())
 	{
 		for (auto toRemove : unconnectedCells)
-	{
-		this->myCells.erase(toRemove);
-		this->nCells_--;
-		board->replaceCell(toRemove, new Cell_Empty());
-	}
+		{
+			this->myCells.erase(toRemove);
+			this->nCells_--;
+			this->ReplaceKilledCell(toRemove);
+			// board->replaceCell(toRemove, new Cell_Empty());
+		}
 		this->RecalculateStats();
 	}
 
@@ -914,8 +918,8 @@ Organism *Organism::Reproduce()
 					replicated->brain->Mutate();
 				}
 
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * (static_cast<float>(replicated->maxEnergy) / replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
-				this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * (static_cast<float>(this->maxEnergy) / this->nCells_);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * sqrt(static_cast<float>(replicated->maxEnergy) / replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
+				this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * sqrt(static_cast<float>(this->maxEnergy) / this->nCells_);
 
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->MaxHealth());
