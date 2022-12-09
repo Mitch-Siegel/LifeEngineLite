@@ -288,10 +288,7 @@ void Cell_Bark::Tick()
 	}
 
 	// any leaves attached to bark generate a bonus energy every few ticks
-	if ((this->myOrganism->age % PHOTOSYNTHESIS_INTERVAL) == 0)
-	{
-		this->myOrganism->AddEnergy(bonusEnergy);
-	}
+	this->myOrganism->AddEnergy(bonusEnergy / PHOTOSYNTHESIS_INTERVAL);
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -664,7 +661,7 @@ void Cell_Killer::Tick()
 	}
 	// base cost of 1 every few ticks
 	// then some addl cost to actually hurt stuff
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (this->myOrganism->age % 3 == 0));
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (1.0 / 4.0));
 
 	int adjacentLeaves = 0;
 	int adjacentBark = 0;

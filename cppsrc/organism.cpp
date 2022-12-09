@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) floor(sqrt(2.5 * (nCells - 1)))
+#define moveCost(nCells) (sqrt(pow(2 * nCells, 1.5)))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -200,8 +200,7 @@ Organism *Organism::Tick()
 		}
 	}
 
-	this->AddEnergy(((this->age % PHOTOSYNTHESIS_INTERVAL == 0) ? this->cellCounts[cell_leaf] : 0) +
-					(this->cellCounts[cell_leaf] > 0));
+	this->AddEnergy((static_cast<float>(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL) + (this->cellCounts[cell_leaf] > 0));
 
 	if (this->reproductionCooldown == 0)
 	{
@@ -582,20 +581,53 @@ void Organism::Heal(uint64_t n)
 	}
 }
 
-void Organism::ExpendEnergy(uint64_t n)
+void Organism::ExpendEnergy(double n)
 {
-	if (n > this->currentEnergy)
+	if(n < 0.0)
+	{
+		printf("ExpendEnergy with < 0 n\n");
+		exit(1);
+	}
+	double wholeComponent;
+	this->leftoverEnergy -= modf(n, &wholeComponent);
+
+	if (wholeComponent > this->currentEnergy)
 	{
 		this->currentEnergy = 0;
-		return;
+	}
+	else
+	{
+		this->currentEnergy -= wholeComponent;
 	}
 
-	this->currentEnergy -= n;
+	while (this->leftoverEnergy < -1.0)
+	{
+		this->leftoverEnergy++;
+		if (this->currentEnergy > 0)
+		{
+			this->currentEnergy--;
+		}
+	}
 }
 
-void Organism::AddEnergy(uint64_t n)
+void Organism::AddEnergy(double n)
 {
-	this->currentEnergy += n;
+	if(n < 0.0)
+	{
+		printf("AddEnergy with < 0 n\n");
+		exit(1);
+	}
+	double wholeComponent;
+	this->leftoverEnergy += modf(n, &wholeComponent);
+
+	this->currentEnergy += wholeComponent;
+
+	while (this->leftoverEnergy > 1.0)
+	{
+		this->leftoverEnergy--;
+		this->currentEnergy++;
+	}
+
 	if (this->currentEnergy > this->maxEnergy)
 	{
 		this->currentEnergy = this->maxEnergy;

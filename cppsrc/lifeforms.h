@@ -57,6 +57,8 @@ private:
 	uint64_t nCells_;
 	OrganismIdentifier identifier_;
 
+	float leftoverEnergy = 0.0;
+
 public:
 	int x = -1;
 	int y = -1;
@@ -110,9 +112,9 @@ public:
 
 	void Heal(uint64_t n);
 
-	void ExpendEnergy(uint64_t n);
+	void ExpendEnergy(double n);
 
-	void AddEnergy(uint64_t n);
+	void AddEnergy(double n);
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
 
@@ -161,7 +163,7 @@ class Organism;
 // #define BIOMASS_FOOD_ENERGY 15 * PLANTMASS_FOOD_ENERGY
 #define BIOMASS_FOOD_ENERGY 5 * PLANTMASS_FOOD_ENERGY
 
-#define PHOTOSYNTHESIS_INTERVAL 9
+#define PHOTOSYNTHESIS_INTERVAL 9.0
 #define FLOWER_COST 2 * ENERGY_DENSITY_MULTIPLIER
 #define LEAF_FLOWERING_COOLDOWN 50
 
@@ -185,7 +187,7 @@ class Organism;
 
 #define TOUCH_SENSE_COOLDOWN 2
 
-#define KILLER_DAMAGE_COST 4 * ENERGY_DENSITY_MULTIPLIER
+#define KILLER_DAMAGE_COST 5 * ENERGY_DENSITY_MULTIPLIER
 
 #define ARMOR_HEALTH_BONUS 4 * MAX_HEALTH_MULTIPLIER
 
