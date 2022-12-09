@@ -42,6 +42,8 @@ public:
 
 class Cell;
 class OrganismView;
+class SDL_Texture;
+class SDL_Renderer;
 
 class Organism
 {
@@ -123,6 +125,8 @@ public:
 	enum OrganismClassifications Classify();
 
 	const OrganismIdentifier &Identifier() { return this->identifier_; };
+
+	SDL_Texture *OneShotRender(SDL_Renderer *r, SDL_Texture *inTex);
 };
 
 class Organism;

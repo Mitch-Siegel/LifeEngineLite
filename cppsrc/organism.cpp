@@ -1,13 +1,12 @@
-#include "curses.h"
 #include <stdlib.h>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <cmath>
+#include <SDL2/SDL.h>
 
 #include "lifeforms.h"
 #include "board.h"
 #include "rng.h"
+#include "util.h"
 
 #define moveCost(nCells) floor(sqrt(2.5 * (nCells - 1)))
 
@@ -828,7 +827,7 @@ bool Organism::Mutate()
 	{
 		int switchedIndex = randInt(0, this->nCells() - 2);
 		auto switchedIterator = this->myCells.begin();
-		for(int i = 0; i < switchedIndex; i++)
+		for (int i = 0; i < switchedIndex; i++)
 		{
 			++switchedIterator;
 		}
@@ -850,7 +849,7 @@ bool Organism::Mutate()
 		{
 			int removedIndex = randInt(0, this->nCells() - 2);
 			auto removedIterator = this->myCells.begin();
-			for(int i = 0; i < removedIndex; i++)
+			for (int i = 0; i < removedIndex; i++)
 			{
 				++removedIterator;
 			}
@@ -1008,4 +1007,57 @@ enum OrganismClassifications Organism::Classify()
 
 	// if no mouths but not substantially plant, just classify as plant anyways
 	return class_plant;
+}
+
+SDL_Texture *Organism::OneShotRender(SDL_Renderer *r, SDL_Texture *inTex)
+{
+	int maxX = 1;
+	int maxY = 1;
+	for (Cell *c : this->myCells)
+	{
+		int x_rel = c->x - this->x;
+		int y_rel = c->y - this->y;
+
+		if (abs(x_rel) > maxX)
+			maxX = abs(x_rel);
+		if (abs(y_rel) > maxY)
+			maxY = abs(y_rel);
+	}
+	int dim_x = ((maxX * 2) + 1) * 3;
+	int dim_y = ((maxY * 2) + 1) * 3;
+	bool needNewTex = false;
+	if (inTex == nullptr)
+	{
+		needNewTex = true;
+	}
+	else
+	{
+		int existingW, existingH;
+		SDL_QueryTexture(inTex, nullptr, nullptr, &existingW, &existingH);
+		if ((existingW != dim_x) || (existingH != dim_y))
+		{
+			SDL_DestroyTexture(inTex);
+			needNewTex = true;
+		}
+	}
+
+	if (needNewTex)
+	{
+		inTex = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
+								  dim_x, dim_y);
+	}
+
+	SDL_SetRenderTarget(r, inTex);
+	// SDL_RenderSetScale(r, ORGANISM_VIEWER_SCALE_FACTOR, ORGANISM_VIEWER_SCALE_FACTOR);
+	SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
+	SDL_RenderSetScale(r, 3.0, 3.0);
+	for (Cell *c : this->myCells)
+	{
+		int x_rel = c->x - this->x;
+		int y_rel = c->y - this->y;
+		DrawCell(r, c, x_rel + maxX, y_rel + maxY);
+	}
+	SDL_RenderSetScale(r, 1.0, 1.0);
+	SDL_SetRenderTarget(r, nullptr);
+	return inTex;
 }

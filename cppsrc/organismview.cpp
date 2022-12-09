@@ -25,7 +25,7 @@ OrganismView::OrganismView(Organism *o, SDL_Renderer *r)
     this->texture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
                                       1, 1);
     this->scaledTexture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
-                                            1 * ORGANISM_VIEWER_SCALE_FACTOR, ORGANISM_VIEWER_SCALE_FACTOR);
+                                            1 * ORGANISM_VIEWER_SCALE_FACTOR, 1 * ORGANISM_VIEWER_SCALE_FACTOR);
     this->SetUpBrainVisualization();
 }
 
@@ -135,52 +135,23 @@ void OrganismView::SetUpBrainVisualization()
 
 void OrganismView::DrawOrganism(SDL_Renderer *r)
 {
-    int maxX = 1;
-    int maxY = 1;
-    int organismX = this->myOrganism->x;
-    int organismY = this->myOrganism->y;
-    for (Cell *c : this->myOrganism->myCells)
+    this->texture = this->myOrganism->OneShotRender(r, this->texture);
+    int w, h;
+    SDL_QueryTexture(this->texture, nullptr, nullptr, &w, &h);
+    SDL_QueryTexture(this->scaledTexture, nullptr, nullptr, &this->tex_w, &this->tex_h);
+    if ((this->tex_w != (w * ORGANISM_VIEWER_SCALE_FACTOR)) || (this->tex_h != (h * ORGANISM_VIEWER_SCALE_FACTOR)))
     {
-        int x_rel = c->x - organismX;
-        int y_rel = c->y - organismY;
-
-        if (abs(x_rel) > maxX)
-            maxX = abs(x_rel);
-        if (abs(y_rel) > maxY)
-            maxY = abs(y_rel);
-    }
-    this->dim_x = ((maxX * 2) + 1) * 3;
-    this->dim_y = ((maxY * 2) + 1) * 3;
-    int existingW, existingH;
-    SDL_QueryTexture(this->texture, nullptr, nullptr, &existingW, &existingH);
-    if ((existingW != this->dim_x * 3) || (existingH != this->dim_y * 3))
-    {
-        printf("resize view texture\n");
-        SDL_DestroyTexture(this->texture);
         SDL_DestroyTexture(this->scaledTexture);
-        this->texture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
-                                          this->dim_x, this->dim_y);
         this->scaledTexture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
-                                                (this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR), (this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR));
+                                                (w * ORGANISM_VIEWER_SCALE_FACTOR), (h * ORGANISM_VIEWER_SCALE_FACTOR));
+        this->tex_w = (w * ORGANISM_VIEWER_SCALE_FACTOR);
+        this->tex_h = (h * ORGANISM_VIEWER_SCALE_FACTOR);
     }
 
-    SDL_SetRenderTarget(r, this->texture);
-    // SDL_RenderSetScale(r, ORGANISM_VIEWER_SCALE_FACTOR, ORGANISM_VIEWER_SCALE_FACTOR);
-    SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
-    SDL_RenderSetScale(r, 3.0, 3.0);
-    for (Cell *c : this->myOrganism->myCells)
-    {
-        // SetColorForCell(r, c);
-        int x_rel = c->x - this->myOrganism->x;
-        int y_rel = c->y - this->myOrganism->y;
-        DrawCell(r, c, x_rel + maxX, y_rel + maxY);
-        // SDL_RenderDrawPoint(r, x_rel + maxX, y_rel + maxY);
-    }
     SDL_SetRenderTarget(r, this->scaledTexture);
-    SDL_Rect srcRect = {0, 0, this->dim_x, this->dim_y};
-    SDL_Rect dstRect = {0, 0, this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR, this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR};
+    SDL_Rect srcRect = {0, 0, w, h};
+    SDL_Rect dstRect = {0, 0, this->tex_w, this->tex_h};
     SDL_RenderCopy(r, this->texture, &srcRect, &dstRect);
-    SDL_RenderSetScale(r, 1.0, 1.0);
     SDL_SetRenderTarget(r, nullptr);
 }
 
@@ -222,7 +193,7 @@ void OrganismView::OnFrame(SDL_Renderer *r)
     {
         ImGui::Text("Organism no longer exists");
     }
-    ImGui::Image(this->scaledTexture, ImVec2(this->dim_x * ORGANISM_VIEWER_SCALE_FACTOR, this->dim_y * ORGANISM_VIEWER_SCALE_FACTOR));
+    ImGui::Image(this->scaledTexture, ImVec2(this->tex_w, this->tex_h));
     // ImGui::Text("Test text");
 
     // ImVec2 size;

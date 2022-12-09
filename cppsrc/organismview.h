@@ -23,7 +23,7 @@ private:
     OrganismIdentifier myIdentifier;
     bool allowUpdates;
     bool open;
-    int dim_x, dim_y;
+    int tex_w, tex_h;
     char name[64];
     uint32_t cellCounts[cell_null];
     uint32_t nCells;
