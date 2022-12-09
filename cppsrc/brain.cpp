@@ -10,46 +10,18 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     for (int i = 0; i < 3; i++)
     {
         size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
-        while (this->TryAddRandomInputConnectionByDst(newId))
+        int nInputs = randInt(1, this->size(0) / 2);
+        while (nInputs -= !this->TryAddRandomInputConnectionByDst(newId))
             ;
-        while (this->TryAddRandomOutputConnectionBySrc(newId))
+
+        int nOutputs = randInt(1, this->size(2) / 2);
+        while (nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newId))
             ;
     }
-
-    int nConnections = 0;
-    while (nConnections < 4)
+    /*for (int i = 0; i < 2; i++)
     {
-        switch (randInt(0, 3))
-        {
-        case 0:
-            if (!this->TryAddRandomInputConnection())
-            {
-                nConnections++;
-            }
-            break;
-
-        case 1:
-            if (!this->TryAddRandomHiddenConnection())
-            {
-                nConnections++;
-            }
-            break;
-
-        case 2:
-            if (!this->TryAddRandomOutputConnection())
-            {
-                nConnections++;
-            }
-            break;
-
-        case 3:
-            if (!this->TryAddRandomInputOutputConnection())
-            {
-                nConnections++;
-            }
-            break;
-        }
-    }
+        this->AddRandomHiddenNeuron();
+    }*/
 }
 
 Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
@@ -175,80 +147,62 @@ void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_nu
     this->SetInput((BRAIN_DEFAULT_INPUTS - 1) + (senseCellIndex * cell_null), valuesVector);
 }
 
+void Brain::AddRandomHiddenNeuron()
+{
+    size_t newNeuronId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+
+    bool usedHidden = false;
+    // determine this neuron's inputs (input layer vs hidden layer)
+    if (randPercent(50))
+    {
+        int nInputs = randInt(1, this->layers[0].size());
+        while (nInputs > 0)
+        {
+            nInputs -= !this->TryAddRandomInputConnectionByDst(newNeuronId);
+        }
+    }
+    else
+    {
+        int nInputs = randInt(1, this->layers[1].size() / 2);
+        while (nInputs > 0)
+        {
+            nInputs -= !this->TryAddRandomHiddenConnectionByDst(newNeuronId);
+        }
+        usedHidden = true;
+    }
+
+    // determine this neuron's outputs (input layer vs output layer)
+    if (randPercent(50) && !usedHidden)
+    {
+        int nOutputs = randInt(1, this->layers[1].size() / 2);
+        while (nOutputs > 0)
+        {
+            nOutputs -= !this->TryAddRandomHiddenConnectionBySrc(newNeuronId);
+        }
+    }
+    else
+    {
+        int nOutputs = randInt(1, this->layers[2].size());
+        while (nOutputs > 0)
+        {
+            nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newNeuronId);
+        }
+    }
+}
+
 void Brain::Mutate()
 {
     // add/remove a neuron with 25% probability
     if (randPercent(25))
     {
-        // 45% to remove a neuron
-        if (this->size(1) > 1 && randPercent(45))
+        // less likely to remove a neuron than add
+        if (this->size(1) > 1 && randPercent(40))
         {
             this->RemoveUnit(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id());
         }
         else
         {
-
-            size_t newNeuronId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
-
-            // generate an input for the new neuron
-            if (randPercent(50))
-            {
-                // try to add an input->hidden connection first, then hidden->hidden
-                bool retry;
-                int nTries = 0;
-                while ((retry = this->TryAddRandomInputConnectionByDst(newNeuronId)) && (nTries++ < 10))
-                    ;
-
-                if (retry)
-                {
-                    while ((retry = this->TryAddRandomHiddenConnectionByDst(newNeuronId)) && (nTries++ < 20))
-                        ;
-                }
-            }
-            else
-            {
-                // try to add an hidden->hidden connection first, then input->hidden
-                bool retry;
-                int nTries = 0;
-                while ((retry = this->TryAddRandomHiddenConnectionByDst(newNeuronId)) && (nTries++ < 10))
-                    ;
-
-                if (retry)
-                {
-                    while ((retry = this->TryAddRandomInputConnectionByDst(newNeuronId)) && (nTries++ < 20))
-                        ;
-                }
-            }
-
-            // generate an output for the new neuron
-            if (randPercent(50))
-            {
-                // try to add an hidden->output connection first, then hidden->hidden
-                bool retry;
-                int nTries = 0;
-                while ((retry = this->TryAddRandomOutputConnectionBySrc(newNeuronId)) && (nTries++ < 10))
-                    ;
-
-                if (retry)
-                {
-                    while ((retry = this->TryAddRandomHiddenConnectionBySrc(newNeuronId)) && (nTries++ < 20))
-                        ;
-                }
-            }
-            else
-            {
-                // try to add an hidden->hidden connection first, then hidden->output
-                bool retry;
-                int nTries = 0;
-                while ((retry = this->TryAddRandomHiddenConnectionBySrc(newNeuronId)) && (nTries++ < 10))
-                    ;
-
-                if (retry)
-                {
-                    while ((retry = this->TryAddRandomOutputConnectionBySrc(newNeuronId)) && (nTries++ < 20))
-                        ;
-                }
-            }
+            this->AddRandomHiddenNeuron();
         }
     }
     // add/remove/modify connection with 75% probability

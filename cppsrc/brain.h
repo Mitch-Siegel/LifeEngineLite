@@ -38,6 +38,8 @@ private:
     bool TryAddRandomOutputConnectionByDst(size_t dstId);
     bool TryAddRandomOutputConnection();
 
+    void AddRandomHiddenNeuron();
+
 public:
     Brain();
     Brain(const Brain &b);
