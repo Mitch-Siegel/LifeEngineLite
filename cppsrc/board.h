@@ -134,7 +134,7 @@ private:
 public:
     void swapCellAtIndex(int _x, int _y, Cell *_toSwap);
 
-    Organism *createOrganism(const int _x, const int _y);
+    Organism *CreateOrganism(const int _x, const int _y);
 
     unsigned int GetNextSpecies();
 

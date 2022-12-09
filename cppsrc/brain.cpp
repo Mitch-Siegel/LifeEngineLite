@@ -73,7 +73,6 @@ bool Brain::TryAddRandomInputConnectionByDst(size_t dstId)
 
 bool Brain::TryAddRandomInputConnection()
 {
-
     return this->TryAddRandomInputConnectionByDst(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id());
 }
 
@@ -181,14 +180,14 @@ void Brain::Mutate()
     // add/remove a neuron with 25% probability
     if (randPercent(25))
     {
-        // 50% to remove a neuron
-        if (this->size(1) > 1 && randPercent(50))
+        // 45% to remove a neuron
+        if (this->size(1) > 1 && randPercent(45))
         {
             this->RemoveUnit(this->layers[1][randInt(0, this->layers[1].size() - 1)].Id());
         }
         else
         {
-            
+
             size_t newNeuronId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
 
             // generate an input for the new neuron
@@ -279,24 +278,24 @@ void Brain::Mutate()
                 bool couldAdd = false;
                 while (!couldAdd && (nTries++ < 20))
                 {
-                    auto fromi = this->units().begin();
-                    int fromIndex = randInt(0, this->units().size() - 3);
-                    fromIndex = (fromIndex > 0) ? fromIndex : 0;
-                    int i = fromIndex;
-                    while (i-- > 0)
+                    switch (randInt(0, 3))
                     {
-                        ++fromi;
-                    }
-                    auto toi = fromi;
-                    ++toi;
-                    i = randInt(0, (this->units().size() - 3) - fromIndex);
-                    i = (i > 0) ? i : 0;
+                    case 0:
+                        couldAdd = !this->TryAddRandomInputConnection();
+                        break;
 
-                    while (i-- > 0)
-                    {
-                        ++toi;
+                    case 1:
+                        couldAdd = !this->TryAddRandomHiddenConnection();
+                        break;
+
+                    case 2:
+                        couldAdd = !this->TryAddRandomOutputConnection();
+                        break;
+
+                    case 3:
+                        couldAdd = !this->TryAddRandomInputOutputConnection();
+                        break;
                     }
-                    couldAdd = !this->AddConnection((*fromi).second->Id(), (*toi).second->Id(), randFloat(-1.0, 1.0));
                 }
             }
             else // remove connection
@@ -326,7 +325,7 @@ unsigned int Brain::GetNewSensorIndex()
         {
             if (randPercent(50))
             {
-                if(this->TryAddRandomInputConnectionBySrc(inputId))
+                if (this->TryAddRandomInputConnectionBySrc(inputId))
                 {
                     printf("that shouldn't have happened\n");
                     exit(1);
@@ -334,7 +333,7 @@ unsigned int Brain::GetNewSensorIndex()
             }
             else
             {
-                if(this->TryAddRandomInputOutputConnectionBySrc(inputId))
+                if (this->TryAddRandomInputOutputConnectionBySrc(inputId))
                 {
                     printf("that shouldn't have happened\n");
                     exit(1);

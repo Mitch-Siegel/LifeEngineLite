@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
 	board = new Board(board_x, board_y);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
 
-	Organism *firstOrganism = board->createOrganism(board->dim_x / 2, board->dim_y / 2);
+	Organism *firstOrganism = board->CreateOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->direction = 3;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
 	firstOrganism->RecalculateStats();
@@ -320,9 +320,11 @@ int main(int argc, char *argv[])
 	firstOrganism->Reproduce();
 	firstOrganism->AddEnergy(firstOrganism->MaxEnergy());
 	firstOrganism->Heal(100);
+	// firstOrganism->identifier_ = OrganismIdentifier(board->GetNextSpecies());
 	// firstOrganism->reproductionCooldown = 10;
 	// organism will be species 0 instance 0 by default
 	board->AddSpeciesMember(firstOrganism);
+	board->GetNextSpecies();
 
 	// SDL_RendererInfo info;
 	// SDL_GetRendererInfo(renderer, &info);

@@ -72,7 +72,7 @@ bool Board::Tick()
 					// if we roll grow percent, create a new random organism
 					if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
 					{
-						Organism *grownFruit = this->createOrganism(expiringFood->x, expiringFood->y);
+						Organism *grownFruit = this->CreateOrganism(expiringFood->x, expiringFood->y);
 						grownFruit->mutability = 10;
 						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
 						grownFruit->AddCell(0, 0, GenerateRandomCell());
@@ -321,7 +321,7 @@ void Board::swapCellAtIndex(int _x, int _y, Cell *a)
 	this->DeltaCells.insert(std::pair<int, int>(a_oldx, a_oldy));
 }
 
-Organism *Board::createOrganism(const int _x, const int _y)
+Organism *Board::CreateOrganism(const int _x, const int _y)
 {
 	Organism *newOrganism = new Organism(_x, _y);
 	this->Organisms.insert(newOrganism);

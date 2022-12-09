@@ -731,27 +731,72 @@ Organism *Organism::Reproduce()
 				bool newSpecies = false;
 				if (randPercent(this->mutability))
 				{
+
 					newSpecies = replicated->Mutate();
+
+					// check these cell types
+					std::vector<enum CellTypes> checkedTypes{
+						cell_herbivore_mouth,
+						cell_carnivore_mouth,
+						cell_mover,
+						cell_killer,
+						cell_armor,
+						cell_touch,
+						cell_eye};
+					// if the count of them differs from parent to child, we have mutated
+					for (auto checker : checkedTypes)
+					{
+						if (this->cellCounts[checker] != replicated->cellCounts[checker])
+						{
+							break;
+						}
+					}
+
+					// if all of the above counts are identical, it's possible we just added a leaf or bark
+					// if the parent has a leaf and we added/removed a leaf and the child still has a leaf, consider it to be the same species
+					// same goes for killer
 					size_t parentLeafCount = this->cellCounts[cell_leaf];
 					size_t parentBarkCount = this->cellCounts[cell_bark];
 					size_t childLeafCount = replicated->cellCounts[cell_leaf];
 					size_t childBarkCount = replicated->cellCounts[cell_bark];
+					bool changeByOneChecker = true;
 					if (parentLeafCount && childLeafCount)
 					{
-						if ((childLeafCount == (parentLeafCount + 1)) ||
-							(childLeafCount == (parentLeafCount - 1)))
+						if ((childLeafCount != (parentLeafCount + 1)) &&
+							(childLeafCount != parentLeafCount) &&
+							(childLeafCount != (parentLeafCount - 1)))
 						{
-							newSpecies = false;
+
+							changeByOneChecker &= false;
 						}
 					}
+					else
+					{
+						if (childLeafCount == !parentLeafCount)
+						{
+							changeByOneChecker &= false;
+						}
+					}
+
 					if (parentBarkCount && childBarkCount)
 					{
-						if ((childBarkCount == (parentBarkCount + 1)) ||
-							(childBarkCount == (parentBarkCount - 1)))
+						if ((childBarkCount != (parentBarkCount + 1)) &&
+							(childBarkCount != parentBarkCount) &&
+							(childBarkCount != (parentBarkCount - 1)))
 						{
-							newSpecies = false;
+							changeByOneChecker &= false;
 						}
 					}
+					else
+					{
+						if (childBarkCount == !parentBarkCount)
+						{
+							changeByOneChecker &= false;
+						}
+					}
+
+					// if we didn't change these categories by only 1 cell, we have a new species
+					newSpecies &= !changeByOneChecker;
 				}
 
 				if (replicated->CheckValidity() || replicated->maxEnergy == 0)
@@ -1045,9 +1090,15 @@ SDL_Texture *Organism::OneShotRender(SDL_Renderer *r, SDL_Texture *inTex)
 	{
 		inTex = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
 								  dim_x, dim_y);
+		SDL_SetRenderTarget(r, inTex);
+	}
+	else
+	{
+		SDL_SetRenderTarget(r, inTex);
+		SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
+		SDL_RenderClear(r);
 	}
 
-	SDL_SetRenderTarget(r, inTex);
 	// SDL_RenderSetScale(r, ORGANISM_VIEWER_SCALE_FACTOR, ORGANISM_VIEWER_SCALE_FACTOR);
 	SDL_SetRenderDrawColor(r, 255, 255, 255, 255);
 	SDL_RenderSetScale(r, 3.0, 3.0);
