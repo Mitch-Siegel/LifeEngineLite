@@ -13,6 +13,24 @@ int CellEnergyDensities[cell_null] = {
 	8,	 // bark
 	2,	 // flower
 	0,	 // fruit
+	32,	 // herbivore
+	80, // carnivore
+	40,	 // mover
+	0,	 // killer
+	-5,	 // armor
+	5,	 // touch sensor
+	5,	 // eye
+};
+
+/*
+int CellEnergyDensities[cell_null] = {
+	0,	 // empty
+	0,	 // pcell_bark
+	0,	 // biomass
+	1,	 // leaf
+	8,	 // bark
+	2,	 // flower
+	0,	 // fruit
 	40,	 // herbivore
 	100, // carnivore
 	50,	 // mover
@@ -20,7 +38,7 @@ int CellEnergyDensities[cell_null] = {
 	-5,	 // armor
 	5,	 // touch sensor
 	5,	 // eye
-};
+};*/
 
 Cell *GenerateRandomCell()
 {

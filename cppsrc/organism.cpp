@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (sqrt(pow(2 * nCells, 1.5)))
+#define moveCost(nCells) (sqrt(pow(3 * nCells, 1.5)))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)

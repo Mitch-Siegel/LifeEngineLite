@@ -192,8 +192,8 @@ void Brain::AddRandomHiddenNeuron()
 
 void Brain::Mutate()
 {
-    // add/remove a neuron with 25% probability
-    if (randPercent(25))
+    // add/remove a neuron with 10% probability
+    if (randPercent(10))
     {
         // less likely to remove a neuron than add
         if (this->size(1) > 1 && randPercent(40))
@@ -205,11 +205,11 @@ void Brain::Mutate()
             this->AddRandomHiddenNeuron();
         }
     }
-    // add/remove/modify connection with 75% probability
+    // add/remove/modify connection with 90% probability
     else
     {
-        // modify existing connection
-        if (randPercent(33) && this->connections().size() > 0)
+        // modify existing connection with 75% probability
+        if (randPercent(75) && this->connections().size() > 0)
         {
             auto toModify = this->connections().begin();
             int i = 0;
@@ -222,7 +222,7 @@ void Brain::Mutate()
                 ++toModify;
             }
 
-            this->ChangeWeight(toModify->first.first, toModify->first.second, randFloat(-1.0, 1.0));
+            this->ChangeWeight(toModify->first.first, toModify->first.second, randFloat(-0.25, 0.25));
         }
         else // add/remove connection
         {
@@ -277,7 +277,7 @@ unsigned int Brain::GetNewSensorIndex()
         size_t inputId = this->AddInput();
         if (randPercent(35))
         {
-            if (randPercent(50))
+            if (randPercent(90))
             {
                 if (this->TryAddRandomInputConnectionBySrc(inputId))
                 {
