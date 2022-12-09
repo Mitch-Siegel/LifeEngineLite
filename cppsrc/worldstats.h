@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <map>
 
 #include "config.h"
@@ -44,7 +45,7 @@ private:
 	DataTracker<int> activeSpeciesData = DataTracker<int>(2500);
 
 	// mapping from number of species members to count of species with this many members
-	std::map<int, int> nSpeciesBySize;
+	std::map<uint32_t, uint32_t> nSpeciesBySize;
 
 	void DisplayGeneralInfoTable();
 

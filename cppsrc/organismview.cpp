@@ -381,8 +381,8 @@ void OrganismView::OnFrame(SDL_Renderer *r)
                                       edgeColor);
             }
         }
-        ImGui::EndChild();
     }
+    ImGui::EndChild();
 
     // ImGui::SetWindowSize(size);
 

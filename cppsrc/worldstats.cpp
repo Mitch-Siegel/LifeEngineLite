@@ -208,27 +208,59 @@ void WorldStats::DisplayHistoryGraphs()
 
 	case 2:
 	{
-		ImPlot::SetNextAxesToFit();
+		std::map<uint32_t, uint32_t> mapCopy = nSpeciesBySize;
+		unsigned int maxRows = 25;
+		if(maxRows > mapCopy.size())
+		{
+			maxRows = mapCopy.size();
+		}
 
-		// if (ImPlot::BeginPlot("Organism Counts by Classification", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit))
-		// {
-			// ImPlot::PlotLine("asdf", tickData.rawData(), this->activeSpeciesData.rawData(), static_cast<int>(activeSpeciesData.size()));
-			// ImPlot::EndPlot();
-		// }
+		auto mapIterator = mapCopy.rbegin();
+		for(unsigned int i = 0; i < maxRows; i++)
+		{
+			if(mapIterator->second > 1)
+			{
+			ImGui::Text("%3d species have >=%5d members", mapIterator->second, static_cast<int>(pow(2, mapIterator->first)));
+			}
+			else
+			{
+				ImGui::Text("%3d species has  >=%5d members", mapIterator->second, static_cast<int>(pow(2, mapIterator->first)));
+			}
+			++mapIterator;
+		}
+		/*
+		ImPlot::SetNextAxesToFit();
 		if (ImPlot::BeginPlot("Sizes of currently active species", ImVec2(-1, 0), ImPlotFlags_NoBoxSelect | ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit))
 		{
-			ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
-			std::vector<int> x(this->nSpeciesBySize.size());
-			std::vector<int> y(this->nSpeciesBySize.size());
-			auto mapIterator = nSpeciesBySize.begin();
-			for(size_t i = 0; i < this->nSpeciesBySize.size(); i++)
+			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
+
+			std::map<uint32_t, uint32_t> mapCopy = nSpeciesBySize;
+			std::vector<int> x(mapCopy.size());
+			std::vector<int> y(mapCopy.size());
+			auto mapIterator = mapCopy.begin();
+
+			int maxY = 0;
+			for (size_t i = 0; i < mapCopy.size(); i++)
 			{
-				x[i] = mapIterator->first;
-				y[i] = mapIterator->second;
+				int thisY = mapIterator->first + 1;
+				x[i] = mapIterator->second;
+				y[i] = thisY;
+				if(thisY > maxY)
+				{
+					maxY = thisY;
+				}
+
+				printf("%d:%d\n", x[i], y[i]);
+
+				++mapIterator;
 			}
-			ImPlot::PlotHistogram2D("", x.data(), y.data(), x.size());
+			// ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0, maxY);
+
+			printf("\n");
+			ImPlot::PlotBars("", x.data(), y.data(), x.size(), 1.0);
 			ImPlot::EndPlot();
 		}
+		*/
 	}
 	break;
 
@@ -322,9 +354,9 @@ void WorldStats::Update(Board *board)
 	this->activeSpeciesData.Add(board->activeSpecies().size());
 
 	nSpeciesBySize.clear();
-	for(uint32_t species : board->activeSpecies())
+	for (uint32_t species : board->activeSpecies())
 	{
 		const SpeciesInfo &info = board->GetSpeciesInfo(species);
-		nSpeciesBySize[info.count]++;
+		nSpeciesBySize[static_cast<unsigned int>(log2(info.count))]++;
 	}
 }
