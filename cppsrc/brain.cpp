@@ -1,23 +1,37 @@
 #include "brain.h"
 #include "rng.h"
 
-#define BRAIN_DEFAULT_INPUTS 6
+/*
+ * Default brain inputs:
+ * random
+ * energy proportion
+ * health proportion
+ *
+ *
+ */
+#define BRAIN_DEFAULT_INPUTS 3
 
 Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets::logistic})
 {
     this->nextSensorIndex = 0;
+    this->freeWill = 0.0;
+    // for (int i = 0; i < 3; i++)
+    // {
+    size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+    int nInputs = randInt(1, this->size(0) / 2);
+    while (nInputs -= !this->TryAddRandomInputConnectionByDst(newId))
+        ;
 
-    for (int i = 0; i < 3; i++)
+    int nOutputs = randInt(1, this->size(2) / 2);
+    while (nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newId))
+        ;
+    // }
+    if (randPercent(50))
     {
-        size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
-        int nInputs = randInt(1, this->size(0) / 2);
-        while (nInputs -= !this->TryAddRandomInputConnectionByDst(newId))
-            ;
-
-        int nOutputs = randInt(1, this->size(2) / 2);
-        while (nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newId))
+        while (this->TryAddRandomInputOutputConnection())
             ;
     }
+
     /*for (int i = 0; i < 2; i++)
     {
         this->AddRandomHiddenNeuron();
@@ -133,8 +147,17 @@ bool Brain::TryAddRandomOutputConnection()
 
 void Brain::SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion)
 {
-    this->SetInput(0, {randFloat(-1.0, 1.0), randFloat(-1.0, 1.0), randFloat(-1.0, 1.0), randFloat(-1.0, 1.0),
-                       energyProportion, healthProportion});
+    this->freeWill += randFloat(-0.25, 0.25);
+    if (this->freeWill > 1.0)
+    {
+        this->freeWill = 1.0;
+    }
+    else if (this->freeWill < -1.0)
+    {
+        this->freeWill = -1.0;
+    }
+
+    this->SetInput(0, {this->freeWill, energyProportion, healthProportion});
 }
 
 void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_null])

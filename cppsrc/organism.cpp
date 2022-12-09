@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (sqrt(pow(3 * nCells, 1.5)))
+#define moveCost(nCells) (sqrt(pow(5 * nCells, 1.5)))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -583,7 +583,7 @@ void Organism::Heal(uint64_t n)
 
 void Organism::ExpendEnergy(double n)
 {
-	if(n < 0.0)
+	if (n < 0.0)
 	{
 		printf("ExpendEnergy with < 0 n\n");
 		exit(1);
@@ -612,7 +612,7 @@ void Organism::ExpendEnergy(double n)
 
 void Organism::AddEnergy(double n)
 {
-	if(n < 0.0)
+	if (n < 0.0)
 	{
 		printf("AddEnergy with < 0 n\n");
 		exit(1);
@@ -695,7 +695,7 @@ bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 
 Organism *Organism::Reproduce()
 {
-	// this->reproductionCooldown = REPRODUCTION_COOLDOWN;
+	// this->reproductionCooldown = REPRODUCTION_COOLDOWN * this->maxEnergy;
 
 	int dirIndex = randInt(0, 7);
 	for (int i = 0; i < 8; i++)
@@ -871,7 +871,9 @@ Organism *Organism::Reproduce()
 					replicated->brain->Mutate();
 				}
 
-				replicated->reproductionCooldown = 15 * replicated->nCells_; // + randInt(0, REPRODUCTION_COOLDOWN);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * sqrt(static_cast<float>(replicated->maxEnergy) / replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
+				this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * sqrt(static_cast<float>(this->maxEnergy) / this->nCells_);
+
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->MaxHealth());
 				// if (replicated->cellCounts[cell_mover])

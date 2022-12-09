@@ -13,9 +13,9 @@ int CellEnergyDensities[cell_null] = {
 	8,	 // bark
 	2,	 // flower
 	0,	 // fruit
-	32,	 // herbivore
-	80, // carnivore
-	40,	 // mover
+	24,	 // herbivore
+	60, // carnivore
+	30,	 // mover
 	0,	 // killer
 	-5,	 // armor
 	5,	 // touch sensor
