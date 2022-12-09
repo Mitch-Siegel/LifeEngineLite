@@ -36,7 +36,7 @@ void WorldStats::DisplayGeneralInfoTable()
 {
 	if (ImGui::BeginTable("OrganismStats", class_null + 1))
 	{
-		const char *rowNames[count_null + 1] = {"Class:", "Count", "Cells", "Energy%", "Max Energy", "Age%", "Lifespan", "Mutability", "Neurons", "Synapses"};
+		const char *rowNames[count_null + 2] = {"Class:", "Count", "Cells", "Energy%", "Max Energy/Cell", "Max Energy", "Age%", "Lifespan", "Mutability", "Inner Neurons", "Synapses"};
 		int row = 0;
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
@@ -78,6 +78,17 @@ void WorldStats::DisplayGeneralInfoTable()
 		{
 			ImGui::TableSetColumnIndex(i + 1);
 			ImGui::Text("%.0f%%", 100.0 * (organismStats[i][count_energy] / organismStats[i][count_maxenergy]));
+		}
+		row++;
+
+		// energy / cell
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+		ImGui::Text("%s", rowNames[row]);
+		for (int i = 0; i < class_null; i++)
+		{
+			ImGui::TableSetColumnIndex(i + 1);
+			ImGui::Text("%.2f", (organismStats[i][count_maxenergy] / organismStats[i][count_cells]));
 		}
 		row++;
 
@@ -311,7 +322,7 @@ void WorldStats::Update(Board *board)
 		this->organismStats[thisClass][count_age] += o->age;
 		this->organismStats[thisClass][count_lifespan] += o->lifespan;
 		this->organismStats[thisClass][count_mutability] += o->mutability;
-		this->organismStats[thisClass][count_neurons] += o->brain->NeuronCount();
+		this->organismStats[thisClass][count_neurons] += o->brain->NHidden();
 		this->organismStats[thisClass][count_synapses] += o->brain->SynapseCount();
 		this->organismStats[thisClass][count_raw]++;
 		for (int i = 0; i < cell_null; i++)

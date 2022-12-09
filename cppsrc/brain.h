@@ -15,9 +15,10 @@ enum Intent
 class Brain : private SimpleNets::DAGNetwork
 {
     friend class OrganismView;
+
 private:
     unsigned int nextSensorIndex;
-    
+
     // this variable drives the random input neuron
     nn_num_t freeWill;
 
@@ -52,9 +53,11 @@ public:
 
     void SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_null]);
 
-    size_t NeuronCount() {return this->units().size();};
-    
-    size_t SynapseCount() {return this->connections().size();};
+    size_t NeuronCount() { return this->units().size(); };
+
+    size_t NHidden() { return this->size(1); };
+
+    size_t SynapseCount() { return this->connections().size(); };
 
     void Mutate();
 

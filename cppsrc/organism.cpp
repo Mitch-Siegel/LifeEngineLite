@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (sqrt(pow(5 * nCells, 1.5)))
+#define moveCost(nCells) (sqrt(pow(2 * nCells, 1.5)))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -28,6 +28,7 @@ Organism::Organism(int center_x, int center_y)
 	this->mutability = DEFAULT_MUTABILITY;
 	this->brain = new Brain();
 	this->direction = randInt(0, 3);
+	this->requireConnectednessCheck = false;
 	for (int i = 0; i < cell_null; i++)
 	{
 		this->cellCounts[i] = 0;
@@ -51,6 +52,8 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 	this->mutability = DEFAULT_MUTABILITY;
 	this->brain = new Brain(baseBrain);
 	this->direction = randInt(0, 3);
+	this->requireConnectednessCheck = false;
+
 	for (int i = 0; i < cell_null; i++)
 	{
 		this->cellCounts[i] = 0;
@@ -134,25 +137,37 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
+	if (this->requireConnectednessCheck)
+	{
+		this->VerifyCellConnectedness();
+	}
+	this->requireConnectednessCheck = false;
+
+	std::map<Cell *, bool> ticked;
+
 	for (auto celli = this->myCells.begin(); celli != this->myCells.end();)
 	{
 		// drive the iterator like this to prevent it from breaking if the cell's Tick() results in it being removed
 		auto next = celli;
 		next++;
 		Cell *toTick = *celli;
-		switch (toTick->type)
+		if (ticked.count(toTick) == 0)
 		{
-		case cell_leaf:
-		{
-			Cell_Leaf *leafToTick = static_cast<Cell_Leaf *>(toTick);
-			if (leafToTick->CanFlower())
+			switch (toTick->type)
 			{
-				leafToTick->Tick();
+			case cell_leaf:
+			{
+				Cell_Leaf *leafToTick = static_cast<Cell_Leaf *>(toTick);
+				if (leafToTick->CanFlower())
+				{
+					leafToTick->Tick();
+				}
 			}
-		}
-		default:
-			toTick->Tick();
-			break;
+			default:
+				toTick->Tick();
+				break;
+			}
+			ticked[toTick] = true;
 		}
 		celli = next;
 	}
@@ -201,6 +216,8 @@ Organism *Organism::Tick()
 	}
 
 	this->AddEnergy((static_cast<float>(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL) + (this->cellCounts[cell_leaf] > 0));
+
+	this->ExpendEnergy(this->cellCounts[cell_herbivore_mouth]);
 
 	if (this->reproductionCooldown == 0)
 	{
@@ -259,6 +276,71 @@ void Organism::RecalculateStats()
 		this->currentEnergy = this->maxEnergy;
 	}
 }
+			#include "organismview.h"
+
+void Organism::VerifyCellConnectedness()
+{
+	std::set<Cell *> unconnectedCells;
+	// std::map<Cell *, bool> cellValidity;
+	for (Cell *c : this->myCells)
+	{
+		unconnectedCells.insert(c);
+		// cellValidity[c] = false;
+	}
+
+	// conduct a search on cells, only keep ones directly attached to the organism
+	std::vector<Cell *> searchQueue;
+	searchQueue.reserve(this->nCells_);
+	Cell *start = board->cells[this->y][this->x];
+	// cellValidity[start] = true;
+	unconnectedCells.erase(start);
+	searchQueue.push_back(start);
+	while (searchQueue.size() > 0)
+	{
+		Cell *examined = searchQueue.back();
+		searchQueue.pop_back();
+		// cellValidity[examined] = true;
+		for (int i = 0; i < 8; i++)
+		{
+			int x_abs = examined->x + directions[i][0];
+			int y_abs = examined->y + directions[i][1];
+			if (!board->boundCheckPos(x_abs, y_abs))
+			{
+				Cell *neighbor = board->cells[y_abs][x_abs];
+				if ((neighbor->myOrganism) == this && unconnectedCells.count(neighbor))
+				{
+					unconnectedCells.erase(neighbor);
+					// cellValidity[neighbor] = true;
+					searchQueue.push_back(neighbor);
+				}
+			}
+		}
+	}
+
+	
+	if(unconnectedCells.size())
+	{
+		for (auto toRemove : unconnectedCells)
+	{
+		this->myCells.erase(toRemove);
+		this->nCells_--;
+		board->replaceCell(toRemove, new Cell_Empty());
+	}
+		this->RecalculateStats();
+	}
+
+	/*
+	for (auto v : cellValidity)
+	{
+		if (v.second == false)
+		{
+			Cell *invalidCell = v.first;
+			this->myCells.erase(invalidCell);
+			this->nCells_--;
+			board->replaceCell(invalidCell, new Cell_Empty());
+		}
+	}*/
+}
 
 // disallow specific types of organisms from existing
 // return true if invalid
@@ -285,45 +367,6 @@ bool Organism::CheckValidity()
 		if (this->cellCounts[cell_leaf] > 0.5 * this->nCells_)
 		{
 			return true;
-		}
-	}
-
-	std::unordered_map<Cell *, bool> cellValidity;
-	// conduct a search on cells, only keep ones directly attached to the organism
-	std::vector<Cell *> searchQueue;
-	Cell *start = board->cells[this->y][this->x];
-	searchQueue.push_back(start);
-	while (searchQueue.size() > 0)
-	{
-		Cell *examined = searchQueue.back();
-		searchQueue.pop_back();
-		cellValidity[examined] = true;
-		for (int i = 0; i < 8; i++)
-		{
-			int x_abs = examined->x + directions[i][0];
-			int y_abs = examined->y + directions[i][1];
-			if (!board->boundCheckPos(x_abs, y_abs))
-			{
-				Cell *neighbor = board->cells[y_abs][x_abs];
-				if (neighbor->myOrganism == this && cellValidity[neighbor] == false)
-				{
-					searchQueue.push_back(neighbor);
-				}
-			}
-		}
-	}
-
-	for (std::set<Cell *>::iterator c = this->myCells.begin(); c != this->myCells.end();)
-	{
-		if (cellValidity[*c] == true)
-		{
-			++c;
-		}
-		else
-		{
-			board->replaceCell(*c, new Cell_Empty());
-			c = this->myCells.erase(c);
-			this->nCells_--;
 		}
 	}
 
@@ -866,13 +909,13 @@ Organism *Organism::Reproduce()
 					replicated->Rotate(randPercent(50));
 				}
 
-				if (this->cellCounts[cell_mover] && randPercent(this->mutability))
+				if (this->cellCounts[cell_mover] && randPercent(50))
 				{
 					replicated->brain->Mutate();
 				}
 
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * sqrt(static_cast<float>(replicated->maxEnergy) / replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
-				this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * sqrt(static_cast<float>(this->maxEnergy) / this->nCells_);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * (static_cast<float>(replicated->maxEnergy) / replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
+				this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * (static_cast<float>(this->maxEnergy) / this->nCells_);
 
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->MaxHealth());
@@ -1024,10 +1067,9 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	_cell->myOrganism = this;
 	board->replaceCellAt(x_abs, y_abs, _cell);
 	this->myCells.insert(_cell);
+
 	this->nCells_++;
-
 	this->OnCellAdded(_cell);
-
 	this->RecalculateStats();
 }
 
@@ -1039,8 +1081,17 @@ void Organism::RemoveCell(Cell *_myCell)
 		exit(1);
 	}
 	this->myCells.erase(_myCell);
-	this->RecalculateStats();
+
+	// lose the proportion of the organism's energy that this cell would "hold"
+	float energyLost = ((static_cast<float>(CellEnergyDensities[_myCell->type]) * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
+	if (energyLost > 0.0) // check because some cells have negative energy densities
+	{
+		this->ExpendEnergy(energyLost);
+	}
+
 	this->nCells_--;
+	this->RecalculateStats();
+	this->requireConnectednessCheck = true;
 }
 
 void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)

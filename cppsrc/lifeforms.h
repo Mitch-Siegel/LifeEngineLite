@@ -13,7 +13,6 @@ private:
 	uint32_t species_;
 
 public:
-
 	OrganismIdentifier()
 	{
 		this->species_ = 0;
@@ -26,12 +25,11 @@ public:
 		this->memberID_ = 0;
 	}
 
-	const uint32_t &Species() const {return this->species_;};
+	const uint32_t &Species() const { return this->species_; };
 
-	const uint32_t &MemberID() const {return this->memberID_;};
+	const uint32_t &MemberID() const { return this->memberID_; };
 
-	void SetMemberID(uint32_t newID) { this->memberID_ = newID;};
-
+	void SetMemberID(uint32_t newID) { this->memberID_ = newID; };
 
 	bool operator<(const OrganismIdentifier &b) const
 	{
@@ -58,6 +56,10 @@ private:
 	OrganismIdentifier identifier_;
 
 	float leftoverEnergy = 0.0;
+
+	bool requireConnectednessCheck;
+	// remove any cells which aren't directly connected to the organism
+	void VerifyCellConnectedness();
 
 public:
 	int x = -1;
@@ -138,13 +140,13 @@ class Organism;
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_MULTIPLIER .8
 
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 3
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 0.5
 
 #define LIFESPAN_MULTIPLIER 35
 #define ENERGY_DENSITY_MULTIPLIER 8
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define FOOD_MULTIPLIER 1.75 * ENERGY_DENSITY_MULTIPLIER
+#define FOOD_MULTIPLIER 2.0 * ENERGY_DENSITY_MULTIPLIER
 
 #define LEAF_FOOD_ENERGY 1
 #define FLOWER_FOOD_ENERGY 3
