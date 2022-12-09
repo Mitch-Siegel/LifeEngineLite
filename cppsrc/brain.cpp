@@ -178,7 +178,7 @@ void Brain::AddRandomHiddenNeuron()
     // determine this neuron's inputs (input layer vs hidden layer)
     if (randPercent(50))
     {
-        int nInputs = randInt(1, this->layers[0].size());
+        int nInputs = randInt(1, floor(sqrt(this->layers[0].size())));
         while (nInputs > 0)
         {
             nInputs -= !this->TryAddRandomInputConnectionByDst(newNeuronId);
@@ -186,7 +186,7 @@ void Brain::AddRandomHiddenNeuron()
     }
     else
     {
-        int nInputs = randInt(1, this->layers[1].size() / 2);
+        int nInputs = randInt(1, floor(sqrt(this->layers[1].size())));
         while (nInputs > 0)
         {
             nInputs -= !this->TryAddRandomHiddenConnectionByDst(newNeuronId);
@@ -197,7 +197,7 @@ void Brain::AddRandomHiddenNeuron()
     // determine this neuron's outputs (input layer vs output layer)
     if (randPercent(50) && !usedHidden)
     {
-        int nOutputs = randInt(1, this->layers[1].size() / 2);
+        int nOutputs = randInt(1, floor(sqrt(this->layers[1].size())));
         while (nOutputs > 0)
         {
             nOutputs -= !this->TryAddRandomHiddenConnectionBySrc(newNeuronId);
@@ -205,7 +205,7 @@ void Brain::AddRandomHiddenNeuron()
     }
     else
     {
-        int nOutputs = randInt(1, this->layers[2].size());
+        int nOutputs = randInt(1, floor(sqrt(this->layers[2].size())));
         while (nOutputs > 0)
         {
             nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newNeuronId);
