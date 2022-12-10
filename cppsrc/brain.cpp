@@ -15,9 +15,9 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
 {
     this->nextSensorIndex = 0;
     this->freeWill = 0.0;
-    /*
+    
     size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
-    int nInputs = randInt(1, this->size(0) / 2);
+    int nInputs = randInt(2, this->size(0) / 2);
     while (nInputs -= !this->TryAddRandomInputConnectionByDst(newId))
         ;
 
@@ -25,12 +25,7 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     while (nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newId))
         ;
 
-    if (randPercent(50))
-    {
-        while (this->TryAddRandomInputOutputConnection())
-            ;
-    }
-    */
+    
     while (this->TryAddRandomInputOutputConnection())
         ;
 }

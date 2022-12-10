@@ -50,7 +50,7 @@ class Organism
 
 private:
 	uint64_t currentHealth, maxHealth;
-	uint64_t currentEnergy, maxEnergy;
+	double currentEnergy, maxEnergy;
 	std::set<Cell *> myCells;
 	uint64_t nCells_;
 	OrganismIdentifier identifier_;
@@ -109,14 +109,15 @@ public:
 
 	const uint64_t &MaxHealth();
 
-	const uint64_t &Energy();
+	const double &Energy();
 
-	const uint64_t &MaxEnergy();
+	const double &MaxEnergy();
 
 	void Damage(uint64_t n);
 
 	void Heal(uint64_t n);
 
+	// automatically scales n by energy density multiplier
 	void ExpendEnergy(double n);
 
 	void AddEnergy(double n);
@@ -141,15 +142,37 @@ class Organism;
 #define DEFAULT_MUTABILITY 15
 
 // as proportion of max energy
-#define REPRODUCTION_ENERGY_MULTIPLIER .8
+#define REPRODUCTION_ENERGY_PROPORTION .7
 
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 5
+#define MOVE_COST_MULTIPLIER 0.01
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 15
+#define REPRODUCTION_COOLDOWN(maxEnergy, nCells) (randFloat(0.95, 1.05) * REPRODUCTION_COOLDOWN_MULTIPLIER * (sqrt((maxEnergy / ENERGY_DENSITY_MULTIPLIER) * nCells)))
 
-#define LIFESPAN_MULTIPLIER 35
-#define ENERGY_DENSITY_MULTIPLIER 8
+#define LIFESPAN_MULTIPLIER 15
+#define LIFESPAN(maxEnergy, nCells) LIFESPAN_MULTIPLIER * (maxEnergy / ENERGY_DENSITY_MULTIPLIER) * ceil(sqrt(nCells))
+/*
+int REPRODUCTION_COOLDOWN(uint64_t maxEnergy, uint64_t nCells)
+{
+	if(nCells < 5)
+	{
+		return (1.5 - (0.2 * nCells)) * log(maxEnergy);
+	}
+	else
+	{
+		return log(maxEnergy) * nCells;
+	}
+}*/
+
+
+// #define REPRODUCTION_COOLDOWN(maxEnergy, nCells) (REPRODUCTION_COOLDOWN_MULTIPLIER * ((nCells < 5) ? ((3 - (0.6 * nCells)) * sqrt(maxEnergy)) : (sqrt(maxEnergy) * nCells)))
+// #define REPRODUCTION_COOLDOWN(maxEnergy, nCells) (REPRODUCTION_COOLDOWN_MULTIPLIER * ((nCells < 5) ? (((1.0 / LIFESPAN_MULTIPLIER) * pow(6 - nCells, 3)) * sqrt(maxEnergy)) : (sqrt(maxEnergy) * nCells)))
+
+
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define FOOD_MULTIPLIER 2.0 * ENERGY_DENSITY_MULTIPLIER
+#define FOOD_MULTIPLIER 10.0
+#define ENERGY_DENSITY_MULTIPLIER 4
+
 
 #define LEAF_FOOD_ENERGY 1
 #define FLOWER_FOOD_ENERGY 3
@@ -161,38 +184,39 @@ class Organism;
 
 #define FRUIT_SPOIL_TIME 5 * SPOILTIME_BASE
 
-// must roll this 2x
-#define FRUIT_GROW_PERCENT 10
+#define FRUIT_GROW_PERCENT 2
 
 #define PLANTMASS_FOOD_ENERGY 2
 // #define BIOMASS_FOOD_ENERGY 15 * PLANTMASS_FOOD_ENERGY
 #define BIOMASS_FOOD_ENERGY 5 * PLANTMASS_FOOD_ENERGY
 
-#define PHOTOSYNTHESIS_INTERVAL 9.0
-#define FLOWER_COST 2 * ENERGY_DENSITY_MULTIPLIER
-#define LEAF_FLOWERING_COOLDOWN 50
+// #define PHOTOSYNTHESIS_INTERVAL 15.0
+#define FLOWER_COST 4
+#define LEAF_FLOWERING_COOLDOWN 4 * LIFESPAN_MULTIPLIER
 
 // whether or not a leaf is able to flower, rolled at creation
 #define LEAF_FLOWERING_ABILITY_PERCENT 45
 
+// percent rolled for a leaf to flower 
 #define PLANT_GROW_PERCENT 50
 // percent for a flower to wilt into another leaf vs just going away
 #define FLOWER_EXPAND_PERCENT 100
 
-#define BARK_GROW_COOLDOWN 30
+#define BARK_GROW_COOLDOWN 10 * LIFESPAN_MULTIPLIER
 #define BARK_PLANT_VS_THORN 95
-#define BARK_GROW_COST 2 * ENERGY_DENSITY_MULTIPLIER
+#define BARK_GROW_COST 4
 #define BARK_MAX_INTEGRITY 10
 
 // max integrity for leaves which are next to a bark
 
-#define FLOWER_BLOOM_COOLDOWN 75
+#define FLOWER_BLOOM_COOLDOWN 1.5 * LIFESPAN_MULTIPLIER
 #define FLOWER_WILT_CHANCE 30
-#define FLOWER_BLOOM_COST 3.5 * ENERGY_DENSITY_MULTIPLIER
+#define FLOWER_BLOOM_COST 2
+// #define FLOWER_BLOOM_RECHARGE_TICK_COST 0.5 / PHOTOSYNTHESIS_INTERVAL
+#define FLOWER_BLOOM_RECHARGE_TICK_COST 0.5
 
-#define TOUCH_SENSE_COOLDOWN 2
-
-#define KILLER_DAMAGE_COST 5 * ENERGY_DENSITY_MULTIPLIER
+#define KILLER_DAMAGE_COST 5
+#define KILLER_TICK_COST 1.0
 
 #define ARMOR_HEALTH_BONUS 4 * MAX_HEALTH_MULTIPLIER
 

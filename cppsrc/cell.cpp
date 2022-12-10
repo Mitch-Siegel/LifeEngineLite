@@ -267,7 +267,6 @@ void Cell_Bark::Tick()
 	if (this->actionCooldown > 0)
 	{
 		this->actionCooldown--;
-		return;
 	}
 
 	if (this->integrity < 1)
@@ -278,7 +277,7 @@ void Cell_Bark::Tick()
 	}
 
 	int bonusEnergy = 0;
-	bool canGrow = true;
+	bool canGrow = this->actionCooldown == 0;
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)
 	{
@@ -304,9 +303,8 @@ void Cell_Bark::Tick()
 			bonusEnergy++;
 		}
 	}
-
-	// any leaves attached to bark generate a bonus energy every few ticks
-	this->myOrganism->AddEnergy(bonusEnergy / PHOTOSYNTHESIS_INTERVAL);
+	// any leaves attached to bark generate bonus energy
+	this->myOrganism->AddEnergy(static_cast<double>(bonusEnergy) / 2);
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -333,13 +331,18 @@ void Cell_Flower::Tick()
 {
 	if (this->bloomCooldown > 0)
 	{
+		this->myOrganism->ExpendEnergy(FLOWER_BLOOM_RECHARGE_TICK_COST);
 		this->bloomCooldown--;
+		return;
+	}
+	else if(this->myOrganism->reproductionCooldown > 0)
+	{
 		return;
 	}
 	else
 	{
 		bool couldBloom = false;
-		if (this->myOrganism->Energy() > FLOWER_BLOOM_COST)
+		if (this->myOrganism->Energy() > (FLOWER_BLOOM_COST + 1))
 		{
 			int checkDirIndex = randInt(0, 3);
 			for (int i = 0; i < 4; i++)
@@ -363,9 +366,11 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				if (randPercent(FLOWER_EXPAND_PERCENT))
+				//if (this->myOrganism->Energy() > (FLOWER_COST + 1) &&
+				if (randPercent(FLOWER_EXPAND_PERCENT)/* && (this->myOrganism->Energy() > (FLOWER_COST + 1))*/)
 				{
-					this->myOrganism->ReplaceCell(this, new Cell_Leaf(100));
+					//this->myOrganism->ExpendEnergy(FLOWER_COST);
+					this->myOrganism->ReplaceCell(this, new Cell_Leaf(75));
 				}
 				else
 				{
@@ -676,7 +681,7 @@ void Cell_Killer::Tick()
 	}
 	// base cost of 1 every few ticks
 	// then some addl cost to actually hurt stuff
-	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + (1.0 / 6.0));
+	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + KILLER_TICK_COST);
 
 	int adjacentLeaves = 0;
 	int adjacentBark = 0;

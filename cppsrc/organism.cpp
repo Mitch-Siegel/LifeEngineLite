@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (sqrt(pow(4 * nCells, 1.5)))
+#define moveCost(nCells) (MOVE_COST_MULTIPLIER * sqrt(pow(nCells, 1.5)))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -133,12 +133,61 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	this->ExpendEnergy(1);
+	// this->ExpendEnergy(1);
 
-	if (this->currentEnergy == 0 || this->currentHealth == 0 || (this->age >= this->lifespan) || this->nCells() == 0)
+	// if (this->cellCounts[cell_leaf] > 1)
+	// {
+	// this->ExpendEnergy(sqrt(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL);
+	// }
+
+	/*
+	if(this->cellCounts[cell_mover])
+	{
+		this->ExpendEnergy(0.5);
+	}
+	else
+	{
+		switch(this->nCells_)
+		{
+			case 1:
+			case 2:
+			case 3:
+				this->ExpendEnergy(0.25 * (3 - this->nCells_));
+			break;
+
+			default:
+				break;
+		}
+	}*/
+
+	if (this->currentEnergy == 0.0 || this->currentHealth == 0 || (this->age >= this->lifespan) || this->nCells() == 0)
 	{
 		this->Die();
 		return nullptr;
+	}
+
+	if (this->nCells_ == this->cellCounts[cell_leaf])
+	{
+		this->ExpendEnergy(this->cellCounts[cell_leaf] - (1.0 / (static_cast<double>(ENERGY_DENSITY_MULTIPLIER) * 2.25)));
+	}
+	else
+	{
+		this->ExpendEnergy(this->nCells_ - 1);
+	}
+
+	if (this->reproductionCooldown == 0)
+	{
+		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION) * 1.1))
+		{
+			return this->Reproduce();
+		}
+	}
+	else
+	{
+		if (this->reproductionCooldown > 0)
+		{
+			this->reproductionCooldown--;
+		}
 	}
 
 	if (this->requireConnectednessCheck)
@@ -219,24 +268,17 @@ Organism *Organism::Tick()
 		}
 	}
 
-	this->AddEnergy((static_cast<float>(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL) + (this->cellCounts[cell_leaf] > 0));
-
-	this->ExpendEnergy(this->cellCounts[cell_herbivore_mouth] + (this->cellCounts[cell_carnivore_mouth] * 2));
-
-	if (this->reproductionCooldown == 0)
+	// this->AddEnergy((static_cast<float>(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL)/* + (this->cellCounts[cell_leaf] > 0)*/);
+	if (this->cellCounts[cell_leaf])
 	{
-		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER) * 1.2))
-		{
-			return this->Reproduce();
-		}
+		this->AddEnergy(this->cellCounts[cell_leaf]);
 	}
-	else
+
+	if (this->cellCounts[cell_herbivore_mouth] || this->cellCounts[cell_herbivore_mouth])
 	{
-		if (this->reproductionCooldown > 0)
-		{
-			this->reproductionCooldown--;
-		}
+		this->ExpendEnergy(this->cellCounts[cell_herbivore_mouth] + (this->cellCounts[cell_carnivore_mouth] * 2));
 	}
+
 	return nullptr;
 }
 
@@ -255,7 +297,6 @@ void Organism::RecalculateStats()
 		cellCounts[thisCell->type]++;
 		calculatedMaxEnergy += CellEnergyDensities[thisCell->type];
 	}
-	calculatedMaxEnergy *= ENERGY_DENSITY_MULTIPLIER;
 	if (calculatedMaxEnergy < 0)
 	{
 		this->maxEnergy = 0;
@@ -264,6 +305,7 @@ void Organism::RecalculateStats()
 	{
 		this->maxEnergy = calculatedMaxEnergy;
 	}
+	this->maxEnergy *= ENERGY_DENSITY_MULTIPLIER;
 
 	this->maxHealth = this->nCells() * MAX_HEALTH_MULTIPLIER + (this->cellCounts[cell_armor] * ARMOR_HEALTH_BONUS);
 	if (this->currentHealth > this->maxHealth)
@@ -271,9 +313,9 @@ void Organism::RecalculateStats()
 		this->currentHealth = this->maxHealth;
 	}
 
-	if (this->lifespan > sqrt(this->maxEnergy) * ceil(sqrt(this->nCells())) * LIFESPAN_MULTIPLIER)
+	if (this->lifespan > LIFESPAN(this->maxEnergy, this->nCells_))
 	{
-		this->lifespan = sqrt(this->maxEnergy) * ceil(sqrt(this->nCells())) * LIFESPAN_MULTIPLIER;
+		this->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
 	}
 	if (this->currentEnergy > this->maxEnergy)
 	{
@@ -358,6 +400,11 @@ bool Organism::CheckValidity()
 	{
 		return true;
 	}
+
+	// if ((this->nCells_ > 3) && (this->nCells_ == this->cellCounts[cell_leaf]))
+	// {
+		// return true;
+	// }
 
 	if (this->cellCounts[cell_mover] == 0)
 	{
@@ -498,8 +545,8 @@ void Organism::Move(int moveDirection)
 		/*
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-2
 		*/
-		this->ExpendEnergy(moveCost(this->nCells_));
 	}
+	this->ExpendEnergy(moveCost(this->nCells_));
 }
 
 void Organism::Rotate(bool clockwise)
@@ -635,25 +682,13 @@ void Organism::ExpendEnergy(double n)
 		printf("ExpendEnergy with < 0 n\n");
 		exit(1);
 	}
-	double wholeComponent;
-	this->leftoverEnergy -= modf(n, &wholeComponent);
-
-	if (wholeComponent > this->currentEnergy)
+	if (n > this->currentEnergy)
 	{
-		this->currentEnergy = 0;
+		this->currentEnergy = 0.0;
 	}
 	else
 	{
-		this->currentEnergy -= wholeComponent;
-	}
-
-	while (this->leftoverEnergy < -1.0)
-	{
-		this->leftoverEnergy++;
-		if (this->currentEnergy > 0)
-		{
-			this->currentEnergy--;
-		}
+		this->currentEnergy -= n;
 	}
 }
 
@@ -664,16 +699,8 @@ void Organism::AddEnergy(double n)
 		printf("AddEnergy with < 0 n\n");
 		exit(1);
 	}
-	double wholeComponent;
-	this->leftoverEnergy += modf(n, &wholeComponent);
 
-	this->currentEnergy += wholeComponent;
-
-	while (this->leftoverEnergy > 1.0)
-	{
-		this->leftoverEnergy--;
-		this->currentEnergy++;
-	}
+	this->currentEnergy += n;
 
 	if (this->currentEnergy > this->maxEnergy)
 	{
@@ -686,12 +713,12 @@ const uint64_t &Organism::MaxHealth()
 	return this->maxHealth;
 }
 
-const uint64_t &Organism::Energy()
+const double &Organism::Energy()
 {
 	return this->currentEnergy;
 }
 
-const uint64_t &Organism::MaxEnergy()
+const double &Organism::MaxEnergy()
 {
 	return this->maxEnergy;
 }
@@ -757,22 +784,22 @@ Organism *Organism::Reproduce()
 			{
 				int dir_x_extra = 0;
 				int dir_y_extra = 0;
-				if (randPercent(40))
+				for (int k = 0; k < 16; k++)
 				{
-					for (int k = 0; k < 16; k++)
+					dir_x_extra = randInt(-3, 3);
+					dir_y_extra = randInt(-3, 3);
+					if (dir_y_extra != 0 || dir_x_extra != 0)
 					{
-						dir_x_extra = randInt(-3, 3);
-						dir_y_extra = randInt(-3, 3);
 						if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
 						{
 							break;
 						}
-						dir_x_extra = 0;
-						dir_y_extra = 0;
 					}
+					dir_x_extra = 0;
+					dir_y_extra = 0;
 				}
 
-				this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_MULTIPLIER);
+				this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION);
 
 				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra, *this->brain);
 				replicated->direction = this->direction;
@@ -917,9 +944,11 @@ Organism *Organism::Reproduce()
 				{
 					replicated->brain->Mutate();
 				}
-
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(static_cast<float>(replicated->maxEnergy) / replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
-				this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(static_cast<float>(this->maxEnergy) / this->nCells_);
+				//\frac{\sqrt{a}}{\log\left(x+1\right)+.01}\left(x+5\right)
+				// replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(replicated->maxEnergy * replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
+				// this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(this->maxEnergy * this->nCells_);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN(replicated->maxEnergy, replicated->nCells_);
+				this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_);
 
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->MaxHealth());
@@ -927,8 +956,8 @@ Organism *Organism::Reproduce()
 				// {
 				// replicated->brain->Mutate();
 				// }
-				replicated->currentEnergy = randInt(replicated->maxEnergy / 2, replicated->maxEnergy);
-				replicated->lifespan = sqrt(replicated->maxEnergy) * sqrt(replicated->nCells()) * LIFESPAN_MULTIPLIER;
+				replicated->currentEnergy = replicated->maxEnergy * 0.4;
+				replicated->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
 				return replicated;
 			}
 
@@ -942,6 +971,9 @@ Organism *Organism::Reproduce()
 			continue;
 		}
 	}
+	// printf("%f\n", 0.01 * REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_));
+	this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION * 0.2);
+	// this->ExpendEnergy(3.0);
 	// this->brain.Punish();
 	return nullptr;
 }
@@ -1028,7 +1060,7 @@ bool Organism::Mutate()
 
 			if (canAdd)
 			{
-				this->AddCell(x_rel, y_rel, allLeaves ? new Cell_Leaf : GenerateRandomCell());
+				this->AddCell(x_rel, y_rel, allLeaves ? new Cell_Leaf(0) : GenerateRandomCell());
 				return true;
 			}
 		}
@@ -1087,7 +1119,7 @@ void Organism::RemoveCell(Cell *_myCell)
 	this->myCells.erase(_myCell);
 
 	// lose the proportion of the organism's energy that this cell would "hold"
-	float energyLost = ((static_cast<float>(CellEnergyDensities[_myCell->type]) * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
+	float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type]) / this->maxEnergy) * this->currentEnergy;
 	if (energyLost > 0.0) // check because some cells have negative energy densities
 	{
 		this->ExpendEnergy(energyLost);

@@ -46,7 +46,6 @@ bool autoplay = false;
 bool maxSpeed = false;
 int ticksThisSecond = 0;
 
-
 bool forceRedraw = false;
 float RenderBoard(SDL_Renderer *r, size_t frameNum, bool forceMutex)
 {
@@ -313,10 +312,18 @@ int main(int argc, char *argv[])
 
 	Organism *firstOrganism = board->CreateOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->direction = 3;
-	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
+	firstOrganism->AddCell(0, 0, new Cell_Bark());
+	firstOrganism->AddCell(0, -1, new Cell_Leaf(0));
+	/*
+	firstOrganism->AddCell(-1, 0, new Cell_Leaf(0));
+	firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
+	firstOrganism->AddCell(0, 1, new Cell_Leaf(0));
+	*/
 	firstOrganism->RecalculateStats();
-	firstOrganism->lifespan = LIFESPAN_MULTIPLIER * firstOrganism->MaxEnergy() * 2;
+	firstOrganism->lifespan = 10000;
+
 	firstOrganism->mutability = 10;
+	firstOrganism->age = 0;
 	// firstOrganism->Reproduce();
 	firstOrganism->AddEnergy(static_cast<float>(firstOrganism->MaxEnergy()));
 	firstOrganism->Heal(100);
@@ -584,7 +591,7 @@ int main(int argc, char *argv[])
 		}
 		board->ReleaseMutex();
 		doneRendering = true;
-			renderCondition.notify_all();
+		renderCondition.notify_all();
 
 		// Rendering
 		ImGui::Render();

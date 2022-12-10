@@ -70,7 +70,7 @@ bool Board::Tick()
 
 				case cell_fruit:
 					// if we roll grow percent, create a new random organism
-					if (randPercent(FRUIT_GROW_PERCENT) && randPercent(FRUIT_GROW_PERCENT))
+					if (randPercent(FRUIT_GROW_PERCENT))
 					{
 						Organism *grownFruit = this->CreateOrganism(expiringFood->x, expiringFood->y);
 						grownFruit->mutability = 10;
@@ -98,12 +98,12 @@ bool Board::Tick()
 						{
 							grownFruit->identifier_ = OrganismIdentifier(this->GetNextSpecies());
 							this->AddSpeciesMember(grownFruit);
+							grownFruit->lifespan = UINT64_MAX;
+							grownFruit->reproductionCooldown = REPRODUCTION_COOLDOWN(grownFruit->maxEnergy, grownFruit->nCells_);
 							grownFruit->RecalculateStats();
-							grownFruit->lifespan = grownFruit->nCells() * LIFESPAN_MULTIPLIER;
-							grownFruit->AddEnergy(randInt(grownFruit->MaxEnergy() / 2, grownFruit->MaxEnergy()));
+							grownFruit->AddEnergy(0.8 * grownFruit->MaxEnergy());
 							grownFruit->Heal(grownFruit->MaxHealth());
 
-							grownFruit->reproductionCooldown = 0;
 						}
 						else
 						{
