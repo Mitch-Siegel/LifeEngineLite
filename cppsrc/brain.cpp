@@ -9,24 +9,23 @@
  *
  *
  */
-#define BRAIN_DEFAULT_INPUTS 3
+#define BRAIN_DEFAULT_INPUTS 4
 
 Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets::logistic})
 {
     this->nextSensorIndex = 0;
-    this->freeWill = 0.0;
-    
+    this->freeWill[0] = randFloat(0.0, 1.0);
+    this->freeWill[1] = randFloat(0.0, 1.0);
+
     size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
-    int nInputs = randInt(2, this->size(0) / 2);
-    while (nInputs -= !this->TryAddRandomInputConnectionByDst(newId))
+    while (!this->TryAddRandomInputConnectionByDst(newId))
         ;
 
-    int nOutputs = randInt(1, this->size(2) / 2);
-    while (nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newId))
+    while (!this->TryAddRandomOutputConnectionBySrc(newId))
         ;
 
-    
-    while (this->TryAddRandomInputOutputConnection())
+    int nIO = randInt(0, 2);
+    while (nIO -= this->TryAddRandomInputOutputConnection())
         ;
 }
 
@@ -37,7 +36,7 @@ Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
 
 bool Brain::TryAddRandomInputConnectionBySrc(size_t srcId)
 {
-    if(this->size(1) == 0)
+    if (this->size(1) == 0)
     {
         return true;
     }
@@ -55,7 +54,7 @@ bool Brain::TryAddRandomInputConnectionByDst(size_t dstId)
 
 bool Brain::TryAddRandomInputConnection()
 {
-    if(this->size(1) == 0)
+    if (this->size(1) == 0)
     {
         return true;
     }
@@ -83,7 +82,7 @@ bool Brain::TryAddRandomInputOutputConnection()
 
 bool Brain::TryAddRandomHiddenConnectionBySrc(size_t srcId)
 {
-    if(this->size(1) == 0)
+    if (this->size(1) == 0)
     {
         return true;
     }
@@ -107,7 +106,7 @@ bool Brain::TryAddRandomHiddenConnectionBySrc(size_t srcId)
 
 bool Brain::TryAddRandomHiddenConnectionByDst(size_t dstId)
 {
-    if(this->size(1) == 0)
+    if (this->size(1) == 0)
     {
         return true;
     }
@@ -131,7 +130,7 @@ bool Brain::TryAddRandomHiddenConnectionByDst(size_t dstId)
 
 bool Brain::TryAddRandomHiddenConnection()
 {
-    if(this->size(1) == 0)
+    if (this->size(1) == 0)
     {
         return true;
     }
@@ -164,17 +163,21 @@ bool Brain::TryAddRandomOutputConnection()
 
 void Brain::SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion)
 {
-    this->freeWill += randFloat(-0.25, 0.25);
-    if (this->freeWill > 1.0)
+    for (int i = 0; i < 2; i++)
     {
-        this->freeWill = 1.0;
-    }
-    else if (this->freeWill < -1.0)
-    {
-        this->freeWill = -1.0;
+
+        this->freeWill[i] += randFloat(-0.25, 0.25);
+        if (this->freeWill[i] > 1.0)
+        {
+            this->freeWill[i] = 1.0;
+        }
+        else if (this->freeWill[i] < 0.0)
+        {
+            this->freeWill[i] = 0.0;
+        }
     }
 
-    this->SetInput(0, {this->freeWill, energyProportion, healthProportion});
+    this->SetInput(0, {this->freeWill[0], this->freeWill[1], energyProportion, healthProportion});
 }
 
 void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_null])
@@ -232,11 +235,10 @@ void Brain::AddRandomHiddenNeuron()
 
 void Brain::Mutate()
 {
-    // add/remove a neuron with 10% probability
-    if (randPercent(10))
+    // add/remove a neuron with 20% probability
+    if (randPercent(20))
     {
-        // less likely to remove a neuron than add
-        if (this->size(1) > 1 && randPercent(40))
+        if (this->size(1) > 1 && randPercent(50))
         {
             this->RemoveUnit(this->layers[1][randInt(0, this->size(1) - 1)].Id());
         }
@@ -245,7 +247,7 @@ void Brain::Mutate()
             this->AddRandomHiddenNeuron();
         }
     }
-    // add/remove/modify connection with 90% probability
+    // add/remove/modify connection with 80% probability
     else
     {
         // modify existing connection with 75% probability
@@ -317,35 +319,33 @@ unsigned int Brain::GetNewSensorIndex()
     // determine the new internal neuron's outputs (input layer vs output layer)
     if (randPercent(50))
     {
-        int nOutputs = randInt(1, floor(sqrt(this->size(1))));
-        while (nOutputs > 0)
-        {
-            nOutputs -= !this->TryAddRandomHiddenConnectionBySrc(newInternalID);
-        }
+        while (!this->TryAddRandomHiddenConnectionBySrc(newInternalID))
+            ;
     }
     else
     {
-        int nOutputs = randInt(1, floor(sqrt(this->size(2))));
-        while (nOutputs > 0)
-        {
-            nOutputs -= !this->TryAddRandomOutputConnectionBySrc(newInternalID);
-        }
+        while (!this->TryAddRandomOutputConnectionBySrc(newInternalID))
+            ;
     }
 
     for (int i = 0; i < cell_null; i++)
     {
         size_t inputId = this->AddInput();
-        if (randPercent(60))
+        if (randPercent(40))
         {
             if (randPercent(60))
             {
-                this->AddConnection(inputId, newInternalID, randFloat(-1.0, 1.0));
+                if (this->AddConnection(inputId, newInternalID, randFloat(-1.0, 1.0)))
+                {
+                    printf("that shouldn't have happened\n");
+                    exit(1);
+                }
             }
             else
             {
                 if (randPercent(90))
                 {
-                    if (this->TryAddRandomInputConnectionBySrc(inputId))
+                    if (this->AddConnection(inputId, newInternalID, randFloat(-1.0, 1.0)))
                     {
                         printf("that shouldn't have happened\n");
                         exit(1);

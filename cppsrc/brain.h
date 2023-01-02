@@ -20,7 +20,7 @@ private:
     unsigned int nextSensorIndex;
 
     // this variable drives the random input neuron
-    nn_num_t freeWill;
+    nn_num_t freeWill[2];
 
     // make one attempt to add a random connection from the input layer to the hidden layer
     bool TryAddRandomInputConnectionBySrc(size_t srcId);

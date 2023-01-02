@@ -143,13 +143,16 @@ class Organism;
 
 // as proportion of max energy
 #define REPRODUCTION_ENERGY_PROPORTION .7
+#define FLOWER_BLOOM_ENERGY_PROPORTION 0.9
+#define FLOWER_GROW_ENERGY_PROPORTION FLOWER_BLOOM_ENERGY_PROPORTION
+#define LIFESPAN_MULTIPLIER 15.0
+#define LIFESPAN(maxEnergy, nCells) LIFESPAN_MULTIPLIER * (maxEnergy / ENERGY_DENSITY_MULTIPLIER) * sqrt(nCells)
 
-#define MOVE_COST_MULTIPLIER 0.01
-#define REPRODUCTION_COOLDOWN_MULTIPLIER 15
-#define REPRODUCTION_COOLDOWN(maxEnergy, nCells) (randFloat(0.95, 1.05) * REPRODUCTION_COOLDOWN_MULTIPLIER * (sqrt((maxEnergy / ENERGY_DENSITY_MULTIPLIER) * nCells)))
 
-#define LIFESPAN_MULTIPLIER 15
-#define LIFESPAN(maxEnergy, nCells) LIFESPAN_MULTIPLIER * (maxEnergy / ENERGY_DENSITY_MULTIPLIER) * ceil(sqrt(nCells))
+#define MOVE_COST_MULTIPLIER 1.0
+#define REPRODUCTION_COOLDOWN_MULTIPLIER 15 * LIFESPAN_MULTIPLIER
+#define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (REPRODUCTION_COOLDOWN_MULTIPLIER * (static_cast<double>(nCells) / sqrt(maxEnergy)))
+
 /*
 int REPRODUCTION_COOLDOWN(uint64_t maxEnergy, uint64_t nCells)
 {
@@ -163,16 +166,13 @@ int REPRODUCTION_COOLDOWN(uint64_t maxEnergy, uint64_t nCells)
 	}
 }*/
 
-
 // #define REPRODUCTION_COOLDOWN(maxEnergy, nCells) (REPRODUCTION_COOLDOWN_MULTIPLIER * ((nCells < 5) ? ((3 - (0.6 * nCells)) * sqrt(maxEnergy)) : (sqrt(maxEnergy) * nCells)))
 // #define REPRODUCTION_COOLDOWN(maxEnergy, nCells) (REPRODUCTION_COOLDOWN_MULTIPLIER * ((nCells < 5) ? (((1.0 / LIFESPAN_MULTIPLIER) * pow(6 - nCells, 3)) * sqrt(maxEnergy)) : (sqrt(maxEnergy) * nCells)))
 
-
 #define MAX_HEALTH_MULTIPLIER 1
 
-#define FOOD_MULTIPLIER 10.0
+#define FOOD_MULTIPLIER 8.0
 #define ENERGY_DENSITY_MULTIPLIER 4
-
 
 #define LEAF_FOOD_ENERGY 1
 #define FLOWER_FOOD_ENERGY 3
@@ -190,14 +190,14 @@ int REPRODUCTION_COOLDOWN(uint64_t maxEnergy, uint64_t nCells)
 // #define BIOMASS_FOOD_ENERGY 15 * PLANTMASS_FOOD_ENERGY
 #define BIOMASS_FOOD_ENERGY 5 * PLANTMASS_FOOD_ENERGY
 
-// #define PHOTOSYNTHESIS_INTERVAL 15.0
+#define PHOTOSYNTHESIS_INTERVAL 1.0
 #define FLOWER_COST 4
 #define LEAF_FLOWERING_COOLDOWN 4 * LIFESPAN_MULTIPLIER
 
 // whether or not a leaf is able to flower, rolled at creation
-#define LEAF_FLOWERING_ABILITY_PERCENT 45
+#define LEAF_FLOWERING_ABILITY_PERCENT 35
 
-// percent rolled for a leaf to flower 
+// percent rolled for a leaf to flower
 #define PLANT_GROW_PERCENT 50
 // percent for a flower to wilt into another leaf vs just going away
 #define FLOWER_EXPAND_PERCENT 100
@@ -206,17 +206,16 @@ int REPRODUCTION_COOLDOWN(uint64_t maxEnergy, uint64_t nCells)
 #define BARK_PLANT_VS_THORN 95
 #define BARK_GROW_COST 4
 #define BARK_MAX_INTEGRITY 10
+#define BARK_BONUS_ENERGY_DIVIDER 100
 
 // max integrity for leaves which are next to a bark
 
 #define FLOWER_BLOOM_COOLDOWN 1.5 * LIFESPAN_MULTIPLIER
 #define FLOWER_WILT_CHANCE 30
 #define FLOWER_BLOOM_COST 2
-// #define FLOWER_BLOOM_RECHARGE_TICK_COST 0.5 / PHOTOSYNTHESIS_INTERVAL
-#define FLOWER_BLOOM_RECHARGE_TICK_COST 0.5
 
-#define KILLER_DAMAGE_COST 5
-#define KILLER_TICK_COST 1.0
+#define KILLER_DAMAGE_COST 2
+#define KILLER_TICK_COST 0.01
 
 #define ARMOR_HEALTH_BONUS 4 * MAX_HEALTH_MULTIPLIER
 
@@ -295,13 +294,19 @@ public:
 	Cell_Biomass *Clone() override;
 };
 
+
+class Cell_Flower;
 class Cell_Leaf : public Cell
 {
 	friend class Cell_Herbivore;
 	friend class Cell_Bark;
+	friend class Cell_Flower;
 	friend class Board;
+
+private:
 	int flowerCooldown;
 	bool flowering;
+	Cell_Flower *associatedFlower;
 
 public:
 	~Cell_Leaf() override;
@@ -345,11 +350,12 @@ class Cell_Flower : public Cell
 	friend class Cell_Leaf;
 	friend class Board;
 	int bloomCooldown;
+	Cell_Leaf *associatedLeaf;
 
 public:
 	~Cell_Flower() override;
 
-	Cell_Flower();
+	Cell_Flower(Cell_Leaf *associatedLeaf);
 
 	// explicit Cell_Flower(Organism *_myOrganism);
 

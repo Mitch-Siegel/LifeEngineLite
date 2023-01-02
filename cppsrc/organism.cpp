@@ -133,47 +133,40 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	// this->ExpendEnergy(1);
-
-	// if (this->cellCounts[cell_leaf] > 1)
-	// {
-	// this->ExpendEnergy(sqrt(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL);
-	// }
-
-	/*
-	if(this->cellCounts[cell_mover])
-	{
-		this->ExpendEnergy(0.5);
-	}
-	else
-	{
-		switch(this->nCells_)
-		{
-			case 1:
-			case 2:
-			case 3:
-				this->ExpendEnergy(0.25 * (3 - this->nCells_));
-			break;
-
-			default:
-				break;
-		}
-	}*/
-
-	if (this->currentEnergy == 0.0 || this->currentHealth == 0 || (this->age >= this->lifespan) || this->nCells() == 0)
+	if (this->currentEnergy == 0.0 || this->currentHealth == 0 || (this->age >= this->lifespan) || (this->nCells() == 0))
 	{
 		this->Die();
 		return nullptr;
 	}
 
-	if (this->nCells_ == this->cellCounts[cell_leaf])
+	this->ExpendEnergy(1 - (this->cellCounts[cell_leaf] > 0));
+	// this->ExpendEnergy(this->nCells_ - (this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]));
+	// if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]) > 0)
+	// {
+	// this->ExpendEnergy((0.9 * sqrt(this->cellCounts[cell_leaf])) + (0.98 * this->cellCounts[cell_flower]));
+	// }
+
+	if (this->cellCounts[cell_leaf])
+	{
+		this->AddEnergy((0.9 / LIFESPAN_MULTIPLIER) * sqrt(this->cellCounts[cell_leaf]));
+		// this->AddEnergy((nLeaves - sqrt(nLeaves - 0.75)) / PHOTOSYNTHESIS_INTERVAL);
+		// x-\sqrt{\left(x-0.75\right)}
+		// this->AddEnergy(this->cellCounts[cell_leaf] / PHOTOSYNTHESIS_INTERVAL);
+	}
+
+	if (this->cellCounts[cell_herbivore_mouth] || this->cellCounts[cell_herbivore_mouth])
+	{
+		this->ExpendEnergy(this->cellCounts[cell_herbivore_mouth] + (this->cellCounts[cell_carnivore_mouth] * 8));
+	}
+
+	/*if (this->nCells_ == this->cellCounts[cell_leaf])
 	{
 		this->ExpendEnergy(this->cellCounts[cell_leaf] - (1.0 / (static_cast<double>(ENERGY_DENSITY_MULTIPLIER) * 2.25)));
 	}
 	else
 	{
 		this->ExpendEnergy(this->nCells_ - 1);
-	}
+	}*/
 
 	if (this->reproductionCooldown == 0)
 	{
@@ -193,8 +186,8 @@ Organism *Organism::Tick()
 	if (this->requireConnectednessCheck)
 	{
 		this->VerifyCellConnectedness();
+		this->requireConnectednessCheck = false;
 	}
-	this->requireConnectednessCheck = false;
 
 	std::map<Cell *, bool> ticked;
 
@@ -269,15 +262,6 @@ Organism *Organism::Tick()
 	}
 
 	// this->AddEnergy((static_cast<float>(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL)/* + (this->cellCounts[cell_leaf] > 0)*/);
-	if (this->cellCounts[cell_leaf])
-	{
-		this->AddEnergy(this->cellCounts[cell_leaf]);
-	}
-
-	if (this->cellCounts[cell_herbivore_mouth] || this->cellCounts[cell_herbivore_mouth])
-	{
-		this->ExpendEnergy(this->cellCounts[cell_herbivore_mouth] + (this->cellCounts[cell_carnivore_mouth] * 2));
-	}
 
 	return nullptr;
 }
@@ -403,7 +387,7 @@ bool Organism::CheckValidity()
 
 	// if ((this->nCells_ > 3) && (this->nCells_ == this->cellCounts[cell_leaf]))
 	// {
-		// return true;
+	// return true;
 	// }
 
 	if (this->cellCounts[cell_mover] == 0)
@@ -427,7 +411,9 @@ bool Organism::CheckValidity()
 	// invalid |= (this->cellCounts[cell_herbivore_mouth] == this->nCells());
 
 	// disallow herbivores that have leaves on them
-	invalid |= (this->cellCounts[cell_herbivore_mouth] > 0 && this->cellCounts[cell_leaf] > 0);
+	invalid |= (((this->cellCounts[cell_herbivore_mouth] > 0) ||
+				 (this->cellCounts[cell_carnivore_mouth] > 0)) &&
+				(this->cellCounts[cell_leaf] > 0));
 
 	// must have a mover to have a touch sensor
 	invalid |= (this->cellCounts[cell_touch] > 0 && this->cellCounts[cell_mover] == 0);
@@ -769,8 +755,6 @@ bool Organism::CanMoveToPosition(int _x_abs, int _y_abs)
 
 Organism *Organism::Reproduce()
 {
-	// this->reproductionCooldown = REPRODUCTION_COOLDOWN * this->maxEnergy;
-
 	int dirIndex = randInt(0, 7);
 	for (int i = 0; i < 8; i++)
 	{
@@ -784,19 +768,22 @@ Organism *Organism::Reproduce()
 			{
 				int dir_x_extra = 0;
 				int dir_y_extra = 0;
-				for (int k = 0; k < 16; k++)
+				if (randPercent(55))
 				{
-					dir_x_extra = randInt(-3, 3);
-					dir_y_extra = randInt(-3, 3);
-					if (dir_y_extra != 0 || dir_x_extra != 0)
+					for (int k = 0; k < 16; k++)
 					{
-						if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
+						dir_x_extra = randInt(-3, 3);
+						dir_y_extra = randInt(-3, 3);
+						if (dir_y_extra != 0 || dir_x_extra != 0)
 						{
-							break;
+							if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
+							{
+								break;
+							}
 						}
+						dir_x_extra = 0;
+						dir_y_extra = 0;
 					}
-					dir_x_extra = 0;
-					dir_y_extra = 0;
 				}
 
 				this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION);
@@ -940,15 +927,15 @@ Organism *Organism::Reproduce()
 					replicated->Rotate(randPercent(50));
 				}
 
-				if (this->cellCounts[cell_mover] && randPercent(50))
+				if (this->cellCounts[cell_mover] && randPercent(20))
 				{
 					replicated->brain->Mutate();
 				}
 				//\frac{\sqrt{a}}{\log\left(x+1\right)+.01}\left(x+5\right)
 				// replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(replicated->maxEnergy * replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
 				// this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(this->maxEnergy * this->nCells_);
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN(replicated->maxEnergy, replicated->nCells_);
-				this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_);
+				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN(replicated->maxEnergy, replicated->nCells_, replicated->cellCounts[cell_leaf]);
+				this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
 
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->MaxHealth());
@@ -956,7 +943,7 @@ Organism *Organism::Reproduce()
 				// {
 				// replicated->brain->Mutate();
 				// }
-				replicated->currentEnergy = replicated->maxEnergy * 0.4;
+				replicated->currentEnergy = randFloat(replicated->maxEnergy * 0.35, replicated->maxEnergy * 0.45);
 				replicated->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
 				return replicated;
 			}
@@ -972,7 +959,9 @@ Organism *Organism::Reproduce()
 		}
 	}
 	// printf("%f\n", 0.01 * REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_));
-	this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION * 0.2);
+	this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION * 0.1);
+	// this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
+
 	// this->ExpendEnergy(3.0);
 	// this->brain.Punish();
 	return nullptr;
@@ -1060,7 +1049,8 @@ bool Organism::Mutate()
 
 			if (canAdd)
 			{
-				this->AddCell(x_rel, y_rel, allLeaves ? new Cell_Leaf(0) : GenerateRandomCell());
+				this->AddCell(x_rel, y_rel, (allLeaves && randPercent(90)) ? new Cell_Leaf() : GenerateRandomCell());
+				this->requireConnectednessCheck = true;
 				return true;
 			}
 		}

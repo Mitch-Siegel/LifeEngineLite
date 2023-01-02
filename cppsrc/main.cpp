@@ -312,8 +312,9 @@ int main(int argc, char *argv[])
 
 	Organism *firstOrganism = board->CreateOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->direction = 3;
-	firstOrganism->AddCell(0, 0, new Cell_Bark());
-	firstOrganism->AddCell(0, -1, new Cell_Leaf(0));
+	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
+	firstOrganism->AddCell(0, 1, new Cell_Leaf(0));
+	// firstOrganism->AddCell(0, -1, new Cell_Leaf(0));
 	/*
 	firstOrganism->AddCell(-1, 0, new Cell_Leaf(0));
 	firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
@@ -573,25 +574,28 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		doneRendering = false;
-		board->GetMutex();
-		for (auto organismViewi = activeOrganismViews.begin(); organismViewi != activeOrganismViews.end();)
+		if (activeOrganismViews.size() > 0)
 		{
-			auto next = organismViewi;
-			++next;
-			if (!(organismViewi->second->isOpen()))
+			doneRendering = false;
+			board->GetMutex();
+			for (auto organismViewi = activeOrganismViews.begin(); organismViewi != activeOrganismViews.end();)
 			{
-				activeOrganismViews.erase(organismViewi->first);
+				auto next = organismViewi;
+				++next;
+				if (!(organismViewi->second->isOpen()))
+				{
+					activeOrganismViews.erase(organismViewi->first);
+				}
+				else
+				{
+					organismViewi->second->OnFrame(renderer);
+				}
+				organismViewi = next;
 			}
-			else
-			{
-				organismViewi->second->OnFrame(renderer);
-			}
-			organismViewi = next;
+			board->ReleaseMutex();
+			doneRendering = true;
+			renderCondition.notify_all();
 		}
-		board->ReleaseMutex();
-		doneRendering = true;
-		renderCondition.notify_all();
 
 		// Rendering
 		ImGui::Render();
@@ -599,8 +603,8 @@ int main(int argc, char *argv[])
 		SDL_RenderClear(renderer);
 
 		float cellsModified;
-		// only make the tick thread wait if not running at max speed
-		if (!maxSpeed || (frameCount % 30 == 0))
+		// only make the tick thread wait every time if not running at max speed, otherwise just once a second is good
+		if (!maxSpeed || (frameCount % 60 == 0))
 		{
 			doneRendering = false;
 			cellsModified = RenderBoard(renderer, frameCount, true);

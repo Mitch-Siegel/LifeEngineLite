@@ -75,31 +75,34 @@ bool Board::Tick()
 						Organism *grownFruit = this->CreateOrganism(expiringFood->x, expiringFood->y);
 						grownFruit->mutability = 10;
 						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
-						grownFruit->AddCell(0, 0, GenerateRandomCell());
-						Cell *secondRandomCell = GenerateRandomCell();
-						bool couldAddSecond = false;
+						
+						bool moverInCenter = randPercent(50);
+						
+						grownFruit->AddCell(0, 0, (moverInCenter ? static_cast<Cell *>(new Cell_Mover()) : static_cast<Cell *>(new Cell_Herbivore())));
+						// Cell *secondRandomCell = GenerateRandomCell();
+						// bool couldAddSecond = false;
 						int dirIndex = randInt(0, 7);
 						for (int j = 0; j < 8; j++)
 						{
 							int *thisDirection = directions[(j + dirIndex) % 8];
 							if (this->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
 							{
-								grownFruit->AddCell(thisDirection[0], thisDirection[1], secondRandomCell);
-								couldAddSecond = true;
+								grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(moverInCenter ? static_cast<Cell *>(new Cell_Herbivore()) : static_cast<Cell *>(new Cell_Mover())));
+								// couldAddSecond = true;
 								break;
 							}
 						}
-						if (!couldAddSecond)
-						{
-							delete secondRandomCell;
-						}
+						// if (!couldAddSecond)
+						// {
+							// delete secondRandomCell;
+						// }
 
 						if (!grownFruit->CheckValidity())
 						{
 							grownFruit->identifier_ = OrganismIdentifier(this->GetNextSpecies());
 							this->AddSpeciesMember(grownFruit);
 							grownFruit->lifespan = UINT64_MAX;
-							grownFruit->reproductionCooldown = REPRODUCTION_COOLDOWN(grownFruit->maxEnergy, grownFruit->nCells_);
+							grownFruit->reproductionCooldown = REPRODUCTION_COOLDOWN(grownFruit->maxEnergy, grownFruit->nCells_, grownFruit->cellCounts[cell_leaf]);
 							grownFruit->RecalculateStats();
 							grownFruit->AddEnergy(0.8 * grownFruit->MaxEnergy());
 							grownFruit->Heal(grownFruit->MaxHealth());

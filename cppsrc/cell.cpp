@@ -6,20 +6,20 @@
 
 extern Board *board;
 int CellEnergyDensities[cell_null] = {
-	0,	 // empty
-	0,	 // pcell_bark
-	0,	 // biomass
-	1,	 // leaf
-	8,	 // bark
-	2,	 // flower
-	0,	 // fruit
-	24,	 // herbivore
+	0,	// empty
+	0,	// pcell_bark
+	0,	// biomass
+	1,	// leaf
+	8,	// bark
+	2,	// flower
+	0,	// fruit
+	24, // herbivore
 	60, // carnivore
-	30,	 // mover
-	0,	 // killer
-	-5,	 // armor
-	5,	 // touch sensor
-	5,	 // eye
+	30, // mover
+	0,	// killer
+	-5, // armor
+	5,	// touch sensor
+	5,	// eye
 };
 
 /*
@@ -186,6 +186,10 @@ Cell_Biomass *Cell_Biomass::Clone()
 // leaf cell
 Cell_Leaf::~Cell_Leaf()
 {
+	if(this->associatedFlower != nullptr)
+	{
+		this->associatedFlower->associatedLeaf = nullptr;
+	}
 }
 
 Cell_Leaf::Cell_Leaf()
@@ -194,6 +198,7 @@ Cell_Leaf::Cell_Leaf()
 	this->myOrganism = nullptr;
 	this->flowering = randPercent(LEAF_FLOWERING_ABILITY_PERCENT);
 	this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
+	this->associatedFlower = nullptr;
 }
 
 Cell_Leaf::Cell_Leaf(int floweringPercent)
@@ -202,11 +207,12 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 	this->myOrganism = nullptr;
 	this->flowering = randPercent(floweringPercent);
 	this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
+	this->associatedFlower = nullptr;
 }
 
 void Cell_Leaf::Tick()
 {
-	if (!this->flowering)
+	if (!this->flowering || (this->myOrganism->Energy() < this->myOrganism->MaxEnergy() * FLOWER_GROW_ENERGY_PROPORTION))
 	{
 		return;
 	}
@@ -218,7 +224,8 @@ void Cell_Leaf::Tick()
 	// can flower
 	else
 	{
-		if (this->myOrganism->Energy() > (FLOWER_COST + 1) &&
+		if ((this->associatedFlower == nullptr) &&
+			(this->myOrganism->Energy() > (FLOWER_COST + 1)) &&
 			randPercent(PLANT_GROW_PERCENT))
 		{
 			int checkDirIndex = randInt(0, 3);
@@ -230,7 +237,9 @@ void Cell_Leaf::Tick()
 				if (board->isCellOfType(x_abs, y_abs, cell_empty))
 				{
 					this->myOrganism->ExpendEnergy(FLOWER_COST);
-					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
+					Cell_Flower *grownFlower = new Cell_Flower(this);
+					this->associatedFlower = grownFlower;
+					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, grownFlower);
 					this->flowerCooldown = LEAF_FLOWERING_COOLDOWN;
 					return;
 				}
@@ -246,7 +255,9 @@ const bool &Cell_Leaf::CanFlower()
 
 Cell_Leaf *Cell_Leaf::Clone()
 {
-	return new Cell_Leaf(*this);
+	Cell_Leaf *cloned = new Cell_Leaf(*this);
+	cloned->associatedFlower = nullptr;
+	return cloned;
 }
 
 // bark cell
@@ -284,11 +295,11 @@ void Cell_Bark::Tick()
 		int *thisDirection = directions[(checkDirIndex + i) % 4];
 		int x_abs = this->x + thisDirection[0];
 		int y_abs = this->y + thisDirection[1];
-		if (board->isCellOfType(x_abs, y_abs, cell_empty) && canGrow && this->myOrganism->Energy() > BARK_GROW_COST)
+		if (canGrow && board->isCellOfType(x_abs, y_abs, cell_empty) && this->myOrganism->Energy() > BARK_GROW_COST)
 		{
 			if (randPercent(BARK_PLANT_VS_THORN))
 			{
-				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf(LEAF_FLOWERING_ABILITY_PERCENT));
+				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf());
 			}
 			else
 			{
@@ -304,7 +315,7 @@ void Cell_Bark::Tick()
 		}
 	}
 	// any leaves attached to bark generate bonus energy
-	this->myOrganism->AddEnergy(static_cast<double>(bonusEnergy) / 2);
+	// this->myOrganism->AddEnergy(static_cast<double>(bonusEnergy) * (1.875 / LIFESPAN_MULTIPLIER) / BARK_BONUS_ENERGY_DIVIDER);
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -318,24 +329,28 @@ Cell_Bark *Cell_Bark::Clone()
 // flower cell
 Cell_Flower::~Cell_Flower()
 {
+	if (this->associatedLeaf != nullptr)
+	{
+		this->associatedLeaf->associatedFlower = nullptr;
+	}
 }
 
-Cell_Flower::Cell_Flower()
+Cell_Flower::Cell_Flower(Cell_Leaf *associatedLeaf)
 {
 	this->type = cell_flower;
 	this->myOrganism = nullptr;
 	this->bloomCooldown = FLOWER_BLOOM_COOLDOWN;
+	this->associatedLeaf = associatedLeaf;
 }
 
 void Cell_Flower::Tick()
 {
 	if (this->bloomCooldown > 0)
 	{
-		this->myOrganism->ExpendEnergy(FLOWER_BLOOM_RECHARGE_TICK_COST);
 		this->bloomCooldown--;
 		return;
 	}
-	else if(this->myOrganism->reproductionCooldown > 0)
+	else if ((this->myOrganism->reproductionCooldown > 0) && (this->myOrganism->Energy() < (this->myOrganism->MaxEnergy() * FLOWER_BLOOM_ENERGY_PROPORTION)))
 	{
 		return;
 	}
@@ -366,17 +381,18 @@ void Cell_Flower::Tick()
 		{
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
-				//if (this->myOrganism->Energy() > (FLOWER_COST + 1) &&
-				if (randPercent(FLOWER_EXPAND_PERCENT)/* && (this->myOrganism->Energy() > (FLOWER_COST + 1))*/)
-				{
-					//this->myOrganism->ExpendEnergy(FLOWER_COST);
-					this->myOrganism->ReplaceCell(this, new Cell_Leaf(75));
-				}
-				else
-				{
-					this->myOrganism->RemoveCell(this);
-					board->replaceCell(this, new Cell_Empty());
-				}
+				// if (this->myOrganism->Energy() > (FLOWER_COST + 1) &&
+				//  if (randPercent(FLOWER_EXPAND_PERCENT)/* && (this->myOrganism->Energy() > (FLOWER_COST + 1))*/)
+				//  {
+				// this->myOrganism->ExpendEnergy(FLOWER_COST);
+
+				// this->myOrganism->ReplaceCell(this, new Cell_Leaf(75));
+				// }
+				// else
+				// {
+				this->myOrganism->RemoveCell(this);
+				board->replaceCell(this, new Cell_Empty());
+				// }
 			}
 		}
 	}
@@ -386,7 +402,7 @@ Cell_Flower *Cell_Flower::Clone()
 {
 	printf("Illegal clone of cell_flower!\n");
 	exit(1);
-	return new Cell_Flower(*this);
+	// return new Cell_Flower(*this);
 }
 
 // fruit cell
@@ -679,8 +695,7 @@ void Cell_Killer::Tick()
 			}
 		}
 	}
-	// base cost of 1 every few ticks
-	// then some addl cost to actually hurt stuff
+	// base cost plus some addl cost per damage done
 	this->myOrganism->ExpendEnergy((damageDone * KILLER_DAMAGE_COST) + KILLER_TICK_COST);
 
 	int adjacentLeaves = 0;
