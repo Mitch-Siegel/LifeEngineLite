@@ -336,7 +336,9 @@ unsigned int Brain::GetNewSensorIndex()
 
     for (int i = 0; i < cell_null; i++)
     {
-        size_t inputId = this->AddInput();
+        // size_t inputId = this->AddInput();
+        this->AddInput();
+        /*
         if (randPercent(40))
         {
             if (randPercent(60))
@@ -367,6 +369,7 @@ unsigned int Brain::GetNewSensorIndex()
                 }
             }
         }
+        */
     }
     return this->nextSensorIndex++;
 }

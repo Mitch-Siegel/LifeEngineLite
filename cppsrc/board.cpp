@@ -73,7 +73,7 @@ bool Board::Tick()
 					if (randPercent(FRUIT_GROW_PERCENT))
 					{
 						Organism *grownFruit = this->CreateOrganism(expiringFood->x, expiringFood->y);
-						grownFruit->mutability = 5;
+						grownFruit->mutability = 15;
 						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
 						
 						bool moverInCenter = randPercent(50);

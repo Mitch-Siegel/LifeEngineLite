@@ -18,8 +18,8 @@ int CellEnergyDensities[cell_null] = {
 	30, // mover
 	0,	// killer
 	-5, // armor
-	5,	// touch sensor
-	5,	// eye
+	1,	// touch sensor
+	1,	// eye
 };
 
 /*
@@ -325,7 +325,7 @@ void Cell_Bark::Tick()
 		}
 	}
 	// any leaves attached to bark generate bonus energy
-	this->myOrganism->AddEnergy((static_cast<double>(bonusEnergy) * PHOTOSYNTHESIS_ENERGY_MULTIPLIER) / BARK_BONUS_ENERGY_DIVIDER);
+	// this->myOrganism->AddEnergy((static_cast<double>(bonusEnergy) * PHOTOSYNTHESIS_ENERGY_MULTIPLIER) / BARK_BONUS_ENERGY_DIVIDER);
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -519,7 +519,7 @@ void Cell_Herbivore::Tick()
 
 				case cell_fruit:
 					gainedEnergy = FRUIT_FOOD_ENERGY;
-					this->digestCooldown = 3;
+					this->digestCooldown = 2;
 					break;
 
 				case cell_plantmass:

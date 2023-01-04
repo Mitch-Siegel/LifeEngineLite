@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (MOVE_COST_MULTIPLIER * (sqrt(nCells_) - 1))
+#define moveCost(nCells) (MOVE_COST_MULTIPLIER * sqrt(nCells_))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -154,10 +154,11 @@ Organism *Organism::Tick()
 		// this->AddEnergy(this->cellCounts[cell_leaf] / PHOTOSYNTHESIS_INTERVAL);
 	}
 
-	if (this->cellCounts[cell_herbivore_mouth] || this->cellCounts[cell_herbivore_mouth])
+	if (this->cellCounts[cell_herbivore_mouth])
 	{
-		this->ExpendEnergy(this->cellCounts[cell_herbivore_mouth] + (this->cellCounts[cell_carnivore_mouth] * 8));
+		this->ExpendEnergy(this->cellCounts[cell_carnivore_mouth] * 8);
 	}
+	
 
 	/*if (this->nCells_ == this->cellCounts[cell_leaf])
 	{
@@ -455,7 +456,7 @@ bool Organism::CheckValidity()
 	}
 	else
 	{
-		if (this->cellCounts[cell_leaf] > 0.5 * this->nCells_)
+		if (this->cellCounts[cell_leaf] > (0.5 * this->nCells_))
 		{
 			return true;
 		}
@@ -467,8 +468,7 @@ bool Organism::CheckValidity()
 	// invalid |= (this->cellCounts[cell_herbivore_mouth] == this->nCells());
 
 	// disallow herbivores that have leaves on them
-	invalid |= (((this->cellCounts[cell_herbivore_mouth] > 0) ||
-				 (this->cellCounts[cell_carnivore_mouth] > 0)) &&
+	invalid |= (((this->cellCounts[cell_herbivore_mouth] > 0) || (this->cellCounts[cell_carnivore_mouth] > 0)) &&
 				(this->cellCounts[cell_leaf] > 0));
 
 	// must have a mover to have a touch sensor
@@ -489,6 +489,7 @@ bool Organism::CheckValidity()
 			{
 				hasCenterCell = true;
 			}
+			/*
 			if (c->type == cell_killer)
 			{
 				bool killerValid = false;
@@ -511,6 +512,7 @@ bool Organism::CheckValidity()
 					break;
 				}
 			}
+			*/
 		}
 	}
 
@@ -1165,7 +1167,12 @@ void Organism::RemoveCell(Cell *_myCell)
 	this->myCells.erase(_myCell);
 
 	// lose the proportion of the organism's energy that this cell would "hold"
-	float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type]) / this->maxEnergy) * this->currentEnergy;
+	// float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
+
+	// lose the entire removed cell's worth of energy ("shock" or similar cost to deal with losing this cell)
+	float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy);
+
+
 	if (energyLost > 0.0) // check because some cells have negative energy densities
 	{
 		this->ExpendEnergy(energyLost);
@@ -1198,7 +1205,7 @@ enum OrganismClassifications Organism::Classify()
 					 this->cellCounts[cell_bark] +
 					 this->cellCounts[cell_flower];
 	// if at least 1/3 plant or can't move, it's a plant
-	if (static_cast<uint64_t>(plantCells * 3) >= this->nCells() || !this->cellCounts[cell_mover])
+	if ((static_cast<uint64_t>(plantCells * 3) >= this->nCells()) || !this->cellCounts[cell_mover])
 	{
 		return class_plant;
 	}
