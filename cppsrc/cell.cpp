@@ -186,7 +186,7 @@ Cell_Biomass *Cell_Biomass::Clone()
 // leaf cell
 Cell_Leaf::~Cell_Leaf()
 {
-	if(this->associatedFlower != nullptr)
+	if (this->associatedFlower != nullptr)
 	{
 		this->associatedFlower->associatedLeaf = nullptr;
 	}
@@ -289,6 +289,7 @@ void Cell_Bark::Tick()
 
 	int bonusEnergy = 0;
 	bool canGrow = this->actionCooldown == 0;
+	// even though leaves can exist in a 5x5 around bark, bark will only grow a leaf directly adjacent
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)
 	{
@@ -297,9 +298,18 @@ void Cell_Bark::Tick()
 		int y_abs = this->y + thisDirection[1];
 		if (canGrow && board->isCellOfType(x_abs, y_abs, cell_empty) && this->myOrganism->Energy() > BARK_GROW_COST)
 		{
+			// high chance to grow plant vs thorn
 			if (randPercent(BARK_PLANT_VS_THORN))
 			{
-				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf());
+				// high chance to grow leaf vs bark
+				if (randPercent(BARK_PLANT_VS_THORN))
+				{
+					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf());
+				}
+				else
+				{
+					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Bark());
+				}
 			}
 			else
 			{
@@ -315,7 +325,7 @@ void Cell_Bark::Tick()
 		}
 	}
 	// any leaves attached to bark generate bonus energy
-	// this->myOrganism->AddEnergy(static_cast<double>(bonusEnergy) * (1.875 / LIFESPAN_MULTIPLIER) / BARK_BONUS_ENERGY_DIVIDER);
+	this->myOrganism->AddEnergy((static_cast<double>(bonusEnergy) * PHOTOSYNTHESIS_ENERGY_MULTIPLIER) / BARK_BONUS_ENERGY_DIVIDER);
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -382,17 +392,15 @@ void Cell_Flower::Tick()
 			if (randPercent(FLOWER_WILT_CHANCE))
 			{
 				// if (this->myOrganism->Energy() > (FLOWER_COST + 1) &&
-				//  if (randPercent(FLOWER_EXPAND_PERCENT)/* && (this->myOrganism->Energy() > (FLOWER_COST + 1))*/)
-				//  {
-				// this->myOrganism->ExpendEnergy(FLOWER_COST);
-
-				// this->myOrganism->ReplaceCell(this, new Cell_Leaf(75));
-				// }
-				// else
-				// {
-				this->myOrganism->RemoveCell(this);
-				board->replaceCell(this, new Cell_Empty());
-				// }
+				if (randPercent(FLOWER_EXPAND_PERCENT) /* && (this->myOrganism->Energy() > (FLOWER_COST + 1))*/)
+				{
+					this->myOrganism->ReplaceCell(this, new Cell_Leaf(100));
+				}
+				else
+				{
+					this->myOrganism->RemoveCell(this);
+					board->replaceCell(this, new Cell_Empty());
+				}
 			}
 		}
 	}

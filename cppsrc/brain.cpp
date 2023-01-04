@@ -17,12 +17,16 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     this->freeWill[0] = randFloat(0.0, 1.0);
     this->freeWill[1] = randFloat(0.0, 1.0);
 
-    size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
-    while (!this->TryAddRandomInputConnectionByDst(newId))
-        ;
+    for (int i = 0; i < 2; i++)
+    {
 
-    while (!this->TryAddRandomOutputConnectionBySrc(newId))
-        ;
+        size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+        while (!this->TryAddRandomInputConnectionByDst(newId))
+            ;
+
+        while (!this->TryAddRandomOutputConnectionBySrc(newId))
+            ;
+    }
 
     int nIO = randInt(0, 2);
     while (nIO -= this->TryAddRandomInputOutputConnection())
@@ -163,19 +167,16 @@ bool Brain::TryAddRandomOutputConnection()
 
 void Brain::SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion)
 {
-    for (int i = 0; i < 2; i++)
+    this->freeWill[0] += randFloat(-0.25, 0.25);
+    if (this->freeWill[0] > 1.0)
     {
-
-        this->freeWill[i] += randFloat(-0.25, 0.25);
-        if (this->freeWill[i] > 1.0)
-        {
-            this->freeWill[i] = 1.0;
-        }
-        else if (this->freeWill[i] < 0.0)
-        {
-            this->freeWill[i] = 0.0;
-        }
+        this->freeWill[0] = 1.0;
     }
+    else if (this->freeWill[0] < 0.0)
+    {
+        this->freeWill[0] = 0.0;
+    }
+    this->freeWill[1] = randFloat(0.0, 1.0);
 
     this->SetInput(0, {this->freeWill[0], this->freeWill[1], energyProportion, healthProportion});
 }
@@ -238,13 +239,16 @@ void Brain::Mutate()
     // add/remove a neuron with 20% probability
     if (randPercent(20))
     {
-        if (this->size(1) > 1 && randPercent(50))
+        // 49% to remove a hidden neuron, 51% to add one (generally trend towards more complex brains)
+        if (this->size(1) > 1 && randPercent(49))
         {
             this->RemoveUnit(this->layers[1][randInt(0, this->size(1) - 1)].Id());
         }
         else
         {
-            this->AddRandomHiddenNeuron();
+            // generate a completely unconnected neuron, rely on further mutations to connect to it
+            this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+            // this->AddRandomHiddenNeuron();
         }
     }
     // add/remove/modify connection with 80% probability
@@ -268,27 +272,29 @@ void Brain::Mutate()
         }
         else // add/remove connection
         {
-            if (randPercent(50) || this->connections().size() < 3) // add connection
+            // 51% to add a connection, 49% to remove one (generally trend towards more complex brains)
+            if (randPercent(51) || this->connections().size() < 3) // add connection
             {
                 int nTries = 0;
                 bool couldAdd = false;
                 while (!couldAdd && (nTries++ < 20))
                 {
-                    switch (randInt(0, 3))
+                    switch (randInt(0, 4))
                     {
                     case 0:
                         couldAdd = !this->TryAddRandomInputConnection();
                         break;
 
                     case 1:
+                    case 2:
                         couldAdd = !this->TryAddRandomHiddenConnection();
                         break;
 
-                    case 2:
+                    case 3:
                         couldAdd = !this->TryAddRandomOutputConnection();
                         break;
 
-                    case 3:
+                    case 4:
                         couldAdd = !this->TryAddRandomInputOutputConnection();
                         break;
                     }

@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (MOVE_COST_MULTIPLIER * sqrt(pow(nCells, 1.5)))
+#define moveCost(nCells) (MOVE_COST_MULTIPLIER * (sqrt(nCells_) - 1))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -139,7 +139,7 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	this->ExpendEnergy(1 - (this->cellCounts[cell_leaf] > 0));
+	this->ExpendEnergy((PHOTOSYNTHESIS_ENERGY_MULTIPLIER * (sqrt(this->nCells_) - 1)));
 	// this->ExpendEnergy(this->nCells_ - (this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]));
 	// if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]) > 0)
 	// {
@@ -148,7 +148,7 @@ Organism *Organism::Tick()
 
 	if (this->cellCounts[cell_leaf])
 	{
-		this->AddEnergy((0.9 / LIFESPAN_MULTIPLIER) * sqrt(this->cellCounts[cell_leaf]));
+		this->AddEnergy(PHOTOSYNTHESIS_ENERGY_MULTIPLIER * this->cellCounts[cell_leaf]);
 		// this->AddEnergy((nLeaves - sqrt(nLeaves - 0.75)) / PHOTOSYNTHESIS_INTERVAL);
 		// x-\sqrt{\left(x-0.75\right)}
 		// this->AddEnergy(this->cellCounts[cell_leaf] / PHOTOSYNTHESIS_INTERVAL);
@@ -311,6 +311,7 @@ void Organism::RecalculateStats()
 void Organism::VerifyCellConnectedness()
 {
 	std::set<Cell *> unconnectedCells;
+	std::set<Cell *> removeAnyways;
 	// std::map<Cell *, bool> cellValidity;
 	for (Cell *c : this->myCells)
 	{
@@ -329,6 +330,54 @@ void Organism::VerifyCellConnectedness()
 	{
 		Cell *examined = searchQueue.back();
 		searchQueue.pop_back();
+
+		// ensure leaves are within a 3x3 of the center of organism or 5x5 of a bark
+		if (examined->type == cell_leaf)
+		{
+			int x_rel = examined->x - this->x;
+			int y_rel = examined->y - this->y;
+			if (abs(y_rel) > 1 || abs(x_rel) > 1)
+			{
+				bool barkAdjacent = false;
+				for (int i = 0; i < 8; i++)
+				{
+					int x_check = examined->x + directions[i][0];
+					int y_check = examined->y + directions[i][1];
+					if (!board->boundCheckPos(x_check, y_check))
+					{
+						Cell *thisNeighbor = board->cells[y_check][x_check];
+						if ((thisNeighbor->myOrganism == this) && (thisNeighbor->type == cell_bark))
+						{
+							barkAdjacent = true;
+						}
+					}
+				}
+
+				if (!barkAdjacent)
+				{
+					static int secondRing[16][2] = {{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}, {-1, 2}, {0, 2}, {1, 2}, {2, 2}, {2, 1}, {2, 0}, {2, -1}, {2, -2}, {1, -2}, {0, -2}, {-1, -2}};
+					for (int i = 0; i < 16; i++)
+					{
+						int x_check = examined->x + secondRing[i][0];
+						int y_check = examined->y + secondRing[i][1];
+						if (!board->boundCheckPos(x_check, y_check))
+						{
+							Cell *thisNeighbor = board->cells[y_check][x_check];
+							if ((thisNeighbor->myOrganism == this) && (thisNeighbor->type == cell_bark))
+							{
+								barkAdjacent = true;
+							}
+						}
+					}
+				}
+
+				// if it's not close enough to center or otherwise next to a bark, override and mark as unconnected
+				if (!barkAdjacent)
+				{
+					removeAnyways.insert(examined);
+				}
+			}
+		}
 		// cellValidity[examined] = true;
 		for (int i = 0; i < 8; i++)
 		{
@@ -337,7 +386,7 @@ void Organism::VerifyCellConnectedness()
 			if (!board->boundCheckPos(x_abs, y_abs))
 			{
 				Cell *neighbor = board->cells[y_abs][x_abs];
-				if ((neighbor->myOrganism) == this && unconnectedCells.count(neighbor))
+				if (neighbor->myOrganism == this && unconnectedCells.count(neighbor))
 				{
 					unconnectedCells.erase(neighbor);
 					// cellValidity[neighbor] = true;
@@ -347,17 +396,24 @@ void Organism::VerifyCellConnectedness()
 		}
 	}
 
-	if (unconnectedCells.size())
+	for (auto toRemove : unconnectedCells)
 	{
-		for (auto toRemove : unconnectedCells)
-		{
-			this->myCells.erase(toRemove);
-			this->nCells_--;
-			this->ReplaceKilledCell(toRemove);
-			// board->replaceCell(toRemove, new Cell_Empty());
-		}
-		this->RecalculateStats();
+		this->myCells.erase(toRemove);
+		this->nCells_--;
+		this->ReplaceKilledCell(toRemove);
 	}
+
+	for (auto toRemoveAnyways : removeAnyways)
+	{
+		if (this->myCells.count(toRemoveAnyways))
+		{
+			this->myCells.erase(toRemoveAnyways);
+			this->nCells_--;
+			this->ReplaceKilledCell(toRemoveAnyways);
+		}
+	}
+
+	this->RecalculateStats();
 
 	/*
 	for (auto v : cellValidity)
@@ -424,6 +480,7 @@ bool Organism::CheckValidity()
 	bool hasCenterCell = false;
 
 	// plants must have a killer cell next to bark
+	// leaves must be within a 3x3 around the center cell, or a bark
 	if (!invalid && this->cellCounts[cell_mover] == 0 && this->cellCounts[cell_killer])
 	{
 		for (Cell *c : this->myCells)
@@ -927,7 +984,7 @@ Organism *Organism::Reproduce()
 					replicated->Rotate(randPercent(50));
 				}
 
-				if (this->cellCounts[cell_mover] && randPercent(20))
+				if (this->cellCounts[cell_mover] && randPercent(40))
 				{
 					replicated->brain->Mutate();
 				}
@@ -990,9 +1047,8 @@ bool Organism::Mutate()
 	}
 	else
 	{
-		bool allLeaves = this->cellCounts[cell_leaf] == this->nCells();
 		// remove a cell
-		if (this->nCells() > 2 && randPercent(50) && !allLeaves)
+		if (this->nCells() > 2 && randPercent(50))
 		{
 			int removedIndex = randInt(0, this->nCells() - 2);
 			auto removedIterator = this->myCells.begin();
@@ -1049,7 +1105,7 @@ bool Organism::Mutate()
 
 			if (canAdd)
 			{
-				this->AddCell(x_rel, y_rel, (allLeaves && randPercent(90)) ? new Cell_Leaf() : GenerateRandomCell());
+				this->AddCell(x_rel, y_rel, GenerateRandomCell());
 				this->requireConnectednessCheck = true;
 				return true;
 			}
