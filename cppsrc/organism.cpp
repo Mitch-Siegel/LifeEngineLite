@@ -8,7 +8,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (MOVE_COST_MULTIPLIER * sqrt(nCells_))
+#define moveCost(nCells) (Settings.Get(WorldSettings::move_cost_multiplier) * sqrt(nCells_))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -25,7 +25,7 @@ Organism::Organism(int center_x, int center_y)
 	this->nCells_ = 0;
 	this->alive = true;
 	this->reproductionCooldown = 0;
-	this->mutability = DEFAULT_MUTABILITY;
+	this->mutability = Settings.Get(WorldSettings::default_mutability);
 	this->brain = new Brain();
 	this->direction = randInt(0, 3);
 	this->requireConnectednessCheck = false;
@@ -49,7 +49,7 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 	this->nCells_ = 0;
 	this->alive = true;
 	this->reproductionCooldown = 0;
-	this->mutability = DEFAULT_MUTABILITY;
+	this->mutability = Settings.Get(WorldSettings::default_mutability);
 	this->brain = new Brain(baseBrain);
 	this->direction = randInt(0, 3);
 	this->requireConnectednessCheck = false;
@@ -139,7 +139,7 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	this->ExpendEnergy((PHOTOSYNTHESIS_ENERGY_MULTIPLIER * (sqrt(this->nCells_) - 1)));
+	this->ExpendEnergy((Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * (sqrt(this->nCells_) - 1)));
 	// this->ExpendEnergy(this->nCells_ - (this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]));
 	// if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]) > 0)
 	// {
@@ -148,7 +148,7 @@ Organism *Organism::Tick()
 
 	if (this->cellCounts[cell_leaf])
 	{
-		this->AddEnergy(PHOTOSYNTHESIS_ENERGY_MULTIPLIER * this->cellCounts[cell_leaf]);
+		this->AddEnergy(Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * this->cellCounts[cell_leaf]);
 		// this->AddEnergy((nLeaves - sqrt(nLeaves - 0.75)) / PHOTOSYNTHESIS_INTERVAL);
 		// x-\sqrt{\left(x-0.75\right)}
 		// this->AddEnergy(this->cellCounts[cell_leaf] / PHOTOSYNTHESIS_INTERVAL);
@@ -171,7 +171,7 @@ Organism *Organism::Tick()
 
 	if (this->reproductionCooldown == 0)
 	{
-		if (this->currentEnergy > ((this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION) * 1.1))
+		if (this->currentEnergy > ((this->maxEnergy * Settings.Get(WorldSettings::reproduction_energy_proportion)) * 1.1))
 		{
 			return this->Reproduce();
 		}
@@ -290,9 +290,9 @@ void Organism::RecalculateStats()
 	{
 		this->maxEnergy = calculatedMaxEnergy;
 	}
-	this->maxEnergy *= ENERGY_DENSITY_MULTIPLIER;
+	this->maxEnergy *= Settings.Get(WorldSettings::energy_density_multiplier);
 
-	this->maxHealth = this->nCells() * MAX_HEALTH_MULTIPLIER + (this->cellCounts[cell_armor] * ARMOR_HEALTH_BONUS);
+	this->maxHealth = this->nCells() * Settings.Get(WorldSettings::max_health_multiplier) + (this->cellCounts[cell_armor] * Settings.Get(WorldSettings::armor_health_bonus));
 	if (this->currentHealth > this->maxHealth)
 	{
 		this->currentHealth = this->maxHealth;
@@ -845,7 +845,7 @@ Organism *Organism::Reproduce()
 					}
 				}
 
-				this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION);
+				this->ExpendEnergy(this->maxEnergy * Settings.Get(WorldSettings::reproduction_energy_proportion));
 
 				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra, *this->brain);
 				replicated->direction = this->direction;
@@ -865,7 +865,7 @@ Organism *Organism::Reproduce()
 						int this_rel_y = thisCell->y - this->y;
 						Cell_Bark *replicatedCell = static_cast<Cell_Bark *>(thisCell->Clone());
 						replicatedCell->myOrganism = replicated;
-						replicatedCell->integrity = BARK_MAX_INTEGRITY;
+						replicatedCell->integrity = Settings.Get(WorldSettings::bark_max_integrity);
 						replicated->AddCell(this_rel_x, this_rel_y, replicatedCell);
 					}
 					break;
@@ -1018,7 +1018,7 @@ Organism *Organism::Reproduce()
 		}
 	}
 	// printf("%f\n", 0.01 * REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_));
-	this->ExpendEnergy(this->maxEnergy * REPRODUCTION_ENERGY_PROPORTION * 0.1);
+	this->ExpendEnergy(this->maxEnergy * Settings.Get(WorldSettings::reproduction_energy_proportion) * 0.1);
 	// this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
 
 	// this->ExpendEnergy(3.0);
@@ -1170,7 +1170,7 @@ void Organism::RemoveCell(Cell *_myCell)
 	// float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
 
 	// lose the entire removed cell's worth of energy ("shock" or similar cost to deal with losing this cell)
-	float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy);
+	float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * Settings.Get(WorldSettings::energy_density_multiplier)) / this->maxEnergy);
 
 
 	if (energyLost > 0.0) // check because some cells have negative energy densities

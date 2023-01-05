@@ -8,6 +8,7 @@
 #include "lifeforms.h"
 #include "rng.h"
 #include "organismview.h"
+#include "util.h"
 
 int directions[8][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
 extern std::map<OrganismIdentifier, std::unique_ptr<OrganismView>> activeOrganismViews;
@@ -70,7 +71,7 @@ bool Board::Tick()
 
 				case cell_fruit:
 					// if we roll grow percent, create a new random organism
-					if (randPercent(FRUIT_GROW_PERCENT))
+					if (randPercent(Settings.Get(WorldSettings::fruit_grow_percent)))
 					{
 						Organism *grownFruit = this->CreateOrganism(expiringFood->x, expiringFood->y);
 						grownFruit->mutability = 15;
@@ -115,7 +116,7 @@ bool Board::Tick()
 					}
 					else
 					{
-						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Plantmass(FRUIT_SPOIL_TIME));
+						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Plantmass(Settings.Get(WorldSettings::fruit_spoil_time)));
 					}
 					break;
 

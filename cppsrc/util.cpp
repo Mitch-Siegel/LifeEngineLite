@@ -16,106 +16,113 @@ extern bool maxSpeed;
 extern int ticksThisSecond;
 extern int targetTickrate;
 extern long int leftoverMicros;
-/*
-float TickratePID::Tick(float instanteneousMeasurement)
-{
-	if (instanteneousMeasurement == 0.0)
-	{
-		instanteneousMeasurement = 1.0;
-	}
-	// printf("Current instanteneous framerate: %f\n", instanteneousMeasurement);
-	float framerate = ImGui::GetIO().Framerate;
-	float error = ((1000000.0 / targetTickrate) - instanteneousMeasurement);
-	if (maxSpeed)
-	{
-		error -= (10000.0 * (59.99 - framerate));
-	}
-	float dt = 1.0 / targetTickrate;
-	// printf("DT is % .8f, error is % .8f\n", dt, error);
-	// printf("Error * dt is %f\n", error * dt);
-	float derivative = (error - previous_error) / dt;
-	float delta = Kp * error + Ki * leftoverMicros + Kd * derivative;
-	// printf("P:% .8f I:% .8f D:% .8f\n", error * Kp, leftoverMicros * Ki, derivative * Kd);
-	// printf("PID Delta returned: % .8f\n\n", delta);
-	previous_error = error;
-	return delta;
-}
-*/
 
-/*
-void TickMain()
+float WorldSettings::GetBase(WorldSettings::SettingNames s)
 {
-	if (board == nullptr)
-	{
-		printf("TickMain called with null board!\nBoard must be instantiated first!\n");
-		return;
-	}
+	return SettingsBase[s];
+}
 
-	auto lastFrame = std::chrono::high_resolution_clock::now();
-	while (running)
+float WorldSettings::Get(WorldSettings::SettingNames s)
+{
+	switch (s)
 	{
-		if (autoplay)
-		{
-			board->Tick();
-			ticksThisSecond++;
-			auto frameEnd = std::chrono::high_resolution_clock::now();
-			auto diff = frameEnd - lastFrame;
-			size_t micros = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
-			int leftoverThisStep = static_cast<int>((1000000.0 / targetTickrate) - micros);
-			leftoverMicros += leftoverThisStep;
-			// lastFrame = frameEnd;
-			if (leftoverMicros > 5000)
-			{
-				if (maxSpeed)
-				{
-					targetTickrate += pidController.Tick(micros);
-				}
-				int delayDuration = leftoverMicros / 1000;
-				boost::this_thread::sleep(boost::posix_time::milliseconds(delayDuration));
-				leftoverMicros -= delayDuration * 1000;
-				auto delayEnd = std::chrono::high_resolution_clock::now();
-				auto delayDiff = delayEnd - frameEnd;
-				size_t actualDelayMicros = std::chrono::duration_cast<std::chrono::microseconds>(delayDiff).count();
-				leftoverMicros -= (delayDuration * 1000) - static_cast<int>(actualDelayMicros);
-				lastFrame = delayEnd;
-			}
-			else
-			{
-				if ((leftoverMicros < -10 * (1000000.0 / targetTickrate)) || maxSpeed)
-				{
-					targetTickrate += pidController.Tick(micros);
-					if (targetTickrate < 1.0)
-					{
-						targetTickrate = 1.0;
-					}
-				}
-				lastFrame = frameEnd;
-			}
-		}
-		else
-		{
-			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-		}
+	case default_mutability:
+	case lifespan_multiplier:
+	case reproduction_energy_proportion:
+		return this->values[s];
+
+	case reproduction_cooldown_multiplier:
+		return this->values[s] * this->values[lifespan_multiplier];
+
+	case max_health_multiplier:
+	case energy_density_multiplier:
+		return this->values[s];
+
+	case move_cost_multiplier:
+	case food_multiplier:
+		return this->values[s] * this->values[energy_density_multiplier];
+
+	case leaf_food_energy:
+	case flower_food_energy:
+	case fruit_food_energy:
+	case plantmass_food_energy:
+	case biomass_food_energy:
+		return this->values[s] * this->values[food_multiplier];
+
+	// leaf
+	case photosynthesis_energy_multiplier:
+		return this->values[s];
+
+	case leaf_flowering_cost:
+		return this->values[s] * this->values[energy_density_multiplier];
+
+	case leaf_flowering_cooldown:
+	case leaf_flowering_ability_percent:
+		return this->values[s];
+
+	// flower
+	case flower_bloom_cost:
+		return this->values[s] * this->values[energy_density_multiplier];
+
+	case flower_bloom_cooldown:
+	case flower_wilt_chance:
+	case flower_expand_percent:
+	case spoil_time_base:
+
+	case plantmass_spoil_time:
+	case biomass_spoil_time:
+	case fruit_spoil_time:
+		return this->values[s] * this->values[spoil_time_base];
+
+	case fruit_grow_percent:
+	case bark_grow_cooldown:
+	case bark_plant_vs_thorn:
+		return this->values[s];
+
+	case bark_grow_cost:
+		return this->values[s] * this->values[energy_density_multiplier];
+
+	case bark_max_integrity:
+		return this->values[s];
+
+	// killer
+	case killer_tick_cost:
+	case killer_damage_cost:
+		return this->values[s] * this->values[energy_density_multiplier];
+
+	// armor
+	case armor_health_bonus:
+	case eye_max_seeing_distance:
+		return this->values[s];
+
+	case null:
+	default:
+		printf("null/unexpected setting passed to WorldSettings::Get()\n");
+		exit(1);
 	}
 }
-*/
+
+void WorldSettings::Set(WorldSettings::SettingNames s, float value)
+{
+	this->values[s] = value;
+}
 
 const ImVec4 cellColors[cell_null] =
 	{
-		{0, 0, 0, 0},		  // empty		
-		{10, 40, 10, 255},	  // plantmass		
-		{150, 60, 60, 255},	  // biomass		
+		{0, 0, 0, 0},		  // empty
+		{10, 40, 10, 255},	  // plantmass
+		{150, 60, 60, 255},	  // biomass
 		{30, 120, 30, 255},	  // leaf
-		{75, 25, 25, 255},	  // bark		
-		{50, 250, 150, 255},  // flower		
-		{200, 200, 0, 255},	  // fruit		
-		{255, 150, 0, 255},	  // herb		
-		{255, 100, 150, 255}, // carn		
-		{50, 120, 255, 255},  // mover		
-		{255, 0, 0, 255},	  // killer		
-		{175, 0, 255, 255},	  // armor		
-		{150, 150, 150, 255}, // touch		
-		{255, 255, 255, 255}  // eye		
+		{75, 25, 25, 255},	  // bark
+		{50, 250, 150, 255},  // flower
+		{200, 200, 0, 255},	  // fruit
+		{255, 150, 0, 255},	  // herb
+		{255, 100, 150, 255}, // carn
+		{50, 120, 255, 255},  // mover
+		{255, 0, 0, 255},	  // killer
+		{175, 0, 255, 255},	  // armor
+		{150, 150, 150, 255}, // touch
+		{255, 255, 255, 255}  // eye
 
 };
 
@@ -200,4 +207,3 @@ void DrawCell(SDL_Renderer *r, Cell *c, int x, int y)
 		SDL_RenderSetScale(r, 3.0, 3.0);
 	}
 }
-

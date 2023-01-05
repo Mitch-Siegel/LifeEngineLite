@@ -26,6 +26,7 @@
 #define MIN_EXTRA_MICROS 100
 static volatile int running = 1;
 Board *board = nullptr;
+WorldSettings Settings;
 std::map<OrganismIdentifier, std::unique_ptr<OrganismView>> activeOrganismViews;
 
 boost::mutex renderMutex;
