@@ -177,6 +177,7 @@ void OrganismView::OnFrame(SDL_Renderer *r)
     }
 
     ImGui::Begin(this->name, nullptr, 0);
+    ImGui::SetWindowFontScale(1.5);
     // ImGui::SetWindowSize(ImVec2(240, 1000));
 
     if (ImGui::Button("Close", ImVec2(400, 25)))

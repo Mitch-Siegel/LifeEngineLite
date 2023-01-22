@@ -17,6 +17,7 @@
 
 #include "lifeforms.h"
 #include "board.h"
+#include "worldsettings.h"
 #include "organismview.h"
 #include "detailedstats.h"
 #include "rng.h"
@@ -517,12 +518,13 @@ int main(int argc, char *argv[])
 		ImGui_ImplSDLRenderer_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
-
 		{
 			ImGui::Begin("Hello, world!");
 			ImGui::Text("Viewport offset: %.0f,%.0f", x_off, y_off);
 			ImGui::Text("Window dimensions: %d,%d", winSizeX, winSizeY);
 			ImGui::Checkbox("Detailed Organism Makeup Stats", &showDetailedStats);
+			ImGui::SameLine();
+			ImGui::Checkbox("World Settings", &showWorldSettingsView);
 			ImGui::Text("Framerate: %f", ImGui::GetIO().Framerate);
 
 			/*
@@ -559,6 +561,12 @@ int main(int argc, char *argv[])
 			{
 				DetailedStats();
 			}
+
+			if (showWorldSettingsView)
+			{
+				WorldSettingsView();
+			}
+
 			ImGui::End();
 		}
 

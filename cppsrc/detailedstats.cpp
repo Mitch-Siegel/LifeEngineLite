@@ -54,7 +54,7 @@ void DetailedStats()
         ImGui::EndTable();
     }*/
     // ImGui::SetWindowSize(ImVec2(960, 1000));
-    
+
     const char *classNames[class_null] = {"Plant", "Herbivore", "Carnivore", "Omnivore"};
     for (int i = 0; i < class_null; i++)
     {

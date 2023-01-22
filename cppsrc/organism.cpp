@@ -5,6 +5,7 @@
 
 #include "lifeforms.h"
 #include "board.h"
+#include "worldsettings.h"
 #include "rng.h"
 #include "util.h"
 

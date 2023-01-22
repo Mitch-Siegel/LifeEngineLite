@@ -2,6 +2,7 @@
 
 #include "lifeforms.h"
 #include "board.h"
+#include "worldsettings.h"
 #include "rng.h"
 #include "util.h"
 
@@ -325,7 +326,7 @@ void Cell_Bark::Tick()
 		}
 	}
 	// any leaves attached to bark generate bonus energy
-	// this->myOrganism->AddEnergy((static_cast<double>(bonusEnergy) * PHOTOSYNTHESIS_ENERGY_MULTIPLIER) / BARK_BONUS_ENERGY_DIVIDER);
+	this->myOrganism->AddEnergy((static_cast<double>(bonusEnergy) * Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * Settings.Get(WorldSettings::bark_photosynthesis_bonus)));
 }
 
 Cell_Bark *Cell_Bark::Clone()

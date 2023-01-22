@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include "lifeforms.h"
+#include "worldsettings.h"
 #include "rng.h"
 #include "organismview.h"
 #include "util.h"
