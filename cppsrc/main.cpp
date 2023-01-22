@@ -315,13 +315,11 @@ int main(int argc, char *argv[])
 	Organism *firstOrganism = board->CreateOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->direction = 3;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
-	// firstOrganism->AddCell(0, 1, new Cell_Leaf(0));
-	// firstOrganism->AddCell(0, -1, new Cell_Leaf(0));
-	/*
-	firstOrganism->AddCell(-1, 0, new Cell_Leaf(0));
-	firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
-	firstOrganism->AddCell(0, 1, new Cell_Leaf(0));
-	*/
+
+	int *direction = directions[randInt(4, 7)];
+	firstOrganism->AddCell(direction[0], direction[1], new Cell_Leaf(0));
+	firstOrganism->AddCell(direction[0], 0, new Cell_Leaf(0));
+	firstOrganism->AddCell(0, direction[1], new Cell_Leaf(0));
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = 10000;
 

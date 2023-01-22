@@ -1,0 +1,35 @@
+15	default mutability
+30	lifespan multiplier
+0.7	reproduction energy proportion
+0	reproduction cooldown multiplier (* lifespan multiplier)
+1	max health multiplier
+4	energy density multiplier
+0.6	move cost multiplier (* energy density multiplier)
+8	food multiplier (* energy density multiplier)
+1	leaf food energy (* food multiplier)
+3	flower food energy (* food multiplier)
+8	fruit food energy (* food multiplier)
+2	plantmass food energy (* food multiplier)
+16	biomass food energy (* food multiplier)
+0.021	photosynthesis energy multiplier
+1	leaf flowering cost (* energy density multiplier)
+3	leaf flowering cooldown
+45	leaf flowering ability percent
+1	flower bloom cost (* energy density multiplier)
+1.5	flower bloom cooldown (* lifespan multiplier)
+33	flower wilt chance
+30	flower expand percent
+10	spoiltime base
+50	plantmass spoil time (* spoiltime base)
+20	biomass spoil time (* spoiltime base)
+5	fruit spoil time (* spoiltime base)
+2	fruit grow percent (to spontaneously grow new organism upon spoil)
+2	bark grow cooldown (* lifespan multiplier)
+95	bark plant vs thorn
+2	bark grow cost (* energy density multiplier)
+5	bark max integrity
+0.1	bark-adjacent leaf photosynthesis bonus
+0.015625	killer tick cost (* energy density multiplier)
+0.25	killer damage cost (* energy density multiplier)
+4	armor health bonus
+20	eye max seeing distance
