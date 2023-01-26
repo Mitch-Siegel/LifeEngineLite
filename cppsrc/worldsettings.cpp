@@ -140,8 +140,10 @@ float WorldSettings::Get(WorldSettings::SettingNames s)
         return this->values[s] * this->values[energy_density_multiplier];
 
     case bark_max_integrity:
-    case bark_photosynthesis_bonus:
         return this->values[s];
+
+    case bark_tick_cost:
+        return this->values[s] * this->values[energy_density_multiplier];
 
     // killer
     case killer_tick_cost:

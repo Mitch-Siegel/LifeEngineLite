@@ -38,11 +38,11 @@ public:
         fruit_grow_percent,               // % for fruit to spontaneously grow a new organism (must roll 2x in a row)
 
         // bark
-        bark_grow_cooldown,        // * lifespan multiplier
-        bark_plant_vs_thorn,       // % to grow a plant cell (leaf/bark) vs a killer
-        bark_grow_cost,            // * energy density multiplier
-        bark_max_integrity,        // how many times bark can be "eaten" before it is broken through
-        bark_photosynthesis_bonus, // bonus energy a leaf will generate if it is directly adjacent to a bark
+        bark_grow_cooldown,  // * lifespan multiplier
+        bark_plant_vs_thorn, // % to grow a plant cell (leaf/bark) vs a killer
+        bark_grow_cost,      // * energy density multiplier
+        bark_max_integrity,  // how many times bark can be "eaten" before it is broken through
+        bark_tick_cost,      // * energy density multiplier
 
         // killer
         killer_tick_cost,   // * energy density multiplier
@@ -68,28 +68,28 @@ public:
             "max health multiplier",
             // base energy stats
             "energy density multiplier",
-            "move cost multiplier (* energy density multiplier)",                 // * energy density multiplier
-            "food multiplier (* energy density multiplier)",                      // * energy density multiplier
-            "leaf food energy (* food multiplier)",                               // * food multiplier
-            "flower food energy (* food multiplier)",                             // * food multiplier
-            "fruit food energy (* food multiplier)",                              // * food multiplier
-            "plantmass food energy (* food multiplier)",                          // * food multiplier
-            "biomass food energy (* food multiplier)",                            // * food multiplier
-                                                                                  // leaf
-            "photosynthesis energy multiplier",                                   // each leaf generates this much energy per tick
-            "leaf flowering cost (* energy density multiplier)",                  // * energy density multiplier
-            "leaf flowering cooldown",                                            // number of ticks between leaf flowering
-            "leaf flowering ability percent",                                     // % chance a new leaf cell will be able to flower
-                                                                                  // flower
-            "flower bloom cost (* energy density multiplier)",                    // * energy density multiplier
-            "flower bloom cooldown (* lifespan multiplier)",                      // * lifespan multiplier
-            "flower wilt chance",                                                 // each time the flower blooms, it has this % chance to wilt
-            "flower expand percent",                                              // % for wilting flower to become leaf
-                                                                                  // spoil times
-            "spoiltime base",                                                     // in ticks
-            "plantmass spoil time (* spoiltime base)",                            // * spoiltime base
-            "biomass spoil time (* spoiltime base)",                              // * spoiltime base
-            "fruit spoil time (* spoiltime base)",                                // * spoiltime base
+            "move cost multiplier (* energy density multiplier)",                                          // * energy density multiplier
+            "food multiplier (* energy density multiplier)",                                               // * energy density multiplier
+            "leaf food energy (* food multiplier)",                                                        // * food multiplier
+            "flower food energy (* food multiplier)",                                                      // * food multiplier
+            "fruit food energy (* food multiplier)",                                                       // * food multiplier
+            "plantmass food energy (* food multiplier)",                                                   // * food multiplier
+            "biomass food energy (* food multiplier)",                                                     // * food multiplier
+                                                                                                           // leaf
+            "photosynthesis energy multiplier",                                                            // each leaf generates this much energy per tick
+            "leaf flowering cost (* energy density multiplier)",                                           // * energy density multiplier
+            "leaf flowering cooldown",                                                                     // number of ticks between leaf flowering
+            "leaf flowering ability percent",                                                              // % chance a new leaf cell will be able to flower
+                                                                                                           // flower
+            "flower bloom cost (* energy density multiplier)",                                             // * energy density multiplier
+            "flower bloom cooldown (* lifespan multiplier)",                                               // * lifespan multiplier
+            "flower wilt chance",                                                                          // each time the flower blooms, it has this % chance to wilt
+            "flower expand percent",                                                                       // % for wilting flower to become leaf
+                                                                                                           // spoil times
+            "spoiltime base",                                                                              // in ticks
+            "plantmass spoil time (* spoiltime base)",                                                     // * spoiltime base
+            "biomass spoil time (* spoiltime base)",                                                       // * spoiltime base
+            "fruit spoil time (* spoiltime base)",                                                         // * spoiltime base
             "fruit grow percent (to spontaneously grow new organism upon spoil)\n(must roll 2x in a row)", // % for fruit to spontaneously grow a new organism
 
             // bark
@@ -97,7 +97,7 @@ public:
             "bark plant vs thorn",                          // % to grow a plant cell (leaf/bark) vs a killer
             "bark grow cost (* energy density multiplier)", // * energy density multiplier
             "bark max integrity",                           // how many times bark can be "eaten" before it is broken through
-            "bark-adjacent leaf photosynthesis bonus",      // bonus energy a leaf will generate if it is directly adjacent to a bark
+            "bark tick cost",                               // * energy density multipler
             // killer
             "killer tick cost (* energy density multiplier)",   // * energy density multiplier
             "killer damage cost (* energy density multiplier)", // * energy density multiplier
@@ -116,43 +116,43 @@ private:
     constexpr static float Default_SettingsBase[SettingNames::null] =
         {
             // base settings
-            15,  // default_mutability,
-            15,  // lifespan_multiplier,
-            0.7, // reproduction_energy_proportion,
-            0,   // reproduction_cooldown_multiplier,
-            1,   // max_health_multiplier,
-            4.0, // energy_density_multiplier,
+            15,    // default_mutability,
+            15,    // lifespan_multiplier,
+            0.7,   // reproduction_energy_proportion,
+            0,     // reproduction_cooldown_multiplier,
+            1,     // max_health_multiplier,
+            4.0,   // energy_density_multiplier,
             0.075, // move_cost_multiplier,
-            2.0, // food_multiplier,
-            1, // leaf_food_energy,
-            3,   // flower_food_energy,
-            4,   // fruit_food_energy,
-            2,   // plantmass_food_energy,
-            8,  // biomass_food_energy,
-            0.3, // photosynthesis_energy_multiplier,
-            3,   // leaf_flowering_cost,
-            45, // leaf_flowering_cooldown, // * lifespan multiplier
-            45,  // leaf_flowering_ability_percent,
+            2.0,   // food_multiplier,
+            1,     // leaf_food_energy,
+            3,     // flower_food_energy,
+            4,     // fruit_food_energy,
+            2,     // plantmass_food_energy,
+            8,     // biomass_food_energy,
+            0.3,   // photosynthesis_energy_multiplier,
+            3,     // leaf_flowering_cost,
+            45,    // leaf_flowering_cooldown, // * lifespan multiplier
+            45,    // leaf_flowering_ability_percent,
 
             4,  // flower_bloom_cost,
-            7, // flower_bloom_cooldown, // * lifespan multiplier
+            7,  // flower_bloom_cooldown, // * lifespan multiplier
             33, // flower_wilt_chance,
             30, // flower_expand_percent,
 
-            10, // spoil_time_base,
-            100, // plantmass_spoil_time,
-            20, // biomass_spoil_time,
-            5,  // fruit_spoil_time,
-            7,  // fruit_grow_percent,
+            10,  // spoil_time_base,
+            50, // plantmass_spoil_time,
+            15,  // biomass_spoil_time,
+            5,   // fruit_spoil_time,
+            7,   // fruit_grow_percent,
 
             2,   // bark_grow_cooldown,	 // * lifespan multiplier
             95,  // bark_plant_vs_thorn, // % to grow a plant cell (leaf/bark) vs a killer
             6,   // bark_grow_cost,		 // * energy density multiplier
             3,   // bark_max_integrity,	 // how many times bark can be "eaten" before it is broken through
-            0.1, // bark_photosynthesis_bonus // bonus energy a leaf will generate if it is directly adjacent to a bark
+            0.3, // bark_tick_cost      // * energy density multiplier
 
-            0.125, // killer_tick_cost,	// * energy density multiplier
-            1, // killer_damage_cost, // * energy density multiplier
+            0.4, // killer_tick_cost,	// * energy density multiplier
+            1,     // killer_damage_cost, // * energy density multiplier
 
             4, // armor_health_bonus,
 

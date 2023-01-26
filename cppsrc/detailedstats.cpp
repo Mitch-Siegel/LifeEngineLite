@@ -22,11 +22,12 @@ void DetailedStats()
 
     for (Organism *o : board->Organisms)
     {
+        OrganismClassifications classificaion = o->Classify();
         for (int i = 0; i < cell_null; i++)
         {
-            cellCounts[o->Classify()][i] += o->cellCounts[i];
+            cellCounts[classificaion][i] += o->cellCounts[i];
         }
-        classCounts[o->Classify()]++;
+        classCounts[classificaion]++;
     }
 
     for (int i = 0; i < class_null; i++)

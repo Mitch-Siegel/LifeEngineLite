@@ -232,10 +232,6 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 
 				switch (neighbor->type)
 				{
-				case cell_leaf:
-					this->photosynthesisEffectiveness++;
-					break;
-
 				case cell_bark:
 					break;
 
@@ -327,10 +323,7 @@ Cell_Bark::Cell_Bark()
 
 void Cell_Bark::Tick()
 {
-	if (this->actionCooldown > 0)
-	{
-		this->actionCooldown--;
-	}
+	// tick cost applied in organism::tick()
 
 	if (this->integrity < 1)
 	{
@@ -339,7 +332,13 @@ void Cell_Bark::Tick()
 		return;
 	}
 
-	bool canGrow = this->actionCooldown == 0;
+	if (this->actionCooldown > 0)
+	{
+		this->actionCooldown--;
+		return;
+	}
+
+		bool canGrow = this->actionCooldown == 0;
 	// even though leaves can exist in a 5x5 around bark, bark will only grow a leaf directly adjacent
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)

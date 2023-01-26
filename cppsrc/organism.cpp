@@ -140,7 +140,8 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	this->ExpendEnergy((sqrt(this->nCells_ - 1)) * Settings.Get(WorldSettings::photosynthesis_energy_multiplier));
+	this->ExpendEnergy(((0.3 * (this->nCells_ - 1)) * Settings.Get(WorldSettings::photosynthesis_energy_multiplier)) +
+					   (Settings.Get(WorldSettings::bark_tick_cost) * this->cellCounts[cell_bark]));
 	// this->ExpendEnergy(this->nCells_ - (this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]));
 	// if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]) > 0)
 	// {
@@ -1268,16 +1269,7 @@ void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 
 enum OrganismClassifications Organism::Classify()
 {
-	int plantCells = this->cellCounts[cell_leaf] +
-					 this->cellCounts[cell_bark] +
-					 this->cellCounts[cell_flower];
-	// if at least 1/3 plant or can't move, it's a plant
-	if ((static_cast<uint64_t>(plantCells * 3) >= this->nCells()) || !this->cellCounts[cell_mover])
-	{
-		return class_plant;
-	}
-
-	// otherwise classify by mouth
+	// classify by mouth
 	if (this->cellCounts[cell_herbivore_mouth] && this->cellCounts[cell_carnivore_mouth])
 	{
 		return class_omnivore;
@@ -1291,7 +1283,7 @@ enum OrganismClassifications Organism::Classify()
 		return class_carnivore;
 	}
 
-	// if no mouths but not substantially plant, just classify as plant anyways
+	// if no mouths classify as plant
 	return class_plant;
 }
 
