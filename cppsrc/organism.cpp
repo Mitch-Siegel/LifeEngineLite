@@ -9,7 +9,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (Settings.Get(WorldSettings::move_cost_multiplier) * sqrt(nCells_))
+#define moveCost(nCells) (Settings.Get(WorldSettings::move_cost_multiplier) * nCells_)
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -140,26 +140,25 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	this->ExpendEnergy((Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * (sqrt(this->nCells_) - 1)));
+	this->ExpendEnergy((sqrt(this->nCells_ - 1)) * Settings.Get(WorldSettings::photosynthesis_energy_multiplier));
 	// this->ExpendEnergy(this->nCells_ - (this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]));
 	// if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]) > 0)
 	// {
 	// this->ExpendEnergy((0.9 * sqrt(this->cellCounts[cell_leaf])) + (0.98 * this->cellCounts[cell_flower]));
 	// }
 
-	if (this->cellCounts[cell_leaf])
-	{
-		this->AddEnergy(Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * this->cellCounts[cell_leaf]);
-		// this->AddEnergy((nLeaves - sqrt(nLeaves - 0.75)) / PHOTOSYNTHESIS_INTERVAL);
-		// x-\sqrt{\left(x-0.75\right)}
-		// this->AddEnergy(this->cellCounts[cell_leaf] / PHOTOSYNTHESIS_INTERVAL);
-	}
+	// if (this->cellCounts[cell_leaf])
+	// {
+	// this->AddEnergy(Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * sqrt(this->cellCounts[cell_leaf]));
+	// this->AddEnergy((nLeaves - sqrt(nLeaves - 0.75)) / PHOTOSYNTHESIS_INTERVAL);
+	// x-\sqrt{\left(x-0.75\right)}
+	// this->AddEnergy(this->cellCounts[cell_leaf] / PHOTOSYNTHESIS_INTERVAL);
+	// }
 
 	if (this->cellCounts[cell_herbivore_mouth])
 	{
 		this->ExpendEnergy(this->cellCounts[cell_carnivore_mouth] * 8);
 	}
-	
 
 	/*if (this->nCells_ == this->cellCounts[cell_leaf])
 	{
@@ -333,18 +332,32 @@ void Organism::VerifyCellConnectedness()
 		Cell *examined = searchQueue.back();
 		searchQueue.pop_back();
 
-		// ensure leaves are within a 3x3 of the center of organism or 5x5 of a bark
+		/*
+		// ensure leaves are within a 5x5 of a bark
 		if (examined->type == cell_leaf)
 		{
-			int x_rel = examined->x - this->x;
-			int y_rel = examined->y - this->y;
-			if (abs(y_rel) > 1 || abs(x_rel) > 1)
+			bool barkAdjacent = false;
+			for (int i = 0; i < 8; i++)
 			{
-				bool barkAdjacent = false;
-				for (int i = 0; i < 8; i++)
+				int x_check = examined->x + directions[i][0];
+				int y_check = examined->y + directions[i][1];
+				if (!board->boundCheckPos(x_check, y_check))
 				{
-					int x_check = examined->x + directions[i][0];
-					int y_check = examined->y + directions[i][1];
+					Cell *thisNeighbor = board->cells[y_check][x_check];
+					if ((thisNeighbor->myOrganism == this) && (thisNeighbor->type == cell_bark))
+					{
+						barkAdjacent = true;
+					}
+				}
+			}
+
+			if (!barkAdjacent)
+			{
+				static int secondRing[16][2] = {{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}, {-1, 2}, {0, 2}, {1, 2}, {2, 2}, {2, 1}, {2, 0}, {2, -1}, {2, -2}, {1, -2}, {0, -2}, {-1, -2}};
+				for (int i = 0; i < 16; i++)
+				{
+					int x_check = examined->x + secondRing[i][0];
+					int y_check = examined->y + secondRing[i][1];
 					if (!board->boundCheckPos(x_check, y_check))
 					{
 						Cell *thisNeighbor = board->cells[y_check][x_check];
@@ -354,32 +367,16 @@ void Organism::VerifyCellConnectedness()
 						}
 					}
 				}
+			}
 
-				if (!barkAdjacent)
-				{
-					static int secondRing[16][2] = {{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}, {-1, 2}, {0, 2}, {1, 2}, {2, 2}, {2, 1}, {2, 0}, {2, -1}, {2, -2}, {1, -2}, {0, -2}, {-1, -2}};
-					for (int i = 0; i < 16; i++)
-					{
-						int x_check = examined->x + secondRing[i][0];
-						int y_check = examined->y + secondRing[i][1];
-						if (!board->boundCheckPos(x_check, y_check))
-						{
-							Cell *thisNeighbor = board->cells[y_check][x_check];
-							if ((thisNeighbor->myOrganism == this) && (thisNeighbor->type == cell_bark))
-							{
-								barkAdjacent = true;
-							}
-						}
-					}
-				}
-
-				// if it's not close enough to center or otherwise next to a bark, override and mark as unconnected
-				if (!barkAdjacent)
-				{
-					removeAnyways.insert(examined);
-				}
+			// if it's not close enough to center or otherwise next to a bark, override and mark as unconnected
+			if (!barkAdjacent)
+			{
+				removeAnyways.insert(examined);
 			}
 		}
+		*/
+
 		// cellValidity[examined] = true;
 		for (int i = 0; i < 8; i++)
 		{
@@ -457,7 +454,8 @@ bool Organism::CheckValidity()
 	}
 	else
 	{
-		if (this->cellCounts[cell_leaf] > (0.5 * this->nCells_))
+		// not be more than half leaves
+		if ((this->cellCounts[cell_leaf] > (0.5 * this->nCells_)))
 		{
 			return true;
 		}
@@ -828,6 +826,26 @@ Organism *Organism::Reproduce()
 			{
 				int dir_x_extra = 0;
 				int dir_y_extra = 0;
+				for (int moreSpaceTries = 0; moreSpaceTries < 16; moreSpaceTries++)
+				{
+
+					if (randPercent(50))
+					{
+						dir_x_extra = ((dir_x > 0) ? 1 : -1);
+					}
+					else
+					{
+						dir_y_extra = ((dir_y > 0) ? 1 : -1);
+					}
+					if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
+					{
+						break;
+					}
+					dir_x_extra = 0;
+					dir_y_extra = 0;
+				}
+
+				/*
 				if (randPercent(55))
 				{
 					for (int k = 0; k < 16; k++)
@@ -845,6 +863,7 @@ Organism *Organism::Reproduce()
 						dir_y_extra = 0;
 					}
 				}
+				*/
 
 				this->ExpendEnergy(this->maxEnergy * Settings.Get(WorldSettings::reproduction_energy_proportion));
 
@@ -1051,7 +1070,9 @@ bool Organism::Mutate()
 	else
 	{
 		// remove a cell
-		if (this->nCells() > 2 && randPercent(50))
+		if ((this->nCells() > 2) &&
+			((this->nCells() == this->cellCounts[cell_leaf] ? this->nCells() > 4 : true)) &&
+			randPercent(50))
 		{
 			int removedIndex = randInt(0, this->nCells() - 2);
 			auto removedIterator = this->myCells.begin();
@@ -1135,6 +1156,48 @@ void Organism::OnCellAdded(Cell *added)
 	default:
 		break;
 	}
+
+	for (int i = 0; i < 8; i++)
+	{
+		// bool canPhotosynthesize = false;
+		int *direction = directions[i];
+		int x_check = added->x + direction[0];
+		int y_check = added->y + direction[1];
+		if (!board->boundCheckPos(x_check, y_check))
+		{
+			Cell *neighbor = board->cells[y_check][x_check];
+			if (neighbor->type == cell_leaf)
+			{
+				static_cast<Cell_Leaf *>(neighbor)->CalculatePhotosynthesieEffectiveness();
+			}
+		}
+	}
+
+	// if we are adding a leaf cell
+	if (added->type == cell_leaf)
+	{
+		Cell_Leaf *addedLeaf = static_cast<Cell_Leaf *>(added);
+		addedLeaf->CalculatePhotosynthesieEffectiveness();
+	}
+}
+
+void Organism::OnCellRemoved(Cell *removed)
+{
+	for (int i = 0; i < 8; i++)
+	{
+		// bool canPhotosynthesize = false;
+		int *direction = directions[i];
+		int x_check = removed->x + direction[0];
+		int y_check = removed->y + direction[1];
+		if (!board->boundCheckPos(x_check, y_check))
+		{
+			Cell *neighbor = board->cells[y_check][x_check];
+			if (neighbor->type == cell_leaf)
+			{
+				static_cast<Cell_Leaf *>(neighbor)->CalculatePhotosynthesieEffectiveness();
+			}
+		}
+	}
 }
 
 void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
@@ -1167,19 +1230,22 @@ void Organism::RemoveCell(Cell *_myCell)
 	}
 	this->myCells.erase(_myCell);
 
-	// lose the proportion of the organism's energy that this cell would "hold"
-	// float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
-
-	// lose the entire removed cell's worth of energy ("shock" or similar cost to deal with losing this cell)
-	float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * Settings.Get(WorldSettings::energy_density_multiplier)) / this->maxEnergy);
-
-
-	if (energyLost > 0.0) // check because some cells have negative energy densities
+	if (_myCell->type != cell_flower)
 	{
-		this->ExpendEnergy(energyLost);
+		// lose the proportion of the organism's energy that this cell would "hold"
+		// float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
+
+		// lose the entire removed cell's worth of energy plus some extra ("shock" or similar cost to deal with losing this cell)
+		float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * Settings.Get(WorldSettings::energy_density_multiplier)) / this->maxEnergy);
+
+		if (energyLost > 0.0) // check because some cells have negative energy densities
+		{
+			this->ExpendEnergy(energyLost * 1.5);
+		}
 	}
 
 	this->nCells_--;
+	this->OnCellRemoved(_myCell);
 	this->RecalculateStats();
 	this->requireConnectednessCheck = true;
 }

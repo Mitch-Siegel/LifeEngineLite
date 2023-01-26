@@ -35,7 +35,7 @@ public:
         plantmass_spoil_time,             // * spoiltime base
         biomass_spoil_time,               // * spoiltime base
         fruit_spoil_time,                 // * spoiltime base
-        fruit_grow_percent,               // % for fruit to spontaneously grow a new organism
+        fruit_grow_percent,               // % for fruit to spontaneously grow a new organism (must roll 2x in a row)
 
         // bark
         bark_grow_cooldown,        // * lifespan multiplier
@@ -90,7 +90,7 @@ public:
             "plantmass spoil time (* spoiltime base)",                            // * spoiltime base
             "biomass spoil time (* spoiltime base)",                              // * spoiltime base
             "fruit spoil time (* spoiltime base)",                                // * spoiltime base
-            "fruit grow percent (to spontaneously grow new organism upon spoil)", // % for fruit to spontaneously grow a new organism
+            "fruit grow percent (to spontaneously grow new organism upon spoil)\n(must roll 2x in a row)", // % for fruit to spontaneously grow a new organism
 
             // bark
             "bark grow cooldown (* lifespan multiplier)",   // * lifespan multiplier
@@ -116,43 +116,43 @@ private:
     constexpr static float Default_SettingsBase[SettingNames::null] =
         {
             // base settings
-            15,   // default_mutability,
-            30,   // lifespan_multiplier,
-            0.7,  // reproduction_energy_proportion,
-            5,   // reproduction_cooldown_multiplier,
-            1,    // max_health_multiplier,
-            4.0,  // energy_density_multiplier,
-            0.6,  // move_cost_multiplier,
-            8.0,  // food_multiplier,
-            1,    // leaf_food_energy,
-            3,    // flower_food_energy,
-            8,    // fruit_food_energy,
-            2,    // plantmass_food_energy,
-            16,   // biomass_food_energy,
-            .021, // photosynthesis_energy_multiplier,
-            1,    // leaf_flowering_cost,
-            3,    // leaf_flowering_cooldown,
-            45,   // leaf_flowering_ability_percent,
+            15,  // default_mutability,
+            15,  // lifespan_multiplier,
+            0.7, // reproduction_energy_proportion,
+            0,   // reproduction_cooldown_multiplier,
+            1,   // max_health_multiplier,
+            4.0, // energy_density_multiplier,
+            0.075, // move_cost_multiplier,
+            2.0, // food_multiplier,
+            1, // leaf_food_energy,
+            3,   // flower_food_energy,
+            4,   // fruit_food_energy,
+            2,   // plantmass_food_energy,
+            8,  // biomass_food_energy,
+            0.3, // photosynthesis_energy_multiplier,
+            3,   // leaf_flowering_cost,
+            45, // leaf_flowering_cooldown, // * lifespan multiplier
+            45,  // leaf_flowering_ability_percent,
 
-            1,   // flower_bloom_cost,
-            1.5, // flower_bloom_cooldown,
-            33,  // flower_wilt_chance,
-            30,  // flower_expand_percent,
+            4,  // flower_bloom_cost,
+            7, // flower_bloom_cooldown, // * lifespan multiplier
+            33, // flower_wilt_chance,
+            30, // flower_expand_percent,
 
             10, // spoil_time_base,
-            50, // plantmass_spoil_time,
+            100, // plantmass_spoil_time,
             20, // biomass_spoil_time,
             5,  // fruit_spoil_time,
-            2,  // fruit_grow_percent,
+            7,  // fruit_grow_percent,
 
             2,   // bark_grow_cooldown,	 // * lifespan multiplier
             95,  // bark_plant_vs_thorn, // % to grow a plant cell (leaf/bark) vs a killer
-            2,   // bark_grow_cost,		 // * energy density multiplier
-            5,   // bark_max_integrity,	 // how many times bark can be "eaten" before it is broken through
+            6,   // bark_grow_cost,		 // * energy density multiplier
+            3,   // bark_max_integrity,	 // how many times bark can be "eaten" before it is broken through
             0.1, // bark_photosynthesis_bonus // bonus energy a leaf will generate if it is directly adjacent to a bark
 
-            0.03125, // killer_tick_cost,	// * energy density multiplier
-            1,      // killer_damage_cost, // * energy density multiplier
+            0.125, // killer_tick_cost,	// * energy density multiplier
+            1, // killer_damage_cost, // * energy density multiplier
 
             4, // armor_health_bonus,
 

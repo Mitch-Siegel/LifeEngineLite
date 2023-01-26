@@ -109,6 +109,8 @@ float WorldSettings::Get(WorldSettings::SettingNames s)
         return this->values[s] * this->values[energy_density_multiplier];
 
     case leaf_flowering_cooldown:
+        return this->values[s] * this->values[lifespan_multiplier];
+
     case leaf_flowering_ability_percent:
         return this->values[s];
 
@@ -117,6 +119,8 @@ float WorldSettings::Get(WorldSettings::SettingNames s)
         return this->values[s] * this->values[energy_density_multiplier];
 
     case flower_bloom_cooldown:
+        return this->values[s] * this->values[lifespan_multiplier];
+        
     case flower_wilt_chance:
     case flower_expand_percent:
     case spoil_time_base:

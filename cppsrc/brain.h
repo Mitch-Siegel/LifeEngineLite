@@ -19,8 +19,8 @@ class Brain : private SimpleNets::DAGNetwork
 private:
     unsigned int nextSensorIndex;
 
-    // this variable drives the random input neurons
-    nn_num_t freeWill[2];
+    // this variable drives the random input neuron
+    nn_num_t freeWill;
 
     // make one attempt to add a random connection from the input layer to the hidden layer
     bool TryAddRandomInputConnectionBySrc(size_t srcId);

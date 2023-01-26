@@ -100,6 +100,8 @@ public:
 	void Rotate(bool clockwise);
 
 	void OnCellAdded(Cell *added);
+	
+	void OnCellRemoved(Cell *removed);
 
 	void AddCell(int x_rel, int y_rel, Cell *_cell);
 
@@ -221,12 +223,15 @@ class Cell_Leaf : public Cell
 	friend class Cell_Herbivore;
 	friend class Cell_Bark;
 	friend class Cell_Flower;
+	friend class Organism;
 	friend class Board;
 
 private:
 	int flowerCooldown;
 	bool flowering;
 	Cell_Flower *associatedFlower;
+	float photosynthesisEffectiveness;
+#define PHOTOSYNTHESISEFFECTIVENESS_MAX 6.0
 
 public:
 	~Cell_Leaf() override;
@@ -238,6 +243,8 @@ public:
 	explicit Cell_Leaf(Organism *_myOrganism);
 
 	// Cell_Leaf(const Cell_Leaf &c);
+
+	void CalculatePhotosynthesieEffectiveness();
 
 	void Tick() override;
 

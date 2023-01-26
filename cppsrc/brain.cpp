@@ -9,18 +9,19 @@
  *
  *
  */
-#define BRAIN_DEFAULT_INPUTS 4
+#define BRAIN_DEFAULT_INPUTS 3
 
 Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets::logistic})
 {
     this->nextSensorIndex = 0;
-    this->freeWill[0] = randFloat(0.0, 1.0);
-    this->freeWill[1] = randFloat(0.0, 1.0);
+    this->freeWill = randFloat(-1.0, 1.0);
 
     for (int i = 0; i < 2; i++)
     {
 
         size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+        this->AddConnection(this->layers[0][0].Id(), newId, randFloat(-1.0, 1.0)); // bias connection
+
         while (!this->TryAddRandomInputConnectionByDst(newId))
             ;
 
@@ -28,9 +29,10 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
             ;
     }
 
-    int nIO = randInt(0, 2);
-    while (nIO -= this->TryAddRandomInputOutputConnection())
-        ;
+    // for (auto output = this->layers[2].begin(); output != this->layers[2].end(); ++output)
+    // {
+    // this->AddConnection(this->layers[0][0].Id(), (*output)->Id(), randFloat(-1.0, 1.0));
+    // }
 }
 
 Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
@@ -167,18 +169,18 @@ bool Brain::TryAddRandomOutputConnection()
 
 void Brain::SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion)
 {
-    this->freeWill[0] += randFloat(-0.25, 0.25);
-    if (this->freeWill[0] > 1.0)
+    
+    this->freeWill += randFloat(-0.15625, 0.15625);
+    if (this->freeWill > 1.0)
     {
-        this->freeWill[0] = 1.0;
+        this->freeWill = 1.0;
     }
-    else if (this->freeWill[0] < 0.0)
+    else if (this->freeWill < 0.0)
     {
-        this->freeWill[0] = 0.0;
+        this->freeWill = 0.0;
     }
-    this->freeWill[1] = randFloat(0.0, 1.0);
 
-    this->SetInput(0, {this->freeWill[0], this->freeWill[1], energyProportion, healthProportion});
+    this->SetInput(0, {this->freeWill, energyProportion, healthProportion});
 }
 
 void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_null])
@@ -194,6 +196,7 @@ void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_nu
 void Brain::AddRandomHiddenNeuron()
 {
     size_t newNeuronId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+    this->AddConnection(this->layers[0][0].Id(), newNeuronId, randFloat(-1.0, 1.0)); // bias connection
 
     bool usedHidden = false;
     // determine this neuron's inputs (input layer vs hidden layer)
@@ -247,15 +250,17 @@ void Brain::Mutate()
         else
         {
             // generate a completely unconnected neuron, rely on further mutations to connect to it
-            this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+            size_t id = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
+            this->AddConnection(this->layers[0][0].Id(), id, randFloat(-1.0, 1.0)); // bias connection
+            this->AddConnection(this->layers[0][0].Id(), id, randFloat(-1.0, 1.0));
             // this->AddRandomHiddenNeuron();
         }
     }
     // add/remove/modify connection with 80% probability
     else
     {
-        // modify existing connection with 75% probability
-        if (randPercent(75) && this->connections().size() > 0)
+        // modify existing connection with 50% probability
+        if (randPercent(50) && this->connections().size() > 0)
         {
             auto toModify = this->connections().begin();
             int i = 0;
@@ -279,7 +284,7 @@ void Brain::Mutate()
                 bool couldAdd = false;
                 while (!couldAdd && (nTries++ < 20))
                 {
-                    switch (randInt(0, 4))
+                    switch (randInt(0, 3))
                     {
                     case 0:
                         couldAdd = !this->TryAddRandomInputConnection();
@@ -294,9 +299,9 @@ void Brain::Mutate()
                         couldAdd = !this->TryAddRandomOutputConnection();
                         break;
 
-                    case 4:
-                        couldAdd = !this->TryAddRandomInputOutputConnection();
-                        break;
+                        // case 4:
+                        // couldAdd = !this->TryAddRandomInputOutputConnection();
+                        // break;
                     }
                 }
             }
@@ -323,7 +328,7 @@ unsigned int Brain::GetNewSensorIndex()
 
     size_t newInternalID = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(randInt(SimpleNets::logistic, SimpleNets::perceptron)));
     // determine the new internal neuron's outputs (input layer vs output layer)
-    if (randPercent(50))
+    if (randPercent(50) && (this->layers[1].size() > 1))
     {
         while (!this->TryAddRandomHiddenConnectionBySrc(newInternalID))
             ;
@@ -336,10 +341,11 @@ unsigned int Brain::GetNewSensorIndex()
 
     for (int i = 0; i < cell_null; i++)
     {
-        // size_t inputId = this->AddInput();
-        this->AddInput();
-        /*
-        if (randPercent(40))
+        size_t inputId = this->AddInput();
+        // this->TryAddRandomInputOutputConnectionBySrc(inputId);
+        // this->AddInput();
+
+        if (randPercent(20))
         {
             if (randPercent(60))
             {
@@ -351,25 +357,13 @@ unsigned int Brain::GetNewSensorIndex()
             }
             else
             {
-                if (randPercent(90))
+                if (this->TryAddRandomHiddenConnectionBySrc(inputId))
                 {
-                    if (this->AddConnection(inputId, newInternalID, randFloat(-1.0, 1.0)))
-                    {
-                        printf("that shouldn't have happened\n");
-                        exit(1);
-                    }
-                }
-                else
-                {
-                    if (this->TryAddRandomInputOutputConnectionBySrc(inputId))
-                    {
-                        printf("that shouldn't have happened\n");
-                        exit(1);
-                    }
+                    printf("that shouldn't have happened\n");
+                    exit(1);
                 }
             }
         }
-        */
     }
     return this->nextSensorIndex++;
 }

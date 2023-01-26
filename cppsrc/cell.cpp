@@ -12,14 +12,14 @@ int CellEnergyDensities[cell_null] = {
 	0,	// pcell_bark
 	0,	// biomass
 	1,	// leaf
-	8,	// bark
+	4,	// bark
 	2,	// flower
 	0,	// fruit
-	24, // herbivore
-	60, // carnivore
-	30, // mover
+	8,	// herbivore
+	16, // carnivore
+	8,	// mover
 	0,	// killer
-	-5, // armor
+	5,	// armor
 	1,	// touch sensor
 	1,	// eye
 };
@@ -56,7 +56,6 @@ Cell *GenerateRandomCell()
 
 	case 2:
 		return new Cell_Bark();
-		break;
 
 	case 3:
 		return new Cell_Herbivore();
@@ -212,8 +211,61 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 	this->associatedFlower = nullptr;
 }
 
+void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
+{
+	this->photosynthesisEffectiveness = PHOTOSYNTHESISEFFECTIVENESS_MAX;
+	for (int i = 0; i < 8; i++)
+	{
+		int x_check = this->x + directions[i][0];
+		int y_check = this->y + directions[i][1];
+		if (!board->boundCheckPos(x_check, y_check))
+		{
+			Cell *neighbor = board->cells[y_check][x_check];
+			if ((neighbor->myOrganism == this->myOrganism))
+			{
+				// if next to a bark from the same organism, no detriment
+				// if not bark but some other cell from same organism, only half detriment
+				// if ((neighbor->type != cell_bark))
+				// {
+				// this->photosynthesisEffectiveness --;
+				// }
+
+				switch (neighbor->type)
+				{
+				case cell_leaf:
+					this->photosynthesisEffectiveness++;
+					break;
+
+				case cell_bark:
+					break;
+
+				default:
+					this->photosynthesisEffectiveness--;
+					break;
+				}
+			}
+			else
+			{
+				if (neighbor->type != cell_empty)
+				{
+					this->photosynthesisEffectiveness -= 2;
+				}
+			}
+		}
+	}
+}
+
 void Cell_Leaf::Tick()
 {
+	if (this->photosynthesisEffectiveness > 0.0)
+	{
+		this->myOrganism->AddEnergy(Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * this->photosynthesisEffectiveness);
+	}
+	else if (this->photosynthesisEffectiveness < 0.0)
+	{
+		this->myOrganism->ExpendEnergy(-1 * Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * this->photosynthesisEffectiveness);
+	}
+
 	if (!this->flowering || (this->myOrganism->Energy() < (Settings.Get(WorldSettings::leaf_flowering_cost) + 1)))
 	{
 		return;
@@ -287,7 +339,6 @@ void Cell_Bark::Tick()
 		return;
 	}
 
-	int bonusEnergy = 0;
 	bool canGrow = this->actionCooldown == 0;
 	// even though leaves can exist in a 5x5 around bark, bark will only grow a leaf directly adjacent
 	int checkDirIndex = randInt(0, 3);
@@ -320,13 +371,7 @@ void Cell_Bark::Tick()
 			this->actionCooldown = Settings.Get(WorldSettings::bark_grow_cooldown);
 			canGrow = false;
 		}
-		else if (board->isCellOfType(x_abs, y_abs, cell_leaf) && board->cells[y_abs][x_abs]->myOrganism == this->myOrganism)
-		{
-			bonusEnergy++;
-		}
 	}
-	// any leaves attached to bark generate bonus energy
-	this->myOrganism->AddEnergy((static_cast<double>(bonusEnergy) * Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * Settings.Get(WorldSettings::bark_photosynthesis_bonus)));
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -513,12 +558,12 @@ void Cell_Herbivore::Tick()
 
 				case cell_flower:
 					gainedEnergy = Settings.Get(WorldSettings::flower_food_energy);
-					this->digestCooldown = 1;
+					this->digestCooldown = 0;
 					break;
 
 				case cell_fruit:
 					gainedEnergy = Settings.Get(WorldSettings::fruit_food_energy);
-					this->digestCooldown = 2;
+					this->digestCooldown = 1;
 					break;
 
 				case cell_plantmass:
@@ -704,47 +749,6 @@ void Cell_Killer::Tick()
 	}
 	// base cost plus some addl cost per damage done
 	this->myOrganism->ExpendEnergy((damageDone * Settings.Get(WorldSettings::killer_damage_cost)) + Settings.Get(WorldSettings::killer_tick_cost));
-
-	int adjacentLeaves = 0;
-	int adjacentBark = 0;
-	for (int i = 0; i < 4; i++)
-	{
-		int *thisDirection = directions[i];
-		int abs_x = this->x + thisDirection[0];
-		int abs_y = this->y + thisDirection[1];
-		if (!board->boundCheckPos(abs_x, abs_y))
-		{
-			Cell *adjacentCell = board->cells[abs_y][abs_x];
-			if (adjacentCell->myOrganism == this->myOrganism)
-			{
-				switch (adjacentCell->type)
-				{
-				case cell_leaf:
-					adjacentLeaves++;
-					break;
-
-				case cell_bark:
-					adjacentBark++;
-					break;
-
-				default:
-					break;
-				}
-			}
-		}
-	}
-	if (adjacentBark || (this->myOrganism->cellCounts[cell_leaf] < this->myOrganism->nCells() * 0.5))
-	{
-		if ((adjacentBark + adjacentLeaves > 2) || (adjacentBark >= 2))
-		{
-			this->myOrganism->ReplaceCell(this, new Cell_Bark());
-		}
-	}
-	else
-	{
-		this->myOrganism->RemoveCell(this);
-		board->replaceCell(this, new Cell_Empty());
-	}
 }
 
 Cell_Killer *Cell_Killer::Clone()

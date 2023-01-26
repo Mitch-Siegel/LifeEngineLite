@@ -71,15 +71,17 @@ bool Board::Tick()
 					break;
 
 				case cell_fruit:
+				{
 					// if we roll grow percent, create a new random organism
-					if (randPercent(Settings.Get(WorldSettings::fruit_grow_percent)))
+					int growPercent = Settings.Get(WorldSettings::fruit_grow_percent);
+					if (randPercent(growPercent) && randPercent(growPercent))
 					{
 						Organism *grownFruit = this->CreateOrganism(expiringFood->x, expiringFood->y);
 						grownFruit->mutability = 15;
 						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
-						
+
 						bool moverInCenter = randPercent(50);
-						
+
 						grownFruit->AddCell(0, 0, (moverInCenter ? static_cast<Cell *>(new Cell_Mover()) : static_cast<Cell *>(new Cell_Herbivore())));
 						// Cell *secondRandomCell = GenerateRandomCell();
 						// bool couldAddSecond = false;
@@ -96,7 +98,7 @@ bool Board::Tick()
 						}
 						// if (!couldAddSecond)
 						// {
-							// delete secondRandomCell;
+						// delete secondRandomCell;
 						// }
 
 						if (!grownFruit->CheckValidity())
@@ -108,7 +110,6 @@ bool Board::Tick()
 							grownFruit->RecalculateStats();
 							grownFruit->AddEnergy(0.8 * grownFruit->MaxEnergy());
 							grownFruit->Heal(grownFruit->MaxHealth());
-
 						}
 						else
 						{
@@ -119,7 +120,8 @@ bool Board::Tick()
 					{
 						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Plantmass(Settings.Get(WorldSettings::fruit_spoil_time)));
 					}
-					break;
+				}
+				break;
 
 				default:
 					printf("Impossible case for food cell to be something it shouldn't (cell_types enum %d)!\n", expiringFood->type);
