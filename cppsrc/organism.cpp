@@ -140,21 +140,9 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	this->ExpendEnergy(((0.3 * (this->nCells_ - 1)) * Settings.Get(WorldSettings::photosynthesis_energy_multiplier)) +
+	this->ExpendEnergy(((0.25 * this->nCells_) * Settings.Get(WorldSettings::photosynthesis_energy_multiplier)) +
 					   (Settings.Get(WorldSettings::bark_tick_cost) * this->cellCounts[cell_bark]));
-	// this->ExpendEnergy(this->nCells_ - (this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]));
-	// if ((this->cellCounts[cell_leaf] + this->cellCounts[cell_flower]) > 0)
-	// {
-	// this->ExpendEnergy((0.9 * sqrt(this->cellCounts[cell_leaf])) + (0.98 * this->cellCounts[cell_flower]));
-	// }
-
-	// if (this->cellCounts[cell_leaf])
-	// {
-	// this->AddEnergy(Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * sqrt(this->cellCounts[cell_leaf]));
-	// this->AddEnergy((nLeaves - sqrt(nLeaves - 0.75)) / PHOTOSYNTHESIS_INTERVAL);
-	// x-\sqrt{\left(x-0.75\right)}
-	// this->AddEnergy(this->cellCounts[cell_leaf] / PHOTOSYNTHESIS_INTERVAL);
-	// }
+	
 
 	if (this->cellCounts[cell_herbivore_mouth])
 	{
@@ -333,7 +321,6 @@ void Organism::VerifyCellConnectedness()
 		Cell *examined = searchQueue.back();
 		searchQueue.pop_back();
 
-		/*
 		// ensure leaves are within a 5x5 of a bark
 		if (examined->type == cell_leaf)
 		{
@@ -376,7 +363,6 @@ void Organism::VerifyCellConnectedness()
 				removeAnyways.insert(examined);
 			}
 		}
-		*/
 
 		// cellValidity[examined] = true;
 		for (int i = 0; i < 8; i++)

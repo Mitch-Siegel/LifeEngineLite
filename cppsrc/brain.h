@@ -1,8 +1,20 @@
 #include "config.h"
 #include "dagnn.h"
 
-enum Intent
+#include <cstring>
+
+class CellSenseActivation
 {
+private:
+    nn_num_t values[cell_null];
+
+public:
+    CellSenseActivation();
+
+    nn_num_t &operator[](unsigned int index);
+};
+
+enum Intent {
     intent_idle,                    // do nothing
     intent_forward,                 // move forward
     intent_back,                    // move backward
@@ -51,7 +63,7 @@ public:
 
     void SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion);
 
-    void SetSensoryInput(unsigned int senseCellIndex, nn_num_t values[cell_null]);
+    void SetSensoryInput(unsigned int senseCellIndex, nn_num_t values);
 
     size_t NeuronCount() { return this->units().size(); };
 

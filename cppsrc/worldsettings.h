@@ -119,17 +119,17 @@ private:
             15,    // default_mutability,
             15,    // lifespan_multiplier,
             0.7,   // reproduction_energy_proportion,
-            0,     // reproduction_cooldown_multiplier,
+            1,     // reproduction_cooldown_multiplier,
             1,     // max_health_multiplier,
             4.0,   // energy_density_multiplier,
-            0.075, // move_cost_multiplier,
-            2.0,   // food_multiplier,
+            0.15, // move_cost_multiplier,
+            4.0,   // food_multiplier,
             1,     // leaf_food_energy,
             3,     // flower_food_energy,
             4,     // fruit_food_energy,
             2,     // plantmass_food_energy,
             8,     // biomass_food_energy,
-            0.3,   // photosynthesis_energy_multiplier,
+            0.5,   // photosynthesis_energy_multiplier,
             3,     // leaf_flowering_cost,
             45,    // leaf_flowering_cooldown, // * lifespan multiplier
             45,    // leaf_flowering_ability_percent,
@@ -141,17 +141,17 @@ private:
 
             10,  // spoil_time_base,
             50, // plantmass_spoil_time,
-            15,  // biomass_spoil_time,
-            5,   // fruit_spoil_time,
+            5,  // biomass_spoil_time,
+            7,   // fruit_spoil_time,
             7,   // fruit_grow_percent,
 
             2,   // bark_grow_cooldown,	 // * lifespan multiplier
             95,  // bark_plant_vs_thorn, // % to grow a plant cell (leaf/bark) vs a killer
             6,   // bark_grow_cost,		 // * energy density multiplier
             3,   // bark_max_integrity,	 // how many times bark can be "eaten" before it is broken through
-            0.3, // bark_tick_cost      // * energy density multiplier
+            0.075, // bark_tick_cost      // * energy density multiplier
 
-            0.4, // killer_tick_cost,	// * energy density multiplier
+            0.2, // killer_tick_cost,	// * energy density multiplier
             1,     // killer_damage_cost, // * energy density multiplier
 
             4, // armor_health_bonus,

@@ -100,7 +100,7 @@ public:
 	void Rotate(bool clockwise);
 
 	void OnCellAdded(Cell *added);
-	
+
 	void OnCellRemoved(Cell *removed);
 
 	void AddCell(int x_rel, int y_rel, Cell *_cell);
@@ -216,7 +216,6 @@ public:
 	Cell_Biomass *Clone() override;
 };
 
-
 class Cell_Flower;
 class Cell_Leaf : public Cell
 {
@@ -231,7 +230,7 @@ private:
 	bool flowering;
 	Cell_Flower *associatedFlower;
 	float photosynthesisEffectiveness;
-#define PHOTOSYNTHESISEFFECTIVENESS_MAX 6.0
+#define PHOTOSYNTHESISEFFECTIVENESS_MAX 8.0
 
 public:
 	~Cell_Leaf() override;
@@ -410,6 +409,9 @@ class Cell_Touch : public Sensor_Cell
 	friend class Organism;
 	friend class Board;
 
+private:
+	CellSenseActivation sentiments;
+
 public:
 	~Cell_Touch() override;
 
@@ -424,7 +426,11 @@ class Cell_Eye : public Sensor_Cell
 {
 	friend class Organism;
 	friend class Board;
+
+private:
 	int direction;
+
+	CellSenseActivation sentiments;
 
 public:
 	~Cell_Eye() override;

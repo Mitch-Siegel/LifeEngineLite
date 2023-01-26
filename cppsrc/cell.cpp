@@ -233,6 +233,7 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 				switch (neighbor->type)
 				{
 				case cell_bark:
+					// this->photosynthesisEffectiveness++;
 					break;
 
 				default:
@@ -242,13 +243,21 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 			}
 			else
 			{
-				if (neighbor->type != cell_empty)
+				switch(neighbor->type)
 				{
-					this->photosynthesisEffectiveness -= 2;
+					case cell_empty:
+					case cell_plantmass:
+					case cell_biomass:
+					case cell_fruit:
+					break;
+
+					default:
+						this->photosynthesisEffectiveness -= 2;
 				}
 			}
 		}
 	}
+	this->photosynthesisEffectiveness /= PHOTOSYNTHESISEFFECTIVENESS_MAX;
 }
 
 void Cell_Leaf::Tick()
@@ -259,7 +268,7 @@ void Cell_Leaf::Tick()
 	}
 	else if (this->photosynthesisEffectiveness < 0.0)
 	{
-		this->myOrganism->ExpendEnergy(-1 * Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * this->photosynthesisEffectiveness);
+		this->myOrganism->ExpendEnergy(-1.0 * Settings.Get(WorldSettings::photosynthesis_energy_multiplier) * this->photosynthesisEffectiveness);
 	}
 
 	if (!this->flowering || (this->myOrganism->Energy() < (Settings.Get(WorldSettings::leaf_flowering_cost) + 1)))
@@ -338,7 +347,7 @@ void Cell_Bark::Tick()
 		return;
 	}
 
-		bool canGrow = this->actionCooldown == 0;
+	bool canGrow = this->actionCooldown == 0;
 	// even though leaves can exist in a 5x5 around bark, bark will only grow a leaf directly adjacent
 	int checkDirIndex = randInt(0, 3);
 	for (int i = 0; i < 4; i++)
@@ -802,7 +811,7 @@ Cell_Touch::Cell_Touch()
 
 void Cell_Touch::Tick()
 {
-	nn_num_t cellsTouched[cell_null] = {0.0};
+	nn_num_t touchedActivation = 0;
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[i];
@@ -815,10 +824,14 @@ void Cell_Touch::Tick()
 			{
 				continue;
 			}
-			cellsTouched[checked->type] = 1.0;
+			touchedActivation += this->sentiments[checked->type];
 		}
 	}
-	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsTouched);
+	if (touchedActivation < 0.0)
+	{
+		touchedActivation = 0.0;
+	}
+	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), touchedActivation);
 }
 
 Cell_Touch *Cell_Touch::Clone()
@@ -840,7 +853,7 @@ Cell_Eye::Cell_Eye()
 
 void Cell_Eye::Tick()
 {
-	nn_num_t cellsSeen[cell_null] = {0.0};
+	nn_num_t seenActivation = 0;
 	int *deltaCoords = directions[this->direction];
 	int x_checked = this->x;
 	int y_checked = this->y;
@@ -855,8 +868,7 @@ void Cell_Eye::Tick()
 			{
 				if (checked->myOrganism != this->myOrganism)
 				{
-					cellsSeen[checked->type] = static_cast<nn_num_t>(Settings.Get(WorldSettings::eye_max_seeing_distance) - i) / Settings.Get(WorldSettings::eye_max_seeing_distance);
-					// cellsSeen[checked->type] = 1.0;
+					seenActivation = static_cast<nn_num_t>(Settings.Get(WorldSettings::eye_max_seeing_distance) - i) / Settings.Get(WorldSettings::eye_max_seeing_distance) * this->sentiments[checked->type];
 				}
 				break;
 			}
@@ -866,7 +878,12 @@ void Cell_Eye::Tick()
 			break;
 		}
 	}
-	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), cellsSeen);
+
+	if (seenActivation < 0.0)
+	{
+		seenActivation = 0.0;
+	}
+	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), seenActivation);
 }
 
 int Cell_Eye::Direction()
