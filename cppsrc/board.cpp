@@ -22,6 +22,9 @@ Board::Board(const int _dim_x, const int _dim_y)
 	this->dim_y = _dim_y;
 	this->Organisms = std::set<Organism *>();
 
+	this->daytime = true;
+	this->dayCycleTimer = Settings.Get(WorldSettings::day_length);
+
 	for (int y = 0; y < _dim_y; y++)
 	{
 		this->cells.push_back(std::vector<Cell *>());
@@ -45,6 +48,16 @@ Board::~Board()
 	}
 }
 
+const bool &Board::IsDaytime()
+{
+	return this->daytime;
+}
+
+const int &Board::DayCycleTimeRemaining()
+{
+	return this->dayCycleTimer;
+}
+
 // returns false if did tick, true if couldn't acquire mutex
 bool Board::Tick()
 {
@@ -52,6 +65,17 @@ bool Board::Tick()
 	{
 		return true;
 	}
+
+	if(this->dayCycleTimer == 0)
+	{
+		this->daytime = !this->daytime;
+		this->dayCycleTimer = Settings.Get(WorldSettings::day_length);
+	}
+	else
+	{
+		this->dayCycleTimer--;
+	}
+
 	std::map<uint64_t, Board::Food_Slot *> newFoodCells;
 	for (std::map<uint64_t, Board::Food_Slot *>::iterator sloti = this->FoodCells.begin(); sloti != this->FoodCells.end(); ++sloti)
 	{

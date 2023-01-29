@@ -15,10 +15,10 @@ int CellEnergyDensities[cell_null] = {
 	2,	// bark
 	2,	// flower
 	0,	// fruit
-	8,	// herbivore
-	16, // carnivore
-	8,	// mover
-	0,	// killer
+	16, // herbivore
+	32, // carnivore
+	16, // mover
+	4,	// killer
 	5,	// armor
 	1,	// touch sensor
 	1,	// eye
@@ -198,6 +198,7 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 {
 	this->crowding = 0;
+	/*
 	for (int i = 0; i < 8; i++)
 	{
 		int x_check = this->x + directions[i][0];
@@ -230,9 +231,9 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 				switch (neighbor->type)
 				{
 				case cell_empty:
-				// case cell_plantmass:
-				// case cell_biomass:
-				// case cell_fruit:
+					// case cell_plantmass:
+					// case cell_biomass:
+					// case cell_fruit:
 					break;
 
 				default:
@@ -240,7 +241,7 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 				}
 			}
 		}
-	}
+	}*/
 }
 
 void Cell_Leaf::Tick()
@@ -251,11 +252,14 @@ void Cell_Leaf::Tick()
 	}
 	else
 	{
-		this->myOrganism->AddEnergy(1);
-		this->photosynthesisCooldown = Settings.GetInt(WorldSettings::photosynthesis_interval) + this->crowding;
+		if (board->IsDaytime())
+		{
+			this->myOrganism->AddEnergy(1);
+			this->photosynthesisCooldown = Settings.GetInt(WorldSettings::photosynthesis_interval) + this->crowding;
+		}
 	}
 
-	if(!this->flowering)
+	if (!this->flowering)
 	{
 		return;
 	}

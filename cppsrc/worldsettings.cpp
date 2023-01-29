@@ -79,6 +79,12 @@ WorldSettings::Setting::Setting()
 
 void WorldSettings::Initialize()
 {
+	this->settings[WorldSettings::day_length] = Setting("Day/Night Length",
+														"Length of 1 day or 1 night (*2 = one full day/night cycle)",
+														true,
+														20,
+														{0, 9999});
+
 	this->settings[WorldSettings::default_mutability] = Setting("Default Mutability (%)",
 																"Base percent chance for an organism to mutate upon reproduction",
 																true,
@@ -242,10 +248,10 @@ void WorldSettings::Initialize()
 																{0, 9999});
 
 	this->settings[WorldSettings::bark_plant_vs_thorn] = Setting("Bark Grow Leaf vs Thorn (%)",
-																"Percent for a bark to grow a new leaf vs a new thorn",
-																true,
-																95,
-																{0, 100});
+																 "Percent for a bark to grow a new leaf vs a new thorn",
+																 true,
+																 95,
+																 {0, 100});
 
 	this->settings[WorldSettings::bark_grow_cost] = Setting("Bark Grow Cost",
 															"Energy cost for a bark cell to grow",
@@ -288,6 +294,7 @@ double WorldSettings::Get(WorldSettings::SettingNames s)
 {
 	switch (s)
 	{
+	case day_length:
 	case default_mutability:
 	case lifespan_multiplier:
 	case reproduction_energy_proportion:
@@ -342,7 +349,7 @@ double WorldSettings::Get(WorldSettings::SettingNames s)
 
 int WorldSettings::GetInt(SettingNames s)
 {
-	if(!this->settings[s].isInt)
+	if (!this->settings[s].isInt)
 	{
 		printf("Call to WorldSettings::GetInt for non-int setting!");
 		exit(1);

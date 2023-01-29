@@ -66,6 +66,9 @@ public:
 class Board
 {
 private:
+    bool daytime;
+    int dayCycleTimer;
+
     unsigned int nextSpecies;
 
     class Food_Slot
@@ -117,6 +120,10 @@ public:
     inline void ReleaseMutex() { this->mutex.unlock(); }
 
     bool Tick();
+
+    const bool &IsDaytime();
+
+    const int &DayCycleTimeRemaining();
 
     bool boundCheckPos(const int _x, const int _y);
 

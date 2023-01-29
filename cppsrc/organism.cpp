@@ -9,7 +9,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (Settings.Get(WorldSettings::move_cost_multiplier) * nCells_)
+#define moveCost(nCells) ceil(Settings.Get(WorldSettings::move_cost_multiplier) * nCells_)
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -958,7 +958,8 @@ Organism *Organism::Reproduce()
 						replicated->mutability = 100;
 					}
 				}
-				if (randPercent(this->mutability))
+
+				if (randPercent(90))
 				{
 					replicated->Rotate(randPercent(50));
 				}
@@ -995,7 +996,7 @@ Organism *Organism::Reproduce()
 		}
 	}
 	// printf("%f\n", 0.01 * REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_));
-	this->ExpendEnergy(this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0) * 0.1);
+	this->ExpendEnergy(this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0));
 	// this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
 
 	// this->ExpendEnergy(3.0);
@@ -1193,7 +1194,7 @@ void Organism::RemoveCell(Cell *_myCell)
 		// float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
 
 		// lose the entire removed cell's worth of energy plus some extra ("shock" or similar cost to deal with losing this cell)
-		float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * Settings.Get(WorldSettings::energy_density_multiplier)) / this->maxEnergy);
+		float energyLost = ceil(static_cast<float>(CellEnergyDensities[_myCell->type] * Settings.Get(WorldSettings::energy_density_multiplier)) / this->maxEnergy);
 
 		if (energyLost > 0.0) // check because some cells have negative energy densities
 		{

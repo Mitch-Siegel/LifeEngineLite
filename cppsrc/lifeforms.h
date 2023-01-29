@@ -140,7 +140,7 @@ public:
 };
 
 class Organism;
-#define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * sqrt(static_cast<double>(maxEnergy) / Settings.Get(WorldSettings::energy_density_multiplier) * nCells))
+#define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * (static_cast<double>(maxEnergy) / Settings.Get(WorldSettings::energy_density_multiplier) * sqrt(nCells)))
 #define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (Settings.Get(WorldSettings::reproduction_cooldown_multiplier) * (static_cast<double>(nCells) / sqrt(maxEnergy)))
 
 class Organism;

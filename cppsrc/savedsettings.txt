@@ -1,5 +1,6 @@
+200	Day/Night Length
 15	Default Mutability (%)
-100	Lifespan Multiplier
+50	Lifespan Multiplier
 75	Reproduction Energy Proportion (%)
 0	Reproduction Cooldown Multiplier
 1	Max Health Multiplier
@@ -11,7 +12,7 @@
 4	Fruit Food Energy
 2	Plantmass Food Energy
 6	Biomass Food Energy
-6	Photosynthesis Interval
+3	Photosynthesis Interval
 3	Leaf Flowering Cost
 40	Leaf Flowering Cooldown
 30	Leaf Flowering Ability (%)
@@ -19,16 +20,16 @@
 30	Flower Bloom Cooldown
 33	Flower Wilt Chance (%)
 30	Flower Expand Chance (%)
-10	Spoil Time Multiplier
+20	Spoil Time Multiplier
 50	Plantmass Spoil Time
-5	Biomass Spoil Time
+0	Biomass Spoil Time
 7	Fruit Spoil Time
 7	Fruit Grow Chance (%)
 50	Bark Grow Cooldown
 95	Bark Grow Leaf vs Thorn (%)
 4	Bark Grow Cost
 3	Bark Max Integrity
-1	Killer Cost Interval
-1	Killer Damage Cost
+10	Killer Cost Interval
+4	Killer Damage Cost
 4	Armor Health Bonus
 20	Eye Max Seeing Distance

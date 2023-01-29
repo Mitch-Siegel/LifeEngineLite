@@ -20,6 +20,7 @@ public:
     enum SettingNames
     {
         // base settings
+        day_length,
         default_mutability,
         lifespan_multiplier,
         // energy proportions (of max) required for certain actions
@@ -75,16 +76,6 @@ public:
 private:
     void Initialize(); // set up the array of settings with defaults
     bool usingDefaultSettings;
-
-    constexpr static float Default_SettingsBase[SettingNames::null] =
-        {
-
-
-            4, // armor_health_bonus,
-
-            20, // eye_max_seeing_distance,
-
-    };
 
     Setting settings[SettingNames::null];
 
