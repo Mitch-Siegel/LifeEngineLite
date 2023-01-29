@@ -66,7 +66,7 @@ void WorldStats::DisplayGeneralInfoTable()
 		for (int i = 0; i < class_null; i++)
 		{
 			ImGui::TableSetColumnIndex(i + 1);
-			ImGui::Text("%.1f", organismStats[i][count_cells]);
+			ImGui::Text("%.2f", organismStats[i][count_cells]);
 		}
 		row++;
 

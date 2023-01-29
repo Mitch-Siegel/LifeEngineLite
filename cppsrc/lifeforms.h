@@ -50,12 +50,12 @@ class Organism
 
 private:
 	uint64_t currentHealth, maxHealth;
-	double currentEnergy, maxEnergy;
+	uint64_t currentEnergy, maxEnergy;
 	std::set<Cell *> myCells;
 	uint64_t nCells_;
 	OrganismIdentifier identifier_;
 
-	float leftoverEnergy = 0.0;
+	double leftoverTickCost = 0.0;
 
 	bool requireConnectednessCheck;
 	// remove any cells which aren't directly connected to the organism
@@ -111,18 +111,18 @@ public:
 
 	const uint64_t &MaxHealth();
 
-	const double &Energy();
+	const uint64_t &Energy();
 
-	const double &MaxEnergy();
+	const uint64_t &MaxEnergy();
 
 	void Damage(uint64_t n);
 
 	void Heal(uint64_t n);
 
 	// automatically scales n by energy density multiplier
-	void ExpendEnergy(double n);
+	void ExpendEnergy(uint64_t n);
 
-	void AddEnergy(double n);
+	void AddEnergy(uint64_t n);
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
 
@@ -140,7 +140,7 @@ public:
 };
 
 class Organism;
-#define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * (maxEnergy / Settings.Get(WorldSettings::energy_density_multiplier) * sqrt(nCells)))
+#define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * sqrt(static_cast<double>(maxEnergy) / Settings.Get(WorldSettings::energy_density_multiplier) * nCells))
 #define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (Settings.Get(WorldSettings::reproduction_cooldown_multiplier) * (static_cast<double>(nCells) / sqrt(maxEnergy)))
 
 class Organism;
@@ -226,11 +226,11 @@ class Cell_Leaf : public Cell
 	friend class Board;
 
 private:
+	int photosynthesisCooldown;
 	int flowerCooldown;
 	bool flowering;
 	Cell_Flower *associatedFlower;
-	float photosynthesisEffectiveness;
-#define PHOTOSYNTHESISEFFECTIVENESS_MAX 8.0
+	int crowding;
 
 public:
 	~Cell_Leaf() override;

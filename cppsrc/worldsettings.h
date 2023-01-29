@@ -1,6 +1,21 @@
+#include <string>
 
 class WorldSettings
 {
+
+    class Setting
+    {
+    public:
+        std::string name;
+        std::string description;
+        bool isInt;
+        double value;
+        std::pair<double, double> range;
+        Setting();
+        Setting(std::string name, std::string description, bool isInt, double baseValue, std::pair<double, double> range);
+
+    };
+
 public:
     enum SettingNames
     {
@@ -21,7 +36,7 @@ public:
         plantmass_food_energy,            // * food multiplier
         biomass_food_energy,              // * food multiplier
                                           // leaf
-        photosynthesis_energy_multiplier, // each leaf generates this much energy per tick
+        photosynthesis_interval, // each leaf generates this much energy per tick
         leaf_flowering_cost,              // * energy density multiplier
         leaf_flowering_cooldown,          // number of ticks between leaf flowering
         leaf_flowering_ability_percent,   // % chance a new leaf cell will be able to flower
@@ -42,10 +57,9 @@ public:
         bark_plant_vs_thorn, // % to grow a plant cell (leaf/bark) vs a killer
         bark_grow_cost,      // * energy density multiplier
         bark_max_integrity,  // how many times bark can be "eaten" before it is broken through
-        bark_tick_cost,      // * energy density multiplier
 
         // killer
-        killer_tick_cost,   // * energy density multiplier
+        killer_cost_interval,   // * energy density multiplier
         killer_damage_cost, // * energy density multiplier
 
         // armor
@@ -58,101 +72,13 @@ public:
 
     };
 
-    const char *names[SettingNames::null + 1] =
-        {
-            "default mutability",
-            "lifespan multiplier",
-            // energy proportions (of max) required for certain actions
-            "reproduction energy proportion",
-            "reproduction cooldown multiplier (* lifespan multiplier)", // * lifespan multiplier
-            "max health multiplier",
-            // base energy stats
-            "energy density multiplier",
-            "move cost multiplier (* energy density multiplier)",                                          // * energy density multiplier
-            "food multiplier (* energy density multiplier)",                                               // * energy density multiplier
-            "leaf food energy (* food multiplier)",                                                        // * food multiplier
-            "flower food energy (* food multiplier)",                                                      // * food multiplier
-            "fruit food energy (* food multiplier)",                                                       // * food multiplier
-            "plantmass food energy (* food multiplier)",                                                   // * food multiplier
-            "biomass food energy (* food multiplier)",                                                     // * food multiplier
-                                                                                                           // leaf
-            "photosynthesis energy multiplier",                                                            // each leaf generates this much energy per tick
-            "leaf flowering cost (* energy density multiplier)",                                           // * energy density multiplier
-            "leaf flowering cooldown",                                                                     // number of ticks between leaf flowering
-            "leaf flowering ability percent",                                                              // % chance a new leaf cell will be able to flower
-                                                                                                           // flower
-            "flower bloom cost (* energy density multiplier)",                                             // * energy density multiplier
-            "flower bloom cooldown (* lifespan multiplier)",                                               // * lifespan multiplier
-            "flower wilt chance",                                                                          // each time the flower blooms, it has this % chance to wilt
-            "flower expand percent",                                                                       // % for wilting flower to become leaf
-                                                                                                           // spoil times
-            "spoiltime base",                                                                              // in ticks
-            "plantmass spoil time (* spoiltime base)",                                                     // * spoiltime base
-            "biomass spoil time (* spoiltime base)",                                                       // * spoiltime base
-            "fruit spoil time (* spoiltime base)",                                                         // * spoiltime base
-            "fruit grow percent (to spontaneously grow new organism upon spoil)\n(must roll 2x in a row)", // % for fruit to spontaneously grow a new organism
-
-            // bark
-            "bark grow cooldown (* lifespan multiplier)",   // * lifespan multiplier
-            "bark plant vs thorn",                          // % to grow a plant cell (leaf/bark) vs a killer
-            "bark grow cost (* energy density multiplier)", // * energy density multiplier
-            "bark max integrity",                           // how many times bark can be "eaten" before it is broken through
-            "bark tick cost",                               // * energy density multipler
-            // killer
-            "killer tick cost (* energy density multiplier)",   // * energy density multiplier
-            "killer damage cost (* energy density multiplier)", // * energy density multiplier
-
-            // armor
-            "armor health bonus",
-
-            // eye
-            "eye max seeing distance",
-
-            "null"};
-
 private:
+    void Initialize(); // set up the array of settings with defaults
     bool usingDefaultSettings;
 
     constexpr static float Default_SettingsBase[SettingNames::null] =
         {
-            // base settings
-            15,    // default_mutability,
-            15,    // lifespan_multiplier,
-            0.7,   // reproduction_energy_proportion,
-            1,     // reproduction_cooldown_multiplier,
-            1,     // max_health_multiplier,
-            4.0,   // energy_density_multiplier,
-            0.15, // move_cost_multiplier,
-            4.0,   // food_multiplier,
-            1,     // leaf_food_energy,
-            3,     // flower_food_energy,
-            4,     // fruit_food_energy,
-            2,     // plantmass_food_energy,
-            8,     // biomass_food_energy,
-            0.5,   // photosynthesis_energy_multiplier,
-            3,     // leaf_flowering_cost,
-            45,    // leaf_flowering_cooldown, // * lifespan multiplier
-            45,    // leaf_flowering_ability_percent,
 
-            4,  // flower_bloom_cost,
-            7,  // flower_bloom_cooldown, // * lifespan multiplier
-            33, // flower_wilt_chance,
-            30, // flower_expand_percent,
-
-            10,  // spoil_time_base,
-            50, // plantmass_spoil_time,
-            5,  // biomass_spoil_time,
-            7,   // fruit_spoil_time,
-            7,   // fruit_grow_percent,
-
-            2,   // bark_grow_cooldown,	 // * lifespan multiplier
-            95,  // bark_plant_vs_thorn, // % to grow a plant cell (leaf/bark) vs a killer
-            6,   // bark_grow_cost,		 // * energy density multiplier
-            3,   // bark_max_integrity,	 // how many times bark can be "eaten" before it is broken through
-            0.075, // bark_tick_cost      // * energy density multiplier
-
-            0.2, // killer_tick_cost,	// * energy density multiplier
-            1,     // killer_damage_cost, // * energy density multiplier
 
             4, // armor_health_bonus,
 
@@ -160,22 +86,24 @@ private:
 
     };
 
-    float SettingsBase[SettingNames::null];
-
-    float values[SettingNames::null];
+    Setting settings[SettingNames::null];
 
 public:
     WorldSettings();
 
-    float GetBase(SettingNames s);
+    double Get(SettingNames s);
+    
+    int GetInt(SettingNames s);
 
-    float Get(SettingNames s);
+    double GetRaw(SettingNames s);
 
-    float GetRaw(SettingNames s);
+    std::string GetName(WorldSettings::SettingNames s);
 
-    const char *GetName(WorldSettings::SettingNames s);
+    std::string GetDescription(WorldSettings::SettingNames s);
 
-    void Set(SettingNames s, float value);
+    void Set(SettingNames s, double value);
+
+    const WorldSettings::Setting &operator[](int index);
 
     /*
 

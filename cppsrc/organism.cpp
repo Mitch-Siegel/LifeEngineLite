@@ -140,27 +140,16 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	this->ExpendEnergy(((0.25 * this->nCells_) * Settings.Get(WorldSettings::photosynthesis_energy_multiplier)) +
-					   (Settings.Get(WorldSettings::bark_tick_cost) * this->cellCounts[cell_bark]));
-	
-
-	if (this->cellCounts[cell_herbivore_mouth])
+	this->leftoverTickCost += 0.5 / Settings.Get(WorldSettings::photosynthesis_interval);
+	if(this->leftoverTickCost > 1.0)
 	{
-		this->ExpendEnergy(this->cellCounts[cell_carnivore_mouth] * 8);
+		this->ExpendEnergy(floor(this->leftoverTickCost));
+		this->leftoverTickCost -= floor(this->leftoverTickCost);
 	}
-
-	/*if (this->nCells_ == this->cellCounts[cell_leaf])
-	{
-		this->ExpendEnergy(this->cellCounts[cell_leaf] - (1.0 / (static_cast<double>(ENERGY_DENSITY_MULTIPLIER) * 2.25)));
-	}
-	else
-	{
-		this->ExpendEnergy(this->nCells_ - 1);
-	}*/
 
 	if (this->reproductionCooldown == 0)
 	{
-		if (this->currentEnergy > ((this->maxEnergy * Settings.Get(WorldSettings::reproduction_energy_proportion)) * 1.1))
+		if (this->currentEnergy > ((this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0)) * 1.1))
 		{
 			return this->Reproduce();
 		}
@@ -251,15 +240,13 @@ Organism *Organism::Tick()
 		}
 	}
 
-	// this->AddEnergy((static_cast<float>(this->cellCounts[cell_leaf]) / PHOTOSYNTHESIS_INTERVAL)/* + (this->cellCounts[cell_leaf] > 0)*/);
-
 	return nullptr;
 }
 
 void Organism::RecalculateStats()
 {
 	this->maxEnergy = 0;
-	int calculatedMaxEnergy = 10;
+	int calculatedMaxEnergy = Settings.GetInt(WorldSettings::energy_density_multiplier);
 	for (int i = 0; i < cell_null; i++)
 	{
 		cellCounts[i] = 0;
@@ -706,16 +693,11 @@ void Organism::Heal(uint64_t n)
 	}
 }
 
-void Organism::ExpendEnergy(double n)
+void Organism::ExpendEnergy(uint64_t n)
 {
-	if (n < 0.0)
-	{
-		printf("ExpendEnergy with < 0 n\n");
-		exit(1);
-	}
 	if (n > this->currentEnergy)
 	{
-		this->currentEnergy = 0.0;
+		this->currentEnergy = 0;
 	}
 	else
 	{
@@ -723,14 +705,8 @@ void Organism::ExpendEnergy(double n)
 	}
 }
 
-void Organism::AddEnergy(double n)
+void Organism::AddEnergy(uint64_t n)
 {
-	if (n < 0.0)
-	{
-		printf("AddEnergy with < 0 n\n");
-		exit(1);
-	}
-
 	this->currentEnergy += n;
 
 	if (this->currentEnergy > this->maxEnergy)
@@ -744,12 +720,12 @@ const uint64_t &Organism::MaxHealth()
 	return this->maxHealth;
 }
 
-const double &Organism::Energy()
+const uint64_t &Organism::Energy()
 {
 	return this->currentEnergy;
 }
 
-const double &Organism::MaxEnergy()
+const uint64_t &Organism::MaxEnergy()
 {
 	return this->maxEnergy;
 }
@@ -852,7 +828,7 @@ Organism *Organism::Reproduce()
 				}
 				*/
 
-				this->ExpendEnergy(this->maxEnergy * Settings.Get(WorldSettings::reproduction_energy_proportion));
+				this->ExpendEnergy(this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0));
 
 				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra, *this->brain);
 				replicated->direction = this->direction;
@@ -1025,7 +1001,7 @@ Organism *Organism::Reproduce()
 		}
 	}
 	// printf("%f\n", 0.01 * REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_));
-	this->ExpendEnergy(this->maxEnergy * Settings.Get(WorldSettings::reproduction_energy_proportion) * 0.1);
+	this->ExpendEnergy(this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0) * 0.1);
 	// this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
 
 	// this->ExpendEnergy(3.0);
