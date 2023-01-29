@@ -29,11 +29,7 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     this->nextSensorIndex = 0;
     this->freeWill = randFloat(-1.0, 1.0);
 
-    this->TryAddRandomInputOutputConnectionBySrc(this->layers[0][0].Id());
-    this->TryAddRandomInputOutputConnectionBySrc(this->layers[0][0].Id());
-
-    /*
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 2; i++)
     {
 
         size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::logistic));
@@ -45,7 +41,6 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
         while (!this->TryAddRandomOutputConnectionBySrc(newId))
             ;
     }
-    */ 
 
     // for (auto output = this->layers[2].begin(); output != this->layers[2].end(); ++output)
     // {

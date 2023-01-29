@@ -140,13 +140,6 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	this->leftoverTickCost += 0.5 / Settings.Get(WorldSettings::photosynthesis_interval);
-	if(this->leftoverTickCost > 1.0)
-	{
-		this->ExpendEnergy(floor(this->leftoverTickCost));
-		this->leftoverTickCost -= floor(this->leftoverTickCost);
-	}
-
 	if (this->reproductionCooldown == 0)
 	{
 		if (this->currentEnergy > ((this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0)) * 1.1))
@@ -205,6 +198,7 @@ Organism *Organism::Tick()
 		{
 		case intent_idle:
 		{
+			this->ExpendEnergy(moveCost(1));
 		}
 		break;
 		case intent_forward:
@@ -421,7 +415,7 @@ bool Organism::CheckValidity()
 
 	if (this->cellCounts[cell_mover] == 0)
 	{
-		if (this->cellCounts[cell_touch] || this->cellCounts[cell_eye])
+		if (this->cellCounts[cell_touch] || this->cellCounts[cell_eye] || this->cellCounts[cell_herbivore_mouth] || this->cellCounts[cell_carnivore_mouth])
 		{
 			return true;
 		}
