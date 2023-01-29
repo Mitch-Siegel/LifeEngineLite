@@ -9,7 +9,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) ceil(Settings.Get(WorldSettings::move_cost_multiplier) * nCells_)
+#define moveCost(nCells) Settings.Get(WorldSettings::move_cost_multiplier) * sqrt(nCells_)
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -161,6 +161,12 @@ Organism *Organism::Tick()
 		this->requireConnectednessCheck = false;
 	}
 
+	if(this->leftoverTickCost > 1.0)
+	{
+		this->ExpendEnergy(floor(this->leftoverTickCost));
+		this->leftoverTickCost -= floor(this->leftoverTickCost);
+	}
+
 	std::map<Cell *, bool> ticked;
 
 	for (auto celli = this->myCells.begin(); celli != this->myCells.end();)
@@ -198,7 +204,7 @@ Organism *Organism::Tick()
 		{
 		case intent_idle:
 		{
-			this->ExpendEnergy(moveCost(1));
+			this->leftoverTickCost += moveCost(1);
 		}
 		break;
 		case intent_forward:
@@ -559,7 +565,7 @@ void Organism::Move(int moveDirection)
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-2
 		*/
 	}
-	this->ExpendEnergy(moveCost(this->nCells_));
+	this->leftoverTickCost += moveCost(this->nCells_);
 }
 
 void Organism::Rotate(bool clockwise)
@@ -656,7 +662,7 @@ void Organism::Rotate(bool clockwise)
 		}
 	}
 
-	this->ExpendEnergy(moveCost(this->nCells_));
+	this->leftoverTickCost += moveCost(this->nCells_);
 	this->direction += (clockwise ? -1 : 1);
 	if (this->direction < 0)
 	{
@@ -997,7 +1003,7 @@ Organism *Organism::Reproduce()
 		}
 	}
 	// printf("%f\n", 0.01 * REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_));
-	this->ExpendEnergy(this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0));
+	this->ExpendEnergy(this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0) * 0.1);
 	// this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
 
 	// this->ExpendEnergy(3.0);

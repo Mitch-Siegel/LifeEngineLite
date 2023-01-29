@@ -409,9 +409,6 @@ class Cell_Touch : public Sensor_Cell
 	friend class Organism;
 	friend class Board;
 
-private:
-	CellSenseActivation sentiments;
-
 public:
 	~Cell_Touch() override;
 
@@ -429,8 +426,6 @@ class Cell_Eye : public Sensor_Cell
 
 private:
 	int direction;
-
-	CellSenseActivation sentiments;
 
 public:
 	~Cell_Eye() override;

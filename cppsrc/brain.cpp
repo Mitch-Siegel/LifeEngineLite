@@ -1,18 +1,8 @@
 #include "brain.h"
 #include "rng.h"
 
-CellSenseActivation::CellSenseActivation()
-{
-    for (int i = 0; i < cell_null; i++)
-    {
-        this->values[i] = randFloat(-1.0, 1.0);
-    }
-}
-
-nn_num_t &CellSenseActivation::operator[](unsigned int index)
-{
-    return this->values[index];
-}
+#include <map>
+#include <math.h>
 
 /*
  * Default brain inputs:
@@ -22,42 +12,46 @@ nn_num_t &CellSenseActivation::operator[](unsigned int index)
  *
  *
  */
-#define BRAIN_DEFAULT_INPUTS 1
+#define BRAIN_DEFAULT_INPUTS 4
 
 Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets::logistic})
 {
     this->nextSensorIndex = 0;
-    this->freeWill = randFloat(-1.0, 1.0);
+    this->freeWill = randFloat(0.0, 1.0);
+    this->nTicksSameAction = 0;
 
     this->AddNeuron(SimpleNets::logistic);
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 3; i++)
     {
-
         size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::logistic));
-        this->AddConnection(this->layers[0][0].Id(), newId, 0.0); // bias connection
+        if (randPercent(50))
+        {
+            while (!this->TryAddRandomHiddenConnectionByDst(newId))
+                ;
+        }
+        else
+        {
+            while (!this->TryAddRandomInputConnectionByDst(newId))
+                ;
+        }
 
-        while (!this->TryAddRandomHiddenConnectionByDst(newId))
-            ;
-
-        while (!this->TryAddRandomHiddenConnectionBySrc(newId))
-            ;
-
-        while (!this->TryAddRandomInputConnectionByDst(newId))
-            ;
-
-        while (!this->TryAddRandomOutputConnectionBySrc(newId))
-            ;
+        if (randPercent(50))
+        {
+            while (!this->TryAddRandomHiddenConnectionBySrc(newId))
+                ;
+        }
+        else
+        {
+            while (!this->TryAddRandomOutputConnectionBySrc(newId))
+                ;
+        }
     }
-
-    // for (auto output = this->layers[2].begin(); output != this->layers[2].end(); ++output)
-    // {
-    // this->AddConnection(this->layers[0][0].Id(), (*output)->Id(), randFloat(-1.0, 1.0));
-    // }
 }
 
 Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
 {
     this->nextSensorIndex = b.nextSensorIndex;
+    this->nTicksSameAction = 0;
 }
 
 bool Brain::TryAddRandomInputConnectionBySrc(size_t srcId)
@@ -189,16 +183,22 @@ bool Brain::TryAddRandomOutputConnection()
 
 void Brain::SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion)
 {
-    this->freeWill = randFloat(0.0, 1.0);
+    this->freeWill += randFloat(-0.1, 0.1);
+    if (this->freeWill < 0.0)
+    {
+        this->freeWill = 0.0;
+    }
+    else if (this->freeWill > 1.0)
+    {
+        this->freeWill = 1.0;
+    }
 
-    this->SetInput(0, {this->freeWill});
+    this->SetInput(0, {this->freeWill, (static_cast<nn_num_t>(this->nTicksSameAction) / 20.0f), energyProportion, healthProportion});
 }
 
-void Brain::SetSensoryInput(unsigned int senseCellIndex, nn_num_t value)
+void Brain::SetSensoryInput(unsigned int senseCellIndex, const std::vector<nn_num_t> &sense)
 {
-    std::vector<nn_num_t> valueVec;
-    valueVec.push_back(value);
-    this->SetInput((BRAIN_DEFAULT_INPUTS - 1) + senseCellIndex, valueVec);
+    this->SetInput((BRAIN_DEFAULT_INPUTS - 1) + senseCellIndex, sense);
 }
 
 void Brain::AddRandomHiddenNeuron()
@@ -334,32 +334,74 @@ void Brain::Mutate()
 unsigned int Brain::GetNewSensorIndex()
 {
 
-    size_t inputId = this->AddInput();
-    this->AddNeuron(SimpleNets::perceptron);
-    int nConnections = randInt(1, (this->size(1)));
-    while (nConnections > 0)
+    size_t thisInputNeuron = this->AddNeuron(SimpleNets::perceptron);
+    if (randPercent(50) && (this->size(1) > 1))
     {
-        if (randPercent(50))
+        while (!this->TryAddRandomOutputConnectionBySrc(thisInputNeuron))
+            ;
+    }
+    else
+    {
+        while (!this->TryAddRandomHiddenConnectionBySrc(thisInputNeuron))
+            ;
+    }
+
+    for (int i = 0; i < cell_null; i++)
+    {
+        size_t inputId = this->AddInput();
+
+        if (randPercent(20))
         {
-            nConnections -= (!this->TryAddRandomHiddenConnectionBySrc(inputId));
+            while (!this->TryAddRandomHiddenConnectionBySrc(inputId))
+                ;
         }
     }
-    return this->nextSensorIndex++;
+
+    int returnedIndex = this->nextSensorIndex;
+    this->nextSensorIndex += cell_null;
+    return returnedIndex;
 }
 
 enum Intent Brain::Decide()
 {
-    enum Intent thisAction = static_cast<enum Intent>(this->Output());
-    if(thisAction == this->lastAction)
+    std::vector<std::pair<int, nn_num_t>> strengthsByOutput;
+
+    for (size_t i = 0; i < this->size(2); i++)
     {
-        this->nTicksSameAction++;
-        if(this->nTicksSameAction > 20)
+        strengthsByOutput.push_back({i, this->layers[2][i].Activation()});
+        // strengthsByOutput[i] = this->layers[2][i].Activation();
+    }
+
+    std::sort(strengthsByOutput.begin(), strengthsByOutput.end(),
+              [](const std::pair<int, nn_num_t> a, const std::pair<int, nn_num_t> b)
+              { return a.second > b.second; });
+
+    // int strictIntent = this->Output();
+    enum Intent chosenAction;
+    bool notChosen = true;
+    while (notChosen)
+    {
+        for (auto i = strengthsByOutput.begin(); i != strengthsByOutput.end(); ++i)
         {
-            enum Intent newAction = randPercent(50) ? intent_rotate_clockwise : intent_rotate_counterclockwise;
-            this->lastAction = newAction;
-            return newAction;
+            // printf("%f\n", i->second);
+            if (randFloat(0.0, 1.0) >= (1 - tanh(M_PI * pow(i->second, (1.0 + (0.1 * (this->nTicksSameAction)))))))
+            {
+                // printf("Strict Intent: %d - Randomized Intent: %d - Same?:%s @ %f\n", strictIntent, i->first, (strictIntent == i->first) ? "YES" : "NO", i->second);
+                chosenAction = static_cast<enum Intent>(i->first);
+                notChosen = false;
+                break;
+            }
         }
     }
-    // ok to cast to enum because the net chooses between discrete outputs and returns the index of the chosen one
-    return static_cast<enum Intent>(thisAction);
+
+    if (chosenAction == this->lastAction)
+    {
+        this->nTicksSameAction++;
+    }
+    else
+    {
+        this->nTicksSameAction = 0;
+    }
+    this->lastAction = chosenAction;
+    return chosenAction;
 }

@@ -3,18 +3,8 @@
 
 #include <cstring>
 
-class CellSenseActivation
+enum Intent
 {
-private:
-    nn_num_t values[cell_null];
-
-public:
-    CellSenseActivation();
-
-    nn_num_t &operator[](unsigned int index);
-};
-
-enum Intent {
     intent_idle,                    // do nothing
     intent_forward,                 // move forward
     intent_back,                    // move backward
@@ -65,7 +55,7 @@ public:
 
     void SetBaselineInput(nn_num_t energyProportion, nn_num_t healthProportion);
 
-    void SetSensoryInput(unsigned int senseCellIndex, nn_num_t values);
+    void SetSensoryInput(unsigned int senseCellIndex, const std::vector<nn_num_t> &sense);
 
     size_t NeuronCount() { return this->units().size(); };
 

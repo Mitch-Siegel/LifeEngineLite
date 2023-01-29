@@ -798,7 +798,7 @@ Cell_Touch::Cell_Touch()
 
 void Cell_Touch::Tick()
 {
-	nn_num_t touchedActivation = 0;
+	std::vector<nn_num_t> sense(cell_null);
 	for (int i = 0; i < 4; i++)
 	{
 		int *thisDirection = directions[i];
@@ -807,18 +807,13 @@ void Cell_Touch::Tick()
 		if (!board->boundCheckPos(x_abs, y_abs))
 		{
 			Cell *checked = board->cells[y_abs][x_abs];
-			if (checked->myOrganism == this->myOrganism)
+			if (checked->myOrganism != this->myOrganism)
 			{
-				continue;
+				sense[checked->type] = 1.0;
 			}
-			touchedActivation += this->sentiments[checked->type];
 		}
 	}
-	if (touchedActivation < 0.0)
-	{
-		touchedActivation = 0.0;
-	}
-	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), touchedActivation);
+	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), sense);
 }
 
 Cell_Touch *Cell_Touch::Clone()
@@ -840,7 +835,7 @@ Cell_Eye::Cell_Eye()
 
 void Cell_Eye::Tick()
 {
-	nn_num_t seenActivation = 0;
+	std::vector<nn_num_t> sense(cell_null);
 	int *deltaCoords = directions[this->direction];
 	int x_checked = this->x;
 	int y_checked = this->y;
@@ -855,7 +850,7 @@ void Cell_Eye::Tick()
 			{
 				if (checked->myOrganism != this->myOrganism)
 				{
-					seenActivation = static_cast<nn_num_t>(Settings.Get(WorldSettings::eye_max_seeing_distance) - i) / Settings.Get(WorldSettings::eye_max_seeing_distance) * this->sentiments[checked->type];
+					sense[checked->type] = static_cast<nn_num_t>(Settings.Get(WorldSettings::eye_max_seeing_distance) - i) / Settings.Get(WorldSettings::eye_max_seeing_distance);
 				}
 				break;
 			}
@@ -865,12 +860,7 @@ void Cell_Eye::Tick()
 			break;
 		}
 	}
-
-	if (seenActivation < 0.0)
-	{
-		seenActivation = 0.0;
-	}
-	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), seenActivation);
+	this->myOrganism->brain->SetSensoryInput(this->BrainInputIndex(), sense);
 }
 
 int Cell_Eye::Direction()
