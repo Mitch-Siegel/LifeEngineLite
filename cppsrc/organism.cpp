@@ -261,6 +261,7 @@ void Organism::RecalculateStats()
 		this->maxEnergy = calculatedMaxEnergy;
 	}
 	this->maxEnergy *= Settings.Get(WorldSettings::energy_density_multiplier);
+	this->maxEnergy *= sqrt(this->nCells_);
 
 	this->maxHealth = this->nCells() * Settings.Get(WorldSettings::max_health_multiplier) + (this->cellCounts[cell_armor] * Settings.Get(WorldSettings::armor_health_bonus));
 	if (this->currentHealth > this->maxHealth)

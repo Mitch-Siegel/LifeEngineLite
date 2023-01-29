@@ -1,18 +1,19 @@
 200	Day/Night Length
+1	Day/Night Cycle Enabled
 15	Default Mutability (%)
-50	Lifespan Multiplier
+40	Lifespan Multiplier
 75	Reproduction Energy Proportion (%)
 0	Reproduction Cooldown Multiplier
 1	Max Health Multiplier
 4	Energy Density Multiplier
 1	Move Cost Multiplier
-6	Food Multiplier
+2	Food Multiplier
 1	Leaf Food Energy
-2	Flower Food Energy
-4	Fruit Food Energy
-2	Plantmass Food Energy
-6	Biomass Food Energy
-3	Photosynthesis Interval
+10	Flower Food Energy
+50	Fruit Food Energy
+1	Plantmass Food Energy
+50	Biomass Food Energy
+10	Photosynthesis Interval
 3	Leaf Flowering Cost
 40	Leaf Flowering Cooldown
 30	Leaf Flowering Ability (%)
@@ -22,8 +23,8 @@
 30	Flower Expand Chance (%)
 20	Spoil Time Multiplier
 50	Plantmass Spoil Time
-0	Biomass Spoil Time
-7	Fruit Spoil Time
+5	Biomass Spoil Time
+2	Fruit Spoil Time
 7	Fruit Grow Chance (%)
 50	Bark Grow Cooldown
 95	Bark Grow Leaf vs Thorn (%)

@@ -66,14 +66,21 @@ bool Board::Tick()
 		return true;
 	}
 
-	if(this->dayCycleTimer == 0)
+	if (Settings.Get(WorldSettings::do_day_night_cycle))
 	{
-		this->daytime = !this->daytime;
-		this->dayCycleTimer = Settings.Get(WorldSettings::day_length);
+		if (this->dayCycleTimer == 0)
+		{
+			this->daytime = !this->daytime;
+			this->dayCycleTimer = Settings.Get(WorldSettings::day_length);
+		}
+		else
+		{
+			this->dayCycleTimer--;
+		}
 	}
 	else
 	{
-		this->dayCycleTimer--;
+		this->daytime = true;
 	}
 
 	std::map<uint64_t, Board::Food_Slot *> newFoodCells;

@@ -30,6 +30,8 @@ class Brain : private SimpleNets::DAGNetwork
 
 private:
     unsigned int nextSensorIndex;
+    int nTicksSameAction;
+    enum Intent lastAction;
 
     // this variable drives the random input neuron
     nn_num_t freeWill;

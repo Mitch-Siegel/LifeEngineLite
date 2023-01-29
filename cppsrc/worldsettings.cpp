@@ -85,6 +85,12 @@ void WorldSettings::Initialize()
 														20,
 														{0, 9999});
 
+	this->settings[WorldSettings::do_day_night_cycle] = Setting("Day/Night Cycle Enabled",
+														"1 for yes, 0 for always day",
+														true,
+														1,
+														{0, 1});
+
 	this->settings[WorldSettings::default_mutability] = Setting("Default Mutability (%)",
 																"Base percent chance for an organism to mutate upon reproduction",
 																true,
@@ -295,6 +301,7 @@ double WorldSettings::Get(WorldSettings::SettingNames s)
 	switch (s)
 	{
 	case day_length:
+	case do_day_night_cycle:
 	case default_mutability:
 	case lifespan_multiplier:
 	case reproduction_energy_proportion:
@@ -326,9 +333,9 @@ double WorldSettings::Get(WorldSettings::SettingNames s)
 
 	case plantmass_spoil_time:
 	case biomass_spoil_time:
+	case fruit_spoil_time:
 		return this->settings[s].value * this->settings[spoil_time_base].value;
 
-	case fruit_spoil_time:
 	case fruit_grow_percent:
 	case bark_grow_cooldown:
 	case bark_plant_vs_thorn:

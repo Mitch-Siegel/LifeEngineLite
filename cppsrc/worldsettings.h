@@ -21,6 +21,7 @@ public:
     {
         // base settings
         day_length,
+        do_day_night_cycle,
         default_mutability,
         lifespan_multiplier,
         // energy proportions (of max) required for certain actions

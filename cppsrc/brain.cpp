@@ -29,11 +29,18 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     this->nextSensorIndex = 0;
     this->freeWill = randFloat(-1.0, 1.0);
 
-    for (int i = 0; i < 2; i++)
+    this->AddNeuron(SimpleNets::logistic);
+    for (int i = 0; i < 10; i++)
     {
 
         size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::logistic));
         this->AddConnection(this->layers[0][0].Id(), newId, 0.0); // bias connection
+
+        while (!this->TryAddRandomHiddenConnectionByDst(newId))
+            ;
+
+        while (!this->TryAddRandomHiddenConnectionBySrc(newId))
+            ;
 
         while (!this->TryAddRandomInputConnectionByDst(newId))
             ;
@@ -328,17 +335,13 @@ unsigned int Brain::GetNewSensorIndex()
 {
 
     size_t inputId = this->AddInput();
-
-    int nConnections = randInt(1, (this->size(1) + this->size(2)) / 2);
-    while(nConnections > 0)
+    this->AddNeuron(SimpleNets::perceptron);
+    int nConnections = randInt(1, (this->size(1)));
+    while (nConnections > 0)
     {
-        if(randPercent(50))
+        if (randPercent(50))
         {
             nConnections -= (!this->TryAddRandomHiddenConnectionBySrc(inputId));
-        }
-        else
-        {
-            nConnections -= (!this->TryAddRandomOutputConnectionBySrc(inputId));
         }
     }
     return this->nextSensorIndex++;
@@ -346,6 +349,17 @@ unsigned int Brain::GetNewSensorIndex()
 
 enum Intent Brain::Decide()
 {
+    enum Intent thisAction = static_cast<enum Intent>(this->Output());
+    if(thisAction == this->lastAction)
+    {
+        this->nTicksSameAction++;
+        if(this->nTicksSameAction > 20)
+        {
+            enum Intent newAction = randPercent(50) ? intent_rotate_clockwise : intent_rotate_counterclockwise;
+            this->lastAction = newAction;
+            return newAction;
+        }
+    }
     // ok to cast to enum because the net chooses between discrete outputs and returns the index of the chosen one
-    return static_cast<enum Intent>(this->Output());
+    return static_cast<enum Intent>(thisAction);
 }
