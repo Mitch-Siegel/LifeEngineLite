@@ -80,23 +80,43 @@ bool Board::Tick()
 						Organism *grownFruit = this->CreateOrganism(expiringFood->x, expiringFood->y);
 						grownFruit->mutability = 15;
 						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
-
-						Cell_Leaf *grownLeaf = new Cell_Leaf(0);
-						grownFruit->AddCell(0, 0, grownLeaf);
-						int dirIndex = randInt(0, 7);
-						for (int j = 0; j < 8; j++)
+						if (randPercent(1))
 						{
-							int *thisDirection = directions[(j + dirIndex) % 8];
-							if (this->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
+							grownFruit->mutability = 15;
+							this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
+
+							bool moverInCenter = randPercent(50);
+
+							grownFruit->AddCell(0, 0, (moverInCenter ? static_cast<Cell *>(new Cell_Mover()) : static_cast<Cell *>(new Cell_Herbivore())));
+							// Cell *secondRandomCell = GenerateRandomCell();
+							// bool couldAddSecond = false;
+							int dirIndex = randInt(0, 7);
+							for (int j = 0; j < 8; j++)
 							{
-								grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(new Cell_Flower()));
-								break;
+								int *thisDirection = directions[(j + dirIndex) % 8];
+								if (this->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
+								{
+									grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(moverInCenter ? static_cast<Cell *>(new Cell_Herbivore()) : static_cast<Cell *>(new Cell_Mover())));
+									break;
+								}
 							}
 						}
-						// if (!couldAddSecond)
-						// {
-						// delete secondRandomCell;
-						// }
+						else
+						{
+
+							Cell_Leaf *grownLeaf = new Cell_Leaf(0);
+							grownFruit->AddCell(0, 0, grownLeaf);
+							int dirIndex = randInt(0, 7);
+							for (int j = 0; j < 8; j++)
+							{
+								int *thisDirection = directions[(j + dirIndex) % 8];
+								if (this->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
+								{
+									grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(new Cell_Flower()));
+									break;
+								}
+							}
+						}
 
 						if (!grownFruit->CheckValidity())
 						{
