@@ -1,4 +1,5 @@
 #include <string>
+#include <cstdint>
 
 class WorldSettings
 {
@@ -8,11 +9,10 @@ class WorldSettings
     public:
         std::string name;
         std::string description;
-        bool isInt;
-        double value;
-        std::pair<double, double> range;
+        uint64_t value;
+        std::pair<uint64_t, uint64_t> range;
         Setting();
-        Setting(std::string name, std::string description, bool isInt, double baseValue, std::pair<double, double> range);
+        Setting(std::string name, std::string description, uint64_t baseValue, std::pair<uint64_t, uint64_t> range);
 
     };
 
@@ -20,8 +20,6 @@ public:
     enum SettingNames
     {
         // base settings
-        day_length,
-        do_day_night_cycle,
         default_mutability,
         lifespan_multiplier,
         // energy proportions (of max) required for certain actions
@@ -83,17 +81,15 @@ private:
 public:
     WorldSettings();
 
-    double Get(SettingNames s);
-    
-    int GetInt(SettingNames s);
+    uint64_t Get(SettingNames s);
 
-    double GetRaw(SettingNames s);
+    uint64_t GetRaw(SettingNames s);
 
     std::string GetName(WorldSettings::SettingNames s);
 
     std::string GetDescription(WorldSettings::SettingNames s);
 
-    void Set(SettingNames s, double value);
+    void Set(SettingNames s, uint64_t value);
 
     const WorldSettings::Setting &operator[](int index);
 

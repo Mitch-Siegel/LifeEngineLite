@@ -180,7 +180,7 @@ Cell_Leaf::Cell_Leaf()
 {
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
-	this->flowering = randPercent(Settings.GetInt(WorldSettings::leaf_flowering_ability_percent));
+	this->flowering = randPercent(Settings.Get(WorldSettings::leaf_flowering_ability_percent));
 	this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
 	this->associatedFlower = nullptr;
 }
@@ -252,11 +252,8 @@ void Cell_Leaf::Tick()
 	}
 	else
 	{
-		if (board->IsDaytime())
-		{
-			this->myOrganism->AddEnergy(1);
-			this->photosynthesisCooldown = Settings.GetInt(WorldSettings::photosynthesis_interval) + this->crowding;
-		}
+		this->myOrganism->AddEnergy(1);
+		this->photosynthesisCooldown = Settings.Get(WorldSettings::photosynthesis_interval) + this->crowding;
 	}
 
 	if (!this->flowering)
@@ -281,11 +278,15 @@ void Cell_Leaf::Tick()
 				int y_abs = this->y + thisDirection[1];
 				if (board->isCellOfType(x_abs, y_abs, cell_empty))
 				{
-					this->myOrganism->ExpendEnergy(Settings.Get(WorldSettings::leaf_flowering_cost));
-					Cell_Flower *grownFlower = new Cell_Flower(this);
-					this->associatedFlower = grownFlower;
-					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, grownFlower);
-					this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
+					double floweringCost = Settings.Get(WorldSettings::leaf_flowering_cost);
+					if (this->myOrganism->Energy() > floweringCost + 1)
+					{
+						this->myOrganism->ExpendEnergy(floweringCost);
+						Cell_Flower *grownFlower = new Cell_Flower(this);
+						this->associatedFlower = grownFlower;
+						this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, grownFlower);
+						this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
+					}
 					return;
 				}
 			}
@@ -315,7 +316,7 @@ Cell_Bark::Cell_Bark()
 	this->type = cell_bark;
 	this->myOrganism = nullptr;
 	this->actionCooldown = 0;
-	this->integrity = Settings.Get(WorldSettings::bark_max_integrity);
+	this->integrity = static_cast<int>(Settings.Get(WorldSettings::bark_max_integrity));
 }
 
 void Cell_Bark::Tick()
@@ -743,7 +744,7 @@ void Cell_Killer::Tick()
 		}
 	}
 	// base cost plus some addl cost per damage done
-	this->myOrganism->ExpendEnergy((damageDone * Settings.Get(WorldSettings::killer_damage_cost)) + (this->myOrganism->age % (Settings.GetInt(WorldSettings::killer_cost_interval) + 1) == 0));
+	this->myOrganism->ExpendEnergy((damageDone * Settings.Get(WorldSettings::killer_damage_cost)) + (this->myOrganism->age % (Settings.Get(WorldSettings::killer_cost_interval) + 1) == 0));
 }
 
 Cell_Killer *Cell_Killer::Clone()
@@ -839,7 +840,8 @@ void Cell_Eye::Tick()
 	int *deltaCoords = directions[this->direction];
 	int x_checked = this->x;
 	int y_checked = this->y;
-	for (int i = 0; i < Settings.Get(WorldSettings::eye_max_seeing_distance); i++)
+	uint64_t maxSeeingDistance = Settings.Get(WorldSettings::eye_max_seeing_distance);
+	for (uint64_t i = 0; i < maxSeeingDistance; i++)
 	{
 		x_checked += deltaCoords[0];
 		y_checked += deltaCoords[1];

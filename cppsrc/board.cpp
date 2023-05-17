@@ -22,9 +22,6 @@ Board::Board(const int _dim_x, const int _dim_y)
 	this->dim_y = _dim_y;
 	this->Organisms = std::set<Organism *>();
 
-	this->daytime = true;
-	this->dayCycleTimer = Settings.Get(WorldSettings::day_length);
-
 	for (int y = 0; y < _dim_y; y++)
 	{
 		this->cells.push_back(std::vector<Cell *>());
@@ -48,39 +45,12 @@ Board::~Board()
 	}
 }
 
-const bool &Board::IsDaytime()
-{
-	return this->daytime;
-}
-
-const int &Board::DayCycleTimeRemaining()
-{
-	return this->dayCycleTimer;
-}
-
 // returns false if did tick, true if couldn't acquire mutex
 bool Board::Tick()
 {
 	if (!this->TryGetMutex())
 	{
 		return true;
-	}
-
-	if (Settings.Get(WorldSettings::do_day_night_cycle))
-	{
-		if (this->dayCycleTimer == 0)
-		{
-			this->daytime = !this->daytime;
-			this->dayCycleTimer = Settings.Get(WorldSettings::day_length);
-		}
-		else
-		{
-			this->dayCycleTimer--;
-		}
-	}
-	else
-	{
-		this->daytime = true;
 	}
 
 	std::map<uint64_t, Board::Food_Slot *> newFoodCells;
@@ -105,25 +75,21 @@ bool Board::Tick()
 				{
 					// if we roll grow percent, create a new random organism
 					int growPercent = Settings.Get(WorldSettings::fruit_grow_percent);
-					if (randPercent(growPercent) && randPercent(growPercent))
+					if (randPercent(growPercent))
 					{
 						Organism *grownFruit = this->CreateOrganism(expiringFood->x, expiringFood->y);
 						grownFruit->mutability = 15;
 						this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
 
-						bool moverInCenter = randPercent(50);
-
-						grownFruit->AddCell(0, 0, (moverInCenter ? static_cast<Cell *>(new Cell_Mover()) : static_cast<Cell *>(new Cell_Herbivore())));
-						// Cell *secondRandomCell = GenerateRandomCell();
-						// bool couldAddSecond = false;
+						Cell_Leaf *grownLeaf = new Cell_Leaf(0);
+						grownFruit->AddCell(0, 0, grownLeaf);
 						int dirIndex = randInt(0, 7);
 						for (int j = 0; j < 8; j++)
 						{
 							int *thisDirection = directions[(j + dirIndex) % 8];
 							if (this->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
 							{
-								grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(moverInCenter ? static_cast<Cell *>(new Cell_Herbivore()) : static_cast<Cell *>(new Cell_Mover())));
-								// couldAddSecond = true;
+								grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(new Cell_Flower(grownLeaf)));
 								break;
 							}
 						}
@@ -250,6 +216,16 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		int ticksUntilSpoil = s->TicksUntilSpoil();
 		Board::Food_Slot *thisSlot = this->FoodCells[ticksUntilSpoil];
 		thisSlot->erase(std::find(thisSlot->begin(), thisSlot->end(), s));
+	}
+	break;
+
+	case cell_leaf:
+	{
+		Cell_Leaf *leaf = static_cast<Cell_Leaf *>(erased);
+		if(leaf->associatedFlower != nullptr)
+		{
+			leaf->associatedFlower->associatedLeaf = nullptr;
+		}
 	}
 	break;
 

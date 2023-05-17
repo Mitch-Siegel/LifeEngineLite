@@ -134,6 +134,17 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
+	double tickCost = 0.9 * sqrt(this->nCells_ - 1);
+	uint64_t intTickCost = 0;
+	if (tickCost > 1)
+	{
+		intTickCost = tickCost;
+		tickCost -= intTickCost;
+	}
+
+	this->ExpendEnergy(intTickCost);
+	this->leftoverTickCost += tickCost;
+
 	if (this->currentEnergy == 0.0 || this->currentHealth == 0 || (this->age >= this->lifespan) || (this->nCells() == 0))
 	{
 		this->Die();
@@ -161,7 +172,7 @@ Organism *Organism::Tick()
 		this->requireConnectednessCheck = false;
 	}
 
-	if(this->leftoverTickCost > 1.0)
+	if (this->leftoverTickCost > 1.0)
 	{
 		this->ExpendEnergy(floor(this->leftoverTickCost));
 		this->leftoverTickCost -= floor(this->leftoverTickCost);
@@ -246,7 +257,7 @@ Organism *Organism::Tick()
 void Organism::RecalculateStats()
 {
 	this->maxEnergy = 0;
-	int calculatedMaxEnergy = Settings.GetInt(WorldSettings::energy_density_multiplier);
+	int calculatedMaxEnergy = Settings.Get(WorldSettings::energy_density_multiplier);
 	for (int i = 0; i < cell_null; i++)
 	{
 		cellCounts[i] = 0;
@@ -414,14 +425,15 @@ bool Organism::CheckValidity()
 	{
 		return true;
 	}
+	if (this->nCells_ == 1)
+	{
+		return true;
+	}
 
-	// if ((this->nCells_ > 3) && (this->nCells_ == this->cellCounts[cell_leaf]))
-	// {
-	// return true;
-	// }
-
+	// if this organism is not a mover
 	if (this->cellCounts[cell_mover] == 0)
 	{
+		// it shouldn't have touch, eye, or mouth cells
 		if (this->cellCounts[cell_touch] || this->cellCounts[cell_eye] || this->cellCounts[cell_herbivore_mouth] || this->cellCounts[cell_carnivore_mouth])
 		{
 			return true;
@@ -429,7 +441,7 @@ bool Organism::CheckValidity()
 	}
 	else
 	{
-		// not be more than half leaves
+		// if it is a mover, it shouldn't be more than half leaves
 		if ((this->cellCounts[cell_leaf] > (0.5 * this->nCells_)))
 		{
 			return true;

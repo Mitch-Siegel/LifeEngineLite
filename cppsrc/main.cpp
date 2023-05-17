@@ -314,21 +314,18 @@ int main(int argc, char *argv[])
 
 	Organism *firstOrganism = board->CreateOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->direction = 3;
-	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
-	firstOrganism->AddCell(0, -1, new Cell_Leaf(0));
-	// firstOrganism->AddCell(1, 0, new Cell_Leaf(0));
-	// firstOrganism->AddCell(-1, 0, new Cell_Leaf(0));
+	Cell_Leaf *firstOrganismLeaf = new Cell_Leaf(0);
+	firstOrganism->AddCell(0, 0, firstOrganismLeaf);
+	firstOrganism->AddCell(0, -1, new Cell_Flower(firstOrganismLeaf));
+
 	firstOrganism->RecalculateStats();
-	firstOrganism->lifespan = 10000;
+	firstOrganism->lifespan = 1000;
 
 	firstOrganism->mutability = 10;
 	firstOrganism->age = 0;
-	// firstOrganism->Reproduce();
 	firstOrganism->AddEnergy(static_cast<float>(firstOrganism->MaxEnergy() / 2));
 	firstOrganism->Heal(100);
-	// firstOrganism->identifier_ = OrganismIdentifier(board->GetNextSpecies());
-	// firstOrganism->reproductionCooldown = 10;
-	// organism will be species 0 instance 0 by default
+
 	board->AddSpeciesMember(firstOrganism);
 	board->GetNextSpecies();
 
@@ -551,7 +548,7 @@ int main(int argc, char *argv[])
 			ImGui::Text("%ld leftover microseconds", leftoverMicros);
 
 			ImGui::Text("%lu organisms in %lu species", board->Organisms.size(), board->activeSpecies().size());
-			ImGui::Text("Tick %lu - %s (%d ticks until %s)", board->tickCount, board->IsDaytime() ? "daytime" : "nighttime", board->DayCycleTimeRemaining(), board->IsDaytime() ? "nighttime" : "daytime");
+			ImGui::Text("Tick %lu", board->tickCount);
 			board->stats.Display();
 
 			if (showDetailedStats)
