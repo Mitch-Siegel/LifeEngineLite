@@ -175,7 +175,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::flower_wilt_chance] = Setting("Flower Wilt Chance (%)",
 																"Percent each flower will wilt after blooming",
-																51,
+																40,
 																{0, 100});
 
 	this->settings[WorldSettings::flower_expand_percent] = Setting("Flower Expand Chance (%)",

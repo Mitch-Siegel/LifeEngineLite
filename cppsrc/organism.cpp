@@ -133,9 +133,9 @@ void Organism::Remove()
 Organism *Organism::Tick()
 {
 	this->age++;
-	
-	this->ExpendEnergy(0.5 * (static_cast<double>(this->cellCounts[cell_leaf] + 1) / (this->nCells_)) * sqrt(this->nCells_ - 1));
-	if(this->nCells_ == 1)
+
+	this->ExpendEnergy(0.5 * sqrt(this->nCells_ - 1));
+	if (this->nCells_ == 1)
 	{
 		this->ExpendEnergy(1.0);
 	}
@@ -172,7 +172,6 @@ Organism *Organism::Tick()
 		this->VerifyCellConnectedness();
 		this->requireConnectednessCheck = false;
 	}
-
 
 	std::map<Cell *, bool> ticked;
 
@@ -1065,7 +1064,7 @@ bool Organism::Mutate()
 				++removedIterator;
 			}
 			Cell *toRemove = *removedIterator;
-			this->RemoveCell(toRemove);
+			this->RemoveCell(toRemove, false);
 			board->replaceCell(toRemove, new Cell_Empty());
 			return true;
 		}
@@ -1205,7 +1204,7 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	this->RecalculateStats();
 }
 
-void Organism::RemoveCell(Cell *_myCell)
+void Organism::RemoveCell(Cell *_myCell, bool doEnergyLoss)
 {
 	if (this->myCells.count(_myCell) == 0)
 	{
@@ -1214,17 +1213,17 @@ void Organism::RemoveCell(Cell *_myCell)
 	}
 	this->myCells.erase(_myCell);
 
-	if (_myCell->type != cell_flower)
+	if (doEnergyLoss)
 	{
 		// lose the proportion of the organism's energy that this cell would "hold"
 		// float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
 
 		// lose the entire removed cell's worth of energy plus some extra ("shock" or similar cost to deal with losing this cell)
-		float energyLost = ceil(static_cast<float>(CellEnergyDensities[_myCell->type] * Settings.Get(WorldSettings::energy_density_multiplier)) / this->maxEnergy);
+		double energyLost = ceil(static_cast<float>(CellEnergyDensities[_myCell->type] * Settings.Get(WorldSettings::energy_density_multiplier)));
 
-		if (energyLost > 0.0) // check because some cells have negative energy densities
+		if (energyLost > 0.0)
 		{
-			this->ExpendEnergy(energyLost * 1.5);
+			this->ExpendEnergy(energyLost);
 		}
 	}
 
@@ -1236,7 +1235,7 @@ void Organism::RemoveCell(Cell *_myCell)
 
 void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 {
-	this->RemoveCell(_myCell);
+	this->RemoveCell(_myCell, false);
 	_newCell->myOrganism = this;
 	this->myCells.insert(_newCell);
 	this->nCells_++;

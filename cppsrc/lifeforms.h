@@ -105,7 +105,7 @@ public:
 
 	void AddCell(int x_rel, int y_rel, Cell *_cell);
 
-	void RemoveCell(Cell *_myCell);
+	void RemoveCell(Cell *_myCell, bool doEnergyLoss);
 
 	void ReplaceCell(Cell *_myCell, Cell *_newCell);
 
@@ -142,7 +142,7 @@ public:
 
 class Organism;
 #define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * (static_cast<double>(maxEnergy) / Settings.Get(WorldSettings::energy_density_multiplier) * sqrt(nCells)))
-#define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (Settings.Get(WorldSettings::reproduction_cooldown_multiplier) * (sqrt(maxEnergy) / static_cast<double>(nCells)))
+#define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (Settings.Get(WorldSettings::reproduction_cooldown_multiplier) * (sqrt(sqrt(maxEnergy * nCells))))
 
 class Organism;
 

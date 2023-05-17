@@ -9,16 +9,16 @@
 extern Board *board;
 int CellEnergyDensities[cell_null] = {
 	0,	// empty
-	0,	// pcell_bark
+	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	2,	// bark
+	8,	// bark
 	2,	// flower
 	0,	// fruit
-	16, // herbivore
-	32, // carnivore
-	16, // mover
-	4,	// killer
+	32, // herbivore
+	64, // carnivore
+	32, // mover
+	8,	// killer
 	5,	// armor
 	1,	// touch sensor
 	1,	// eye
@@ -322,7 +322,7 @@ void Cell_Bark::Tick()
 
 	if (this->integrity < 1)
 	{
-		this->myOrganism->RemoveCell(this);
+		this->myOrganism->RemoveCell(this, false);
 		board->replaceCell(this, new Cell_Empty());
 		return;
 	}
@@ -430,7 +430,7 @@ void Cell_Flower::Tick()
 				}
 				else
 				{
-					this->myOrganism->RemoveCell(this);
+					this->myOrganism->RemoveCell(this, false);
 					board->replaceCell(this, new Cell_Empty());
 				}
 			}
@@ -577,7 +577,7 @@ void Cell_Herbivore::Tick()
 				{
 					if (potentiallyEaten->myOrganism != nullptr)
 					{
-						potentiallyEaten->myOrganism->RemoveCell(potentiallyEaten);
+						potentiallyEaten->myOrganism->RemoveCell(potentiallyEaten, true);
 						board->replaceCell(potentiallyEaten, new Cell_Empty());
 					}
 					else
@@ -614,7 +614,7 @@ void Cell_Herbivore::Tick()
 
 	if (!valid)
 	{
-		this->myOrganism->RemoveCell(this);
+		this->myOrganism->RemoveCell(this, false);
 		board->replaceCell(this, new Cell_Empty());
 	}
 }
@@ -686,7 +686,7 @@ void Cell_Carnivore::Tick()
 
 	if (!valid)
 	{
-		this->myOrganism->RemoveCell(this);
+		this->myOrganism->RemoveCell(this, false);
 		board->replaceCell(this, new Cell_Empty());
 	}
 }
@@ -734,7 +734,7 @@ void Cell_Killer::Tick()
 		}
 	}
 	// base cost plus some addl cost per damage done
-	this->myOrganism->ExpendEnergy((damageDone * Settings.Get(WorldSettings::killer_damage_cost)) + (this->myOrganism->age % (Settings.Get(WorldSettings::killer_cost_interval) + 1) == 0));
+	this->myOrganism->ExpendEnergy((damageDone * Settings.Get(WorldSettings::killer_damage_cost)) + (this->myOrganism->age % (Settings.Get(WorldSettings::killer_cost_interval) + 1 ) == 0));
 }
 
 Cell_Killer *Cell_Killer::Clone()
@@ -765,7 +765,7 @@ void Cell_Armor::Tick()
 	}
 	if (!valid)
 	{
-		this->myOrganism->RemoveCell(this);
+		this->myOrganism->RemoveCell(this, false);
 		board->replaceCell(this, new Cell_Empty());
 	}
 }
