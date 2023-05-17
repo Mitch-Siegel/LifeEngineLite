@@ -134,7 +134,7 @@ Organism *Organism::Tick()
 {
 	this->age++;
 	
-	this->ExpendEnergy(0.85 * (static_cast<double>(this->cellCounts[cell_leaf] + 1) / (this->nCells_)) * sqrt(this->nCells_ - 1));
+	this->ExpendEnergy(0.5 * (static_cast<double>(this->cellCounts[cell_leaf] + 1) / (this->nCells_)) * sqrt(this->nCells_ - 1));
 	if(this->nCells_ == 1)
 	{
 		this->ExpendEnergy(1.0);

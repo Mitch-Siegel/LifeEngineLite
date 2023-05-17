@@ -115,7 +115,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::food_multiplier] = Setting("Food Multiplier",
 															 "Multiplier on energy gained for all food types",
-															 8,
+															 16,
 															 {0, 9999});
 
 	this->settings[WorldSettings::leaf_food_energy] = Setting("Leaf Food Energy",
@@ -230,12 +230,12 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::killer_cost_interval] = Setting("Killer Cost Interval",
 																  "Each killer will cost its organism 1 energy this frequently",
-																  10,
+																  1,
 																  {0, 9999});
 
 	this->settings[WorldSettings::killer_damage_cost] = Setting("Killer Damage Cost",
 																"Energy cost for a killer to do 1 damage",
-																4,
+																24,
 																{0, 9999});
 
 	this->settings[WorldSettings::armor_health_bonus] = Setting("Armor Health Bonus",

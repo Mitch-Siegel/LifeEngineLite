@@ -311,6 +311,7 @@ int main(int argc, char *argv[])
 
 	board = new Board(board_x, board_y);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
+	
 
 	Organism *firstOrganism = board->CreateOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->direction = 3;
@@ -322,11 +323,13 @@ int main(int argc, char *argv[])
 
 	firstOrganism->mutability = 10;
 	firstOrganism->age = 0;
-	firstOrganism->AddEnergy(static_cast<float>(firstOrganism->MaxEnergy() / 2));
-	firstOrganism->Heal(100);
 
 	board->AddSpeciesMember(firstOrganism);
 	board->GetNextSpecies();
+
+	firstOrganism->AddEnergy(static_cast<float>(firstOrganism->MaxEnergy() / 2));
+	firstOrganism->Heal(100);
+
 
 	// SDL_RendererInfo info;
 	// SDL_GetRendererInfo(renderer, &info);

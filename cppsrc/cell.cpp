@@ -191,9 +191,8 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 
 void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 {
-	this->crowding = 0;
-	/*
-	for (int i = 0; i < 8; i++)
+	int neighborPenalty = 0;
+	for (int i = 0; i < 4; i++)
 	{
 		int x_check = this->x + directions[i][0];
 		int y_check = this->y + directions[i][1];
@@ -202,21 +201,15 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 			Cell *neighbor = board->cells[y_check][x_check];
 			if ((neighbor->myOrganism == this->myOrganism))
 			{
-				// if next to a bark from the same organism, no detriment
-				// if not bark but some other cell from same organism, only half detriment
-				// if ((neighbor->type != cell_bark))
-				// {
-				// this->photosynthesisEffectiveness --;
-				// }
-
 				switch (neighbor->type)
 				{
 				case cell_bark:
-					this->crowding--;
+					neighborPenalty -= 2;
 					// this->photosynthesisEffectiveness++;
 					break;
 
 				default:
+					neighborPenalty++;
 					break;
 				}
 			}
@@ -225,17 +218,33 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 				switch (neighbor->type)
 				{
 				case cell_empty:
-					// case cell_plantmass:
-					// case cell_biomass:
-					// case cell_fruit:
+					break;
+
+				case cell_plantmass:
+				case cell_biomass:
+				case cell_fruit:
+					neighborPenalty += 1;
 					break;
 
 				default:
-					this->crowding++;
+					neighborPenalty += 2;
+					break;
 				}
 			}
 		}
-	}*/
+	}
+	if (neighborPenalty < 2)
+	{
+		this->crowding = 0;
+	}
+	else if (neighborPenalty < 5)
+	{
+		this->crowding = 1;
+	}
+	else
+	{
+		this->crowding = 2;
+	}
 }
 
 void Cell_Leaf::Tick()
@@ -375,7 +384,7 @@ Cell_Flower::Cell_Flower()
 {
 	this->type = cell_flower;
 	this->myOrganism = nullptr;
-	this->bloomCooldown = Settings.Get(WorldSettings::flower_bloom_cooldown);
+	this->bloomCooldown = 0;
 }
 
 void Cell_Flower::Tick()
@@ -747,7 +756,6 @@ Cell_Armor::Cell_Armor()
 void Cell_Armor::Tick()
 {
 	bool valid = false;
-	this->myOrganism->ExpendEnergy(1);
 	for (int i = 0; i < 8 && !valid; i++)
 	{
 		int *thisDirection = directions[i];
