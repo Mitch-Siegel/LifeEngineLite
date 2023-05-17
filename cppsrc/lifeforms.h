@@ -119,8 +119,9 @@ public:
 
 	void Heal(uint64_t n);
 
-	// automatically scales n by energy density multiplier
 	void ExpendEnergy(uint64_t n);
+	
+	void ExpendEnergy(double n);
 
 	void AddEnergy(uint64_t n);
 
@@ -141,7 +142,7 @@ public:
 
 class Organism;
 #define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * (static_cast<double>(maxEnergy) / Settings.Get(WorldSettings::energy_density_multiplier) * sqrt(nCells)))
-#define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (Settings.Get(WorldSettings::reproduction_cooldown_multiplier) * (static_cast<double>(nCells) / sqrt(maxEnergy)))
+#define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (Settings.Get(WorldSettings::reproduction_cooldown_multiplier) * (sqrt(maxEnergy) / static_cast<double>(nCells)))
 
 class Organism;
 

@@ -105,17 +105,17 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::energy_density_multiplier] = Setting("Energy Density Multiplier",
 																	   "Multiplier on organism max energy (determined based on energy content of constituent cells)",
-																	   4,
+																	   8,
 																	   {1, 9999});
 
-	this->settings[WorldSettings::move_cost_multiplier] = Setting("Move Cost Multiplier",
+	this->settings[WorldSettings::move_cost_multiplier] = Setting("Move Cost Multiplier (* 0.1)",
 																  "Multiplier on formula of cell count which termines cost for an organism to move once",
-																  1,
+																  7,
 																  {0, 9999});
 
 	this->settings[WorldSettings::food_multiplier] = Setting("Food Multiplier",
 															 "Multiplier on energy gained for all food types",
-															 4,
+															 8,
 															 {0, 9999});
 
 	this->settings[WorldSettings::leaf_food_energy] = Setting("Leaf Food Energy",
@@ -175,7 +175,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::flower_wilt_chance] = Setting("Flower Wilt Chance (%)",
 																"Percent each flower will wilt after blooming",
-																33,
+																51,
 																{0, 100});
 
 	this->settings[WorldSettings::flower_expand_percent] = Setting("Flower Expand Chance (%)",
@@ -318,11 +318,11 @@ std::string WorldSettings::GetName(WorldSettings::SettingNames s)
 void WorldSettings::Set(WorldSettings::SettingNames s, uint64_t value)
 {
 	const std::pair<uint64_t, uint64_t> &range = this->settings[s].range;
-	if (value < range.first)
+	if (value <= range.first)
 	{
 		value = range.first;
 	}
-	else if (value > range.second)
+	else if (value >= range.second)
 	{
 		value = range.second;
 	}
@@ -373,7 +373,14 @@ void WorldSettingsView()
 			ImGui::PushID(buttonId++);
 			if (ImGui::Button(label))
 			{
-				Settings.Set(i, Settings.GetRaw(i) - fraction);
+				if(fraction > Settings.GetRaw(i))
+				{
+					Settings.Set(i, 0);
+				}
+				else
+				{
+					Settings.Set(i, Settings.GetRaw(i) - fraction);
+				}
 			}
 			ImGui::PopID();
 

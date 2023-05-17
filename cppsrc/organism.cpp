@@ -9,7 +9,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) Settings.Get(WorldSettings::move_cost_multiplier) * sqrt(nCells_)
+#define moveCost(nCells) (0.1 * Settings.Get(WorldSettings::move_cost_multiplier)) * sqrt(nCells_ - 1)
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -133,17 +133,18 @@ void Organism::Remove()
 Organism *Organism::Tick()
 {
 	this->age++;
-
-	double tickCost = 0.85 * sqrt(this->nCells_ - 1);
-	uint64_t intTickCost = 0;
-	if (tickCost > 1)
+	
+	this->ExpendEnergy(0.85 * (static_cast<double>(this->cellCounts[cell_leaf] + 1) / (this->nCells_)) * sqrt(this->nCells_ - 1));
+	if(this->nCells_ == 1)
 	{
-		intTickCost = tickCost;
-		tickCost -= intTickCost;
+		this->ExpendEnergy(1.0);
 	}
 
-	this->ExpendEnergy(intTickCost);
-	this->leftoverTickCost += tickCost;
+	if (this->leftoverTickCost > 1.0)
+	{
+		this->ExpendEnergy(floor(this->leftoverTickCost));
+		this->leftoverTickCost -= floor(this->leftoverTickCost);
+	}
 
 	if (this->currentEnergy == 0.0 || this->currentHealth == 0 || (this->age >= this->lifespan) || (this->nCells() == 0))
 	{
@@ -172,11 +173,6 @@ Organism *Organism::Tick()
 		this->requireConnectednessCheck = false;
 	}
 
-	if (this->leftoverTickCost > 1.0)
-	{
-		this->ExpendEnergy(floor(this->leftoverTickCost));
-		this->leftoverTickCost -= floor(this->leftoverTickCost);
-	}
 
 	std::map<Cell *, bool> ticked;
 
@@ -422,10 +418,6 @@ bool Organism::CheckValidity()
 		return true;
 	}
 	if (board->cells[this->y][this->x]->myOrganism != this)
-	{
-		return true;
-	}
-	if (this->nCells_ == 1)
 	{
 		return true;
 	}
@@ -716,6 +708,22 @@ void Organism::ExpendEnergy(uint64_t n)
 	{
 		this->currentEnergy -= n;
 	}
+}
+
+void Organism::ExpendEnergy(double n)
+{
+	uint64_t intN = floor(n);
+	n -= intN;
+
+	if (intN > this->currentEnergy)
+	{
+		this->currentEnergy = 0;
+	}
+	else
+	{
+		this->currentEnergy -= intN;
+	}
+	this->leftoverTickCost += n;
 }
 
 void Organism::AddEnergy(uint64_t n)
