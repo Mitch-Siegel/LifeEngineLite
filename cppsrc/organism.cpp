@@ -134,7 +134,7 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	double tickCost = 0.9 * sqrt(this->nCells_ - 1);
+	double tickCost = 0.85 * sqrt(this->nCells_ - 1);
 	uint64_t intTickCost = 0;
 	if (tickCost > 1)
 	{
@@ -851,7 +851,6 @@ Organism *Organism::Reproduce()
 					Cell *thisCell = *celli;
 					switch (thisCell->type)
 					{
-					case cell_flower:
 					case cell_fruit:
 						break;
 

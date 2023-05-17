@@ -229,7 +229,6 @@ private:
 	int photosynthesisCooldown;
 	int flowerCooldown;
 	bool flowering;
-	Cell_Flower *associatedFlower;
 	int crowding;
 
 public:
@@ -276,12 +275,11 @@ class Cell_Flower : public Cell
 	friend class Cell_Leaf;
 	friend class Board;
 	int bloomCooldown;
-	Cell_Leaf *associatedLeaf;
 
 public:
 	~Cell_Flower() override;
 
-	Cell_Flower(Cell_Leaf *associatedLeaf);
+	Cell_Flower();
 
 	// explicit Cell_Flower(Organism *_myOrganism);
 

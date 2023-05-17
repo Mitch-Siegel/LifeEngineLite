@@ -170,10 +170,6 @@ Cell_Biomass *Cell_Biomass::Clone()
 // leaf cell
 Cell_Leaf::~Cell_Leaf()
 {
-	if (this->associatedFlower != nullptr)
-	{
-		this->associatedFlower->associatedLeaf = nullptr;
-	}
 }
 
 Cell_Leaf::Cell_Leaf()
@@ -182,7 +178,6 @@ Cell_Leaf::Cell_Leaf()
 	this->myOrganism = nullptr;
 	this->flowering = randPercent(Settings.Get(WorldSettings::leaf_flowering_ability_percent));
 	this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
-	this->associatedFlower = nullptr;
 }
 
 Cell_Leaf::Cell_Leaf(int floweringPercent)
@@ -192,7 +187,6 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 	this->flowering = randPercent(floweringPercent);
 	this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
 	this->photosynthesisCooldown = Settings.Get(WorldSettings::photosynthesis_interval);
-	this->associatedFlower = nullptr;
 }
 
 void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
@@ -268,27 +262,22 @@ void Cell_Leaf::Tick()
 	// can flower
 	else
 	{
-		if (this->associatedFlower == nullptr)
+		int checkDirIndex = randInt(0, 3);
+		for (int i = 0; i < 4; i++)
 		{
-			int checkDirIndex = randInt(0, 3);
-			for (int i = 0; i < 4; i++)
+			int *thisDirection = directions[(checkDirIndex + i) % 4];
+			int x_abs = this->x + thisDirection[0];
+			int y_abs = this->y + thisDirection[1];
+			if (board->isCellOfType(x_abs, y_abs, cell_empty))
 			{
-				int *thisDirection = directions[(checkDirIndex + i) % 4];
-				int x_abs = this->x + thisDirection[0];
-				int y_abs = this->y + thisDirection[1];
-				if (board->isCellOfType(x_abs, y_abs, cell_empty))
+				double floweringCost = Settings.Get(WorldSettings::leaf_flowering_cost);
+				if (this->myOrganism->Energy() > floweringCost + 1)
 				{
-					double floweringCost = Settings.Get(WorldSettings::leaf_flowering_cost);
-					if (this->myOrganism->Energy() > floweringCost + 1)
-					{
-						this->myOrganism->ExpendEnergy(floweringCost);
-						Cell_Flower *grownFlower = new Cell_Flower(this);
-						this->associatedFlower = grownFlower;
-						this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, grownFlower);
-						this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
-					}
-					return;
+					this->myOrganism->ExpendEnergy(floweringCost);
+					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
+					this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
 				}
+				return;
 			}
 		}
 	}
@@ -302,7 +291,6 @@ const bool &Cell_Leaf::CanFlower()
 Cell_Leaf *Cell_Leaf::Clone()
 {
 	Cell_Leaf *cloned = new Cell_Leaf(*this);
-	cloned->associatedFlower = nullptr;
 	return cloned;
 }
 
@@ -381,18 +369,13 @@ Cell_Bark *Cell_Bark::Clone()
 // flower cell
 Cell_Flower::~Cell_Flower()
 {
-	if (this->associatedLeaf != nullptr)
-	{
-		this->associatedLeaf->associatedFlower = nullptr;
-	}
 }
 
-Cell_Flower::Cell_Flower(Cell_Leaf *associatedLeaf)
+Cell_Flower::Cell_Flower()
 {
 	this->type = cell_flower;
 	this->myOrganism = nullptr;
 	this->bloomCooldown = Settings.Get(WorldSettings::flower_bloom_cooldown);
-	this->associatedLeaf = associatedLeaf;
 }
 
 void Cell_Flower::Tick()
@@ -448,9 +431,7 @@ void Cell_Flower::Tick()
 
 Cell_Flower *Cell_Flower::Clone()
 {
-	printf("Illegal clone of cell_flower!\n");
-	exit(1);
-	// return new Cell_Flower(*this);
+	return new Cell_Flower(*this);
 }
 
 // fruit cell

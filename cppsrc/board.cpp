@@ -89,7 +89,7 @@ bool Board::Tick()
 							int *thisDirection = directions[(j + dirIndex) % 8];
 							if (this->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
 							{
-								grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(new Cell_Flower(grownLeaf)));
+								grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(new Cell_Flower()));
 								break;
 							}
 						}
@@ -219,16 +219,6 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 	}
 	break;
 
-	case cell_leaf:
-	{
-		Cell_Leaf *leaf = static_cast<Cell_Leaf *>(erased);
-		if(leaf->associatedFlower != nullptr)
-		{
-			leaf->associatedFlower->associatedLeaf = nullptr;
-		}
-	}
-	break;
-
 	default:
 		break;
 	}
@@ -256,7 +246,6 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 		s->attachTicksUntilSpoil(&thisFoodSlot->ticksUntilSpoil);
 		thisFoodSlot->insert(s);
 	}
-
 	break;
 
 	default:

@@ -21,7 +21,7 @@ GAME_SRCS = $(basename $(wildcard *.cpp))
 GAME_OBJS = $(GAME_SRCS:%=%.o)
 
 CFLAGS_NOWARNINGS = -g -O2
-CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall -I./simplenets-0.01 -fsanitize=address
+CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall -I./simplenets-0.01
 
 OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) $(SIMPLENETS_OBJS) main.o organismview.o detailedstats.o organism.o cell.o board.o rng.o brain.o util.o datatracker.o worldstats.o worldsettings.o
 
