@@ -191,74 +191,64 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 
 void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 {
-	int neighborPenalty = 0;
-	for (int i = 0; i < 4; i++)
-	{
-		int x_check = this->x + directions[i][0];
-		int y_check = this->y + directions[i][1];
-		if (!board->boundCheckPos(x_check, y_check))
-		{
-			Cell *neighbor = board->cells[y_check][x_check];
-			if (neighbor->myOrganism == this->myOrganism)
-			{
-				switch (neighbor->type)
-				{
-				case cell_bark:
-					neighborPenalty -= 2;
-					// this->photosynthesisEffectiveness++;
-					break;
+	// int neighborPenalty = 0;
+	// for (int i = 0; i < 4; i++)
+	// {
+	// 	int x_check = this->x + directions[i][0];
+	// 	int y_check = this->y + directions[i][1];
+	// 	if (!board->boundCheckPos(x_check, y_check))
+	// 	{
+	// 		Cell *neighbor = board->cells[y_check][x_check];
+	// 		if (neighbor->myOrganism == this->myOrganism)
+	// 		{
+	// 			switch (neighbor->type)
+	// 			{
+	// 			case cell_bark:
+	// 				neighborPenalty -= 2;
+	// 				// this->photosynthesisEffectiveness++;
+	// 				break;
 
-				default:
-					neighborPenalty++;
-					break;
-				}
-			}
-			else
-			{
-				switch (neighbor->type)
-				{
-				case cell_empty:
-					break;
+	// 			default:
+	// 				neighborPenalty++;
+	// 				break;
+	// 			}
+	// 		}
+	// 		else
+	// 		{
+	// 			switch (neighbor->type)
+	// 			{
+	// 			case cell_empty:
+	// 				break;
 
-				case cell_plantmass:
-				case cell_biomass:
-				case cell_fruit:
-					neighborPenalty += 1;
-					break;
+	// 			case cell_plantmass:
+	// 			case cell_biomass:
+	// 			case cell_fruit:
+	// 				neighborPenalty += 1;
+	// 				break;
 
-				default:
-					neighborPenalty += 2;
-					break;
-				}
-			}
-		}
-	}
-	if (neighborPenalty < 2)
-	{
-		this->crowding = 0;
-	}
-	else if (neighborPenalty < 5)
-	{
-		this->crowding = 1;
-	}
-	else
-	{
-		this->crowding = 2;
-	}
+	// 			default:
+	// 				neighborPenalty += 2;
+	// 				break;
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// if (neighborPenalty < 2)
+	// {
+	// 	this->crowding = 0;
+	// }
+	// else if (neighborPenalty < 5)
+	// {
+	// 	this->crowding = 1;
+	// }
+	// else
+	// {
+	// 	this->crowding = 2;
+	// }
 }
 
 void Cell_Leaf::Tick()
 {
-	if (this->photosynthesisCooldown > 0)
-	{
-		this->photosynthesisCooldown--;
-	}
-	else
-	{
-		this->myOrganism->AddEnergy(1);
-		this->photosynthesisCooldown = Settings.Get(WorldSettings::photosynthesis_interval) + this->crowding;
-	}
-
 	if (!this->flowering)
 	{
 		return;

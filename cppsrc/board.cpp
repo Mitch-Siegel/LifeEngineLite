@@ -226,6 +226,7 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 	}
 
 	Cell *erased = this->cells[_y][_x];
+	this->cells[_y][_x] = _cell;
 	switch (erased->type)
 	{
 	case cell_plantmass:
@@ -271,7 +272,6 @@ void Board::replaceCellAt(const int _x, const int _y, Cell *_cell)
 	default:
 		break;
 	}
-	this->cells[_y][_x] = _cell;
 	this->DeltaCells.insert(std::pair<int, int>(_x, _y));
 }
 
@@ -287,11 +287,9 @@ void Board::replaceCellAt_NoTrackReplacedFood(const int _x, const int _y, Cell *
 		exit(1);
 	}
 
-	Cell *erased = this->cells[_y][_x];
-	delete erased;
-
 	_cell->x = _x;
 	_cell->y = _y;
+
 	switch (_cell->type)
 	{
 	case cell_plantmass:
@@ -318,7 +316,9 @@ void Board::replaceCellAt_NoTrackReplacedFood(const int _x, const int _y, Cell *
 	default:
 		break;
 	}
+	Cell *erased = this->cells[_y][_x];
 	this->cells[_y][_x] = _cell;
+	delete erased;
 	this->DeltaCells.insert(std::pair<int, int>(_x, _y));
 }
 

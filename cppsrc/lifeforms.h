@@ -51,6 +51,7 @@ class Organism
 private:
 	uint64_t currentHealth, maxHealth;
 	uint64_t currentEnergy, maxEnergy;
+	int64_t vitality_;
 	std::set<Cell *> myCells;
 	uint64_t nCells_;
 	OrganismIdentifier identifier_;
@@ -79,6 +80,8 @@ public:
 
 	const uint64_t &nCells() const { return this->nCells_; }
 
+	const int64_t &Vitality() const { return this->vitality_; }
+
 	Organism(int center_x, int center_y);
 
 	Organism(int center_x, int center_y, const Brain &baseBrain);
@@ -105,7 +108,7 @@ public:
 
 	void AddCell(int x_rel, int y_rel, Cell *_cell);
 
-	void RemoveCell(Cell *_myCell, bool doEnergyLoss);
+	void RemoveCell(Cell *_myCell, bool doVitalityLoss);
 
 	void ReplaceCell(Cell *_myCell, Cell *_newCell);
 
@@ -120,7 +123,7 @@ public:
 	void Heal(uint64_t n);
 
 	void ExpendEnergy(uint64_t n);
-	
+
 	void ExpendEnergy(double n);
 
 	void AddEnergy(uint64_t n);

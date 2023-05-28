@@ -46,6 +46,7 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 	this->currentEnergy = 0;
 	this->lifespan = 0;
 	this->maxEnergy = 0;
+	this->vitality_ = 0;
 	this->age = 0;
 	this->nCells_ = 0;
 	this->alive = true;
@@ -134,11 +135,15 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	this->ExpendEnergy(0.5 * sqrt(this->nCells_ - 1));
-	if (this->nCells_ == 1)
+	this->AddEnergy(this->cellCounts[cell_leaf]);
+
+	if(this->currentEnergy > 0.9 * this->maxEnergy)
 	{
-		this->ExpendEnergy(1.0);
+		this->ExpendEnergy(this->nCells_);
+		this->vitality_++;
 	}
+
+	this->ExpendEnergy(0.1 * this->nCells_);
 
 	if (this->leftoverTickCost > 1.0)
 	{
@@ -146,7 +151,7 @@ Organism *Organism::Tick()
 		this->leftoverTickCost -= floor(this->leftoverTickCost);
 	}
 
-	if (this->currentEnergy == 0.0 || this->currentHealth == 0 || (this->age >= this->lifespan) || (this->nCells() == 0))
+	if (this->currentEnergy == 0 || this->currentHealth == 0 || (this->age >= this->lifespan) || (this->nCells() == 0))
 	{
 		this->Die();
 		return nullptr;
@@ -154,7 +159,7 @@ Organism *Organism::Tick()
 
 	if (this->reproductionCooldown == 0)
 	{
-		if (this->currentEnergy > ((this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0)) * 1.1))
+		if (this->vitality_ >= this->nCells_)
 		{
 			return this->Reproduce();
 		}
@@ -1007,6 +1012,7 @@ Organism *Organism::Reproduce()
 				// }
 				replicated->currentEnergy = randFloat(replicated->maxEnergy * 0.35, replicated->maxEnergy * 0.45);
 				replicated->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
+				this->vitality_ -= this->nCells_;
 				return replicated;
 			}
 
@@ -1020,12 +1026,7 @@ Organism *Organism::Reproduce()
 			continue;
 		}
 	}
-	// printf("%f\n", 0.01 * REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_));
-	this->ExpendEnergy(this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0) * 0.1);
-	// this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
-
-	// this->ExpendEnergy(3.0);
-	// this->brain.Punish();
+	this->vitality_--;
 	return nullptr;
 }
 
@@ -1204,7 +1205,7 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	this->RecalculateStats();
 }
 
-void Organism::RemoveCell(Cell *_myCell, bool doEnergyLoss)
+void Organism::RemoveCell(Cell *_myCell, bool doVitalityLoss)
 {
 	if (this->myCells.count(_myCell) == 0)
 	{
@@ -1213,18 +1214,9 @@ void Organism::RemoveCell(Cell *_myCell, bool doEnergyLoss)
 	}
 	this->myCells.erase(_myCell);
 
-	if (doEnergyLoss)
+	if (doVitalityLoss)
 	{
-		// lose the proportion of the organism's energy that this cell would "hold"
-		// float energyLost = (static_cast<float>(CellEnergyDensities[_myCell->type] * ENERGY_DENSITY_MULTIPLIER) / this->maxEnergy) * this->currentEnergy;
-
-		// lose the entire removed cell's worth of energy plus some extra ("shock" or similar cost to deal with losing this cell)
-		double energyLost = ceil(static_cast<float>(CellEnergyDensities[_myCell->type] * Settings.Get(WorldSettings::energy_density_multiplier)));
-
-		if (energyLost > 0.0)
-		{
-			this->ExpendEnergy(energyLost);
-		}
+		this->vitality_--;
 	}
 
 	this->nCells_--;
