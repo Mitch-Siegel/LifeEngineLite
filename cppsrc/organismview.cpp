@@ -1,5 +1,5 @@
 #include "organismview.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "imgui.h"
 #include "implot.h"
@@ -21,7 +21,7 @@ OrganismView::OrganismView(Organism *o, SDL_Renderer *r)
     this->nCells = o->nCells();
 
     this->open = true;
-    sprintf(this->name, "Organism Viewer {Species %u, Member %u}", o->Identifier().Species(), o->Identifier().MemberID());
+    snprintf(this->name, 63, "Organism Viewer {Species %u, Member %u}", o->Identifier().Species(), o->Identifier().MemberID());
     this->texture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
                                       1, 1);
     this->scaledTexture = SDL_CreateTexture(r, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET,
@@ -188,7 +188,7 @@ void OrganismView::OnFrame(SDL_Renderer *r)
     // ImGui::Text("Organism is currently: %s", (this->allowUpdates ? "alive" : "dead"));
     if (this->allowUpdates)
     {
-        ImGui::Text("%lu ticks of lifespan left", this->myOrganism->lifespan - this->myOrganism->age);
+        ImGui::Text("%lu ticks of lifespan left", (unsigned long)(this->myOrganism->lifespan - this->myOrganism->age));
         double energy = this->myOrganism->Energy();
         double maxEnergy = this->myOrganism->MaxEnergy();
         ImGui::Text("%.2f/%.1f energy (%.2f%%)", energy,
@@ -281,7 +281,7 @@ void OrganismView::OnFrame(SDL_Renderer *r)
             positionsByPost[thisPost] = thisPos;
 
             float activation = this->activationsByPost[thisPost];
-            sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
+            snprintf(this->labelsByPost[thisPost], 5, "%0.3f", activation);
             dl->AddText(ImVec2(thisPos.x - (diameter / 1.8),
                                thisPos.y + (diameter / 2)),
                         IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
@@ -308,7 +308,7 @@ void OrganismView::OnFrame(SDL_Renderer *r)
             size_t thisPost = this->outputs[row];
             positionsByPost[thisPost] = thisPos;
             float activation = this->activationsByPost[thisPost];
-            sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
+            snprintf(this->labelsByPost[thisPost], 6, "%0.3f", activation);
             dl->AddText(ImVec2(thisPos.x - (diameter / 1.8),
                                thisPos.y + (diameter / 2)),
                         IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
@@ -327,7 +327,7 @@ void OrganismView::OnFrame(SDL_Renderer *r)
                 size_t thisPost = *coli++;
                 positionsByPost[thisPost] = thisPos;
                 float activation = this->activationsByPost[thisPost];
-                sprintf(this->labelsByPost[thisPost], "%0.3f", activation);
+                snprintf(this->labelsByPost[thisPost], 6, "%0.3f", activation);
                 dl->AddText(ImVec2(thisPos.x - (diameter / 1.8), thisPos.y + (diameter / 2)), IM_COL32(255, 255, 255, 255), this->labelsByPost[thisPost]);
                 dl->AddCircle(thisPos, diameter / 2, IM_COL32(255, 255, 255, 255));
                 dl->AddCircleFilled(thisPos, (diameter / 2) - 1, IM_COL32(255, 255, 255, activation * 255));

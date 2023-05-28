@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <cmath>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "lifeforms.h"
 #include "board.h"

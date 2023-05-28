@@ -8,7 +8,7 @@
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
 	}
 
 	// SDL setup
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE);
 	SDL_Window *window = SDL_CreateWindow("Mitch's Life Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920, 1080, window_flags);
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 	if (renderer == NULL)
@@ -550,7 +550,7 @@ int main(int argc, char *argv[])
 			ImGui::Text("%ld leftover microseconds", leftoverMicros);
 
 			ImGui::Text("%lu organisms in %lu species", board->Organisms.size(), board->activeSpecies().size());
-			ImGui::Text("Tick %lu", board->tickCount);
+			ImGui::Text("Tick %lu", (unsigned long)board->tickCount);
 			board->stats.Display();
 
 			if (showDetailedStats)

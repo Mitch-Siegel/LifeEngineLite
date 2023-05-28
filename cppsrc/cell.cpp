@@ -199,7 +199,7 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 		if (!board->boundCheckPos(x_check, y_check))
 		{
 			Cell *neighbor = board->cells[y_check][x_check];
-			if ((neighbor->myOrganism == this->myOrganism))
+			if (neighbor->myOrganism == this->myOrganism)
 			{
 				switch (neighbor->type)
 				{

@@ -1,7 +1,7 @@
 #include "util.h"
 #include <boost/thread.hpp>
 #include <chrono>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <cstdint>
 
 #include "imgui.h"

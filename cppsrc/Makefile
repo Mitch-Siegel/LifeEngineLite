@@ -20,8 +20,8 @@ SIMPLENETS_OBJS = $(SIMPLENETS_SRCS:$(SIMPLENETS_VERSION)/%=%.o)
 GAME_SRCS = $(basename $(wildcard *.cpp))
 GAME_OBJS = $(GAME_SRCS:%=%.o)
 
-CFLAGS_NOWARNINGS = -g -O2
-CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -Werror -Wall -I./simplenets-0.01
+CFLAGS_NOWARNINGS = -O2 -std=c++17 -I/opt/homebrew/Cellar/boost/1.81.0_1/include `sdl2-config --cflags` -Wno-mismatched-tags
+CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -std=c++17 -O2 -Werror -Wall -I./simplenets-0.01 -I/opt/homebrew/Cellar/boost/1.81.0_1/include `sdl2-config --cflags` -Wno-mismatched-tags
 
 OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) $(SIMPLENETS_OBJS) main.o organismview.o detailedstats.o organism.o cell.o board.o rng.o brain.o util.o datatracker.o worldstats.o worldsettings.o
 
@@ -30,9 +30,14 @@ programs: lel
 #c++ `sdl2-config --cflags` -I .. -I ../.. main.cpp 
 # ../../backends/imgui_impl_sdl.cpp ../../backends/imgui_impl_sdlrenderer.cpp 
 # ../../imgui*.cpp `sdl2-config --libs` -lGL
+BOOST_THREAD_FLAG = -lboost_thread
+ifeq ($(shell uname -s),Darwin)
+	BOOST_THREAD_FLAG = -lboost_thread-mt
+endif
 lel: $(addprefix $(OBJDIR)/,$(OBJS))
 # @echo Final executable:
-	$(CC) $(CFLAGS_WARNINGS)  `sdl2-config --cflags` -o $@ $^ `sdl2-config --libs` -lboost_thread 
+
+	$(CC) $(CFLAGS_WARNINGS)  `sdl2-config --cflags` -o $@ $^ `sdl2-config --libs` $(BOOST_THREAD_FLAG)
 
 $(OBJDIR)/%.o: $(IMGUI_VERSION)/backends/%.cpp
 # @echo ImGui backend file:

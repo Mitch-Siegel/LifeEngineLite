@@ -1,5 +1,5 @@
 #include "detailedstats.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <map>
 
 #include "imgui.h"

@@ -368,7 +368,7 @@ void WorldSettingsView()
 		for (int j = 0; j < 3; j++)
 		{
 			char label[128];
-			snprintf(label, 127, "-%2lu", fraction);
+			snprintf(label, 127, "-%2llu", fraction);
 
 			ImGui::PushID(buttonId++);
 			if (ImGui::Button(label))
@@ -388,14 +388,14 @@ void WorldSettingsView()
 			fraction *= 10;
 		}
 
-		ImGui::Text("%lu", Settings.Get(static_cast<WorldSettings::SettingNames>(i)));
+		ImGui::Text("%llu", Settings.Get(static_cast<WorldSettings::SettingNames>(i)));
 		ImGui::SameLine();
 
 		fraction = 100;
 		for (int j = 0; j < 3; j++)
 		{
 			char label[128];
-			snprintf(label, 127, "+%2lu", fraction);
+			snprintf(label, 127, "+%2llu", fraction);
 
 			ImGui::PushID(buttonId++);
 			if (ImGui::Button(label))

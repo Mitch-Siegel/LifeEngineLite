@@ -1,6 +1,6 @@
 #include "board.h"
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <iostream>
 #include <algorithm>
 #include <chrono>
