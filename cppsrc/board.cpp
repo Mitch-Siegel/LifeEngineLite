@@ -83,7 +83,6 @@ bool Board::Tick()
 						if (randPercent(1))
 						{
 							grownFruit->mutability = 15;
-							this->replaceCell_NoTrackReplacedFood(expiringFood, new Cell_Empty());
 
 							bool moverInCenter = randPercent(50);
 
@@ -319,6 +318,7 @@ void Board::replaceCellAt_NoTrackReplacedFood(const int _x, const int _y, Cell *
 	Cell *erased = this->cells[_y][_x];
 	this->cells[_y][_x] = _cell;
 	delete erased;
+
 	this->DeltaCells.insert(std::pair<int, int>(_x, _y));
 }
 

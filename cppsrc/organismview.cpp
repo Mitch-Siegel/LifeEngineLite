@@ -191,9 +191,10 @@ void OrganismView::OnFrame(SDL_Renderer *r)
         ImGui::Text("%lu ticks of lifespan left", (unsigned long)(this->myOrganism->lifespan - this->myOrganism->age));
         double energy = this->myOrganism->Energy();
         double maxEnergy = this->myOrganism->MaxEnergy();
-        ImGui::Text("%.2f/%.1f energy (%.2f%%)", energy,
+        ImGui::Text("%.2f/%.1f energy (%.2f%%), %lld vitality", energy,
                     maxEnergy,
-                    100.0 * static_cast<float>(energy) / maxEnergy);
+                    100.0 * static_cast<float>(energy) / maxEnergy, 
+                    this->myOrganism->Vitality());
         ImGui::Text("Reproduction cooldown: %d", this->myOrganism->reproductionCooldown);
     }
     else
@@ -268,7 +269,7 @@ void OrganismView::OnFrame(SDL_Renderer *r)
             }
         }
 
-        dl->AddRectFilled(ImVec2(basePos.x + 0.0, basePos.y + 0.0), ImVec2(basePos.x + ((maxX * 5.0) * diameter), basePos.y + ((maxY * yStepMultiplier) * (diameter + yStepMultiplier))), IM_COL32(0, 0, 0, 255));
+        dl->AddRectFilled(ImVec2(basePos.x + 0.0, basePos.y + 0.0), ImVec2(basePos.x + ((maxX * 5.0) * diameter), basePos.y + ((maxY * yStepMultiplier) * (diameter + yStepMultiplier))), IM_COL32(100, 100, 100, 255));
 
         // draw input layer
         float yStepThisCol = (static_cast<float>(maxY) / this->inputs.size()) * diameter * yStepMultiplier;

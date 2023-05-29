@@ -12,12 +12,12 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	8,	// bark
+	16, // bark
 	2,	// flower
 	0,	// fruit
-	32, // herbivore
-	64, // carnivore
-	32, // mover
+	16, // herbivore
+	32, // carnivore
+	16, // mover
 	8,	// killer
 	5,	// armor
 	1,	// touch sensor
@@ -191,64 +191,65 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 
 void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 {
-	// int neighborPenalty = 0;
-	// for (int i = 0; i < 4; i++)
-	// {
-	// 	int x_check = this->x + directions[i][0];
-	// 	int y_check = this->y + directions[i][1];
-	// 	if (!board->boundCheckPos(x_check, y_check))
-	// 	{
-	// 		Cell *neighbor = board->cells[y_check][x_check];
-	// 		if (neighbor->myOrganism == this->myOrganism)
-	// 		{
-	// 			switch (neighbor->type)
-	// 			{
-	// 			case cell_bark:
-	// 				neighborPenalty -= 2;
-	// 				// this->photosynthesisEffectiveness++;
-	// 				break;
+	this->crowding = 0;
+	for (int i = 0; i < 8; i++)
+	{
+		int x_check = this->x + directions[i][0];
+		int y_check = this->y + directions[i][1];
+		if (!board->boundCheckPos(x_check, y_check))
+		{
+			Cell *neighbor = board->cells[y_check][x_check];
+			if (neighbor->myOrganism == this->myOrganism)
+			{
+				switch (neighbor->type)
+				{
+				case cell_bark:
+					this->crowding -= 2;
+					// this->photosynthesisEffectiveness++;
+					break;
 
-	// 			default:
-	// 				neighborPenalty++;
-	// 				break;
-	// 			}
-	// 		}
-	// 		else
-	// 		{
-	// 			switch (neighbor->type)
-	// 			{
-	// 			case cell_empty:
-	// 				break;
+				case cell_leaf:
+					break;
 
-	// 			case cell_plantmass:
-	// 			case cell_biomass:
-	// 			case cell_fruit:
-	// 				neighborPenalty += 1;
-	// 				break;
+				default:
+					this->crowding++;
+					break;
+				}
+			}
+			else
+			{
+				switch (neighbor->type)
+				{
+				case cell_empty:
+					break;
 
-	// 			default:
-	// 				neighborPenalty += 2;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// if (neighborPenalty < 2)
-	// {
-	// 	this->crowding = 0;
-	// }
-	// else if (neighborPenalty < 5)
-	// {
-	// 	this->crowding = 1;
-	// }
-	// else
-	// {
-	// 	this->crowding = 2;
-	// }
+				case cell_plantmass:
+				case cell_biomass:
+				case cell_fruit:
+					this->crowding++;
+					break;
+
+				default:
+					this->crowding += 2;
+					break;
+				}
+			}
+		}
+	}
 }
 
 void Cell_Leaf::Tick()
 {
+	if (this->photosynthesisCooldown > 0)
+	{
+		this->photosynthesisCooldown--;
+	}
+	else
+	{
+		this->myOrganism->AddEnergy(1.0);
+		this->photosynthesisCooldown = Settings.Get(WorldSettings::photosynthesis_interval) + this->crowding;
+	}
+
 	if (!this->flowering)
 	{
 		return;
@@ -269,10 +270,9 @@ void Cell_Leaf::Tick()
 			int y_abs = this->y + thisDirection[1];
 			if (board->isCellOfType(x_abs, y_abs, cell_empty))
 			{
-				double floweringCost = Settings.Get(WorldSettings::leaf_flowering_cost);
-				if (this->myOrganism->Energy() > floweringCost + 1)
+				if (this->myOrganism->Vitality() > 0)
 				{
-					this->myOrganism->ExpendEnergy(floweringCost);
+					this->myOrganism->ExpendVitality(1);
 					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
 					this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
 				}
@@ -317,42 +317,37 @@ void Cell_Bark::Tick()
 		return;
 	}
 
-	if (this->actionCooldown > 0)
+	if (this->myOrganism->Vitality() > 0)
 	{
-		this->actionCooldown--;
-		return;
-	}
-
-	// even though leaves can exist in a 5x5 around bark, bark will only grow a leaf directly adjacent
-	int checkDirIndex = randInt(0, 3);
-	for (int i = 0; i < 4; i++)
-	{
-		int *thisDirection = directions[(checkDirIndex + i) % 4];
-		int x_abs = this->x + thisDirection[0];
-		int y_abs = this->y + thisDirection[1];
-		if (board->isCellOfType(x_abs, y_abs, cell_empty) &&
-			(this->myOrganism->Energy() > (Settings.Get(WorldSettings::bark_grow_cost) + 1)))
+		// bark will only grow a leaf directly adjacent
+		int checkDirIndex = randInt(0, 3);
+		for (int i = 0; i < 4; i++)
 		{
-			// high chance to grow plant vs thorn
-			if (randPercent(Settings.Get(WorldSettings::bark_plant_vs_thorn)))
+			int *thisDirection = directions[(checkDirIndex + i) % 4];
+			int x_abs = this->x + thisDirection[0];
+			int y_abs = this->y + thisDirection[1];
+			if (board->isCellOfType(x_abs, y_abs, cell_empty))
 			{
-				// high chance to grow leaf vs bark
+				// high chance to grow plant vs thorn
 				if (randPercent(Settings.Get(WorldSettings::bark_plant_vs_thorn)))
 				{
-					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf());
+					// high chance to grow leaf vs bark
+					if (randPercent(Settings.Get(WorldSettings::bark_plant_vs_thorn)))
+					{
+						this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Leaf());
+					}
+					else
+					{
+						this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Bark());
+					}
 				}
 				else
 				{
-					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Bark());
+					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Killer());
 				}
+				this->myOrganism->ExpendVitality(1);
+				return;
 			}
-			else
-			{
-				this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Killer());
-			}
-			this->myOrganism->ExpendEnergy(Settings.Get(WorldSettings::bark_grow_cost));
-			this->actionCooldown = Settings.Get(WorldSettings::bark_grow_cooldown);
-			break;
 		}
 	}
 }
@@ -360,7 +355,6 @@ void Cell_Bark::Tick()
 Cell_Bark *Cell_Bark::Clone()
 {
 	Cell_Bark *cloned = new Cell_Bark(*this);
-	cloned->actionCooldown = Settings.Get(WorldSettings::bark_grow_cooldown);
 	cloned->integrity = Settings.Get(WorldSettings::bark_max_integrity);
 	return cloned;
 }
@@ -374,21 +368,11 @@ Cell_Flower::Cell_Flower()
 {
 	this->type = cell_flower;
 	this->myOrganism = nullptr;
-	this->bloomCooldown = 0;
 }
 
 void Cell_Flower::Tick()
 {
-	if (this->bloomCooldown > 0)
-	{
-		this->bloomCooldown--;
-		return;
-	}
-	else if ((this->myOrganism->reproductionCooldown > 0) || (this->myOrganism->Energy() < (Settings.Get(WorldSettings::flower_bloom_cost) + 1)))
-	{
-		return;
-	}
-	else
+	if (this->myOrganism->Vitality() > 0)
 	{
 		bool couldBloom = false;
 		int checkDirIndex = randInt(0, 3);
@@ -409,12 +393,10 @@ void Cell_Flower::Tick()
 
 		if (couldBloom)
 		{
-			this->myOrganism->ExpendEnergy(Settings.Get(WorldSettings::flower_bloom_cost));
-			this->bloomCooldown = Settings.Get(WorldSettings::flower_bloom_cooldown);
+			this->myOrganism->ExpendVitality(1);
 			if (randPercent(Settings.Get(WorldSettings::flower_wilt_chance)))
 			{
-				// if (this->myOrganism->Energy() > (FLOWER_COST + 1) &&
-				if (randPercent(Settings.Get(WorldSettings::flower_expand_percent)) /* && (this->myOrganism->Energy() > (FLOWER_COST + 1))*/)
+				if (randPercent(Settings.Get(WorldSettings::flower_expand_percent)))
 				{
 					this->myOrganism->ReplaceCell(this, new Cell_Leaf(100));
 				}
@@ -724,7 +706,7 @@ void Cell_Killer::Tick()
 		}
 	}
 	// base cost plus some addl cost per damage done
-	this->myOrganism->ExpendEnergy((damageDone * Settings.Get(WorldSettings::killer_damage_cost)) + (this->myOrganism->age % (Settings.Get(WorldSettings::killer_cost_interval) + 1 ) == 0));
+	this->myOrganism->ExpendEnergy((damageDone * Settings.Get(WorldSettings::killer_damage_cost)) + (this->myOrganism->age % (Settings.Get(WorldSettings::killer_cost_interval) + 1) == 0));
 }
 
 Cell_Killer *Cell_Killer::Clone()

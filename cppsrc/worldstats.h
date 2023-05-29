@@ -16,6 +16,7 @@ private:
 		count_cells,
 		count_energy,
 		count_maxenergy,
+		count_vitality,
 		count_age,
 		count_lifespan,
 		count_reproductioncooldown,

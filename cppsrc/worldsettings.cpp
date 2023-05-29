@@ -115,7 +115,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::food_multiplier] = Setting("Food Multiplier",
 															 "Multiplier on energy gained for all food types",
-															 16,
+															 4,
 															 {0, 9999});
 
 	this->settings[WorldSettings::leaf_food_energy] = Setting("Leaf Food Energy",
@@ -145,7 +145,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::photosynthesis_interval] = Setting("Photosynthesis Interval",
 																	 "Interval each leaf cell waits between generating 1 energy",
-																	 0,
+																	 3,
 																	 {0, 9999});
 
 	this->settings[WorldSettings::leaf_flowering_cost] = Setting("Leaf Flowering Cost",
@@ -185,12 +185,12 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::spoil_time_base] = Setting("Spoil Time Multiplier",
 															 "Multiplier on time it takes plantmass/biomass/fruit to spoil",
-															 10,
+															 5,
 															 {0, 9999});
 
 	this->settings[WorldSettings::plantmass_spoil_time] = Setting("Plantmass Spoil Time",
 																  "Base time it takes plantmass to decay (dependent on organism size which became plantmass)",
-																  50,
+																  25,
 																  {0, 9999});
 
 	this->settings[WorldSettings::biomass_spoil_time] = Setting("Biomass Spoil Time",

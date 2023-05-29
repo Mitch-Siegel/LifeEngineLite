@@ -56,7 +56,7 @@ private:
 	uint64_t nCells_;
 	OrganismIdentifier identifier_;
 
-	double leftoverTickCost = 0.0;
+	double fractionalEnergy = 0.0;
 
 	bool requireConnectednessCheck;
 	// remove any cells which aren't directly connected to the organism
@@ -122,11 +122,11 @@ public:
 
 	void Heal(uint64_t n);
 
-	void ExpendEnergy(uint64_t n);
-
 	void ExpendEnergy(double n);
 
 	void AddEnergy(uint64_t n);
+
+	void ExpendVitality(uint32_t n);
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);
 
@@ -145,7 +145,7 @@ public:
 
 class Organism;
 #define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * (static_cast<double>(maxEnergy) / Settings.Get(WorldSettings::energy_density_multiplier) * sqrt(nCells)))
-#define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (Settings.Get(WorldSettings::reproduction_cooldown_multiplier) * (sqrt(sqrt(maxEnergy * nCells))))
+#define REPRODUCTION_COOLDOWN(maxEnergy, nCells, nLeaves) (Settings.Get(WorldSettings::reproduction_cooldown_multiplier) * maxEnergy * nCells)
 
 class Organism;
 

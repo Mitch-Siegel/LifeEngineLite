@@ -14,25 +14,44 @@
  */
 #define BRAIN_DEFAULT_INPUTS 4
 
+nn_num_t RandomBrainConnectionWeight()
+{
+    return randFloat(-0.1, 0.1) * 10;
+}
+
 Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets::logistic})
 {
     this->nextSensorIndex = 0;
     this->freeWill = randFloat(0.0, 1.0);
     this->nTicksSameAction = 0;
 
-    this->AddNeuron(SimpleNets::logistic);
-    for (int i = 0; i < 3; i++)
+    size_t randomId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::logistic));
+    this->AddConnection(this->layers[0][1].Id(), randomId, RandomBrainConnectionWeight());
+    this->AddConnection(this->layers[0][randInt(0, this->layers[0].size() - 1)].Id(), randomId, RandomBrainConnectionWeight());
+    this->AddConnection(randomId, this->layers[2][randInt(1, 4)].Id(), RandomBrainConnectionWeight());
+
+    randomId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::logistic));
+    this->AddConnection(this->layers[0][1].Id(), randomId, RandomBrainConnectionWeight());
+    this->AddConnection(this->layers[0][randInt(0, this->layers[0].size() - 1)].Id(), randomId, RandomBrainConnectionWeight());
+    this->AddConnection(randomId, this->layers[2][randInt(5, 6)].Id(), RandomBrainConnectionWeight());
+
+    /*for (int i = 0; i < 1; i++)
     {
         size_t newId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::logistic));
-        if (randPercent(50))
+
+        int tries = randInt(1, 2);
+        for (int i = 0; i < tries; i++)
         {
-            while (!this->TryAddRandomHiddenConnectionByDst(newId))
-                ;
-        }
-        else
-        {
-            while (!this->TryAddRandomInputConnectionByDst(newId))
-                ;
+            if (randPercent(50))
+            {
+                while (!this->TryAddRandomHiddenConnectionByDst(newId))
+                    ;
+            }
+            else
+            {
+                while (!this->TryAddRandomInputConnectionByDst(newId))
+                    ;
+            }
         }
 
         if (randPercent(50))
@@ -46,6 +65,7 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
                 ;
         }
     }
+    */
 }
 
 Brain::Brain(const Brain &b) : SimpleNets::DAGNetwork(b)
@@ -62,14 +82,14 @@ bool Brain::TryAddRandomInputConnectionBySrc(size_t srcId)
     }
     return this->AddConnection(srcId,
                                this->layers[1][randInt(0, this->size(1) - 1)].Id(),
-                               randFloat(-1.0, 1.0));
+                               RandomBrainConnectionWeight());
 }
 
 bool Brain::TryAddRandomInputConnectionByDst(size_t dstId)
 {
     return this->AddConnection(this->layers[0][randInt(0, this->size(0) - 1)].Id(),
                                dstId,
-                               randFloat(-1.0, 1.0));
+                               RandomBrainConnectionWeight());
 }
 
 bool Brain::TryAddRandomInputConnection()
@@ -85,14 +105,14 @@ bool Brain::TryAddRandomInputOutputConnectionBySrc(size_t srcId)
 {
     return this->AddConnection(srcId,
                                this->layers[2][randInt(0, this->size(2) - 1)].Id(),
-                               randFloat(-1.0, 1.0));
+                               RandomBrainConnectionWeight());
 }
 
 bool Brain::TryAddRandomInputOutputConnectionByDst(size_t dstId)
 {
     return this->AddConnection(this->layers[0][randInt(0, this->size(0) - 1)].Id(),
                                dstId,
-                               randFloat(-1.0, 1.0));
+                               RandomBrainConnectionWeight());
 }
 
 bool Brain::TryAddRandomInputOutputConnection()
@@ -119,7 +139,7 @@ bool Brain::TryAddRandomHiddenConnectionBySrc(size_t srcId)
 
         return this->AddConnection(srcId,
                                    dstId,
-                                   randFloat(-1.0, 1.0));
+                                   RandomBrainConnectionWeight());
     }
     return false;
 }
@@ -143,7 +163,7 @@ bool Brain::TryAddRandomHiddenConnectionByDst(size_t dstId)
 
         return this->AddConnection(srcId,
                                    dstId,
-                                   randFloat(-1.0, 1.0));
+                                   RandomBrainConnectionWeight());
     }
     return false;
 }
@@ -162,7 +182,7 @@ bool Brain::TryAddRandomOutputConnectionBySrc(size_t srcId)
 {
     return this->AddConnection(srcId,
                                this->layers[2][randInt(0, this->size(2) - 1)].Id(),
-                               randFloat(-1.0, 1.0));
+                               RandomBrainConnectionWeight());
 }
 
 bool Brain::TryAddRandomOutputConnectionByDst(size_t dstId)
@@ -173,7 +193,7 @@ bool Brain::TryAddRandomOutputConnectionByDst(size_t dstId)
     }
     return this->AddConnection(this->layers[1][randInt(0, this->size(1) - 1)].Id(),
                                dstId,
-                               randFloat(-1.0, 1.0));
+                               RandomBrainConnectionWeight());
 }
 
 bool Brain::TryAddRandomOutputConnection()
@@ -204,7 +224,7 @@ void Brain::SetSensoryInput(unsigned int senseCellIndex, const std::vector<nn_nu
 void Brain::AddRandomHiddenNeuron()
 {
     size_t newNeuronId = this->AddNeuron(SimpleNets::perceptron);
-    this->AddConnection(this->layers[0][0].Id(), newNeuronId, randFloat(-1.0, 1.0)); // bias connection
+    this->AddConnection(this->layers[0][0].Id(), newNeuronId, RandomBrainConnectionWeight()); // bias connection
 
     bool usedHidden = false;
     // determine this neuron's inputs (input layer vs hidden layer)
@@ -259,8 +279,8 @@ void Brain::Mutate()
         {
             // generate a completely unconnected neuron, rely on further mutations to connect to it
             size_t id = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::perceptron));
-            this->AddConnection(this->layers[0][0].Id(), id, randFloat(-1.0, 1.0)); // bias connection
-            this->AddConnection(this->layers[0][0].Id(), id, randFloat(-1.0, 1.0));
+            this->AddConnection(this->layers[0][0].Id(), id, RandomBrainConnectionWeight()); // bias connection
+            this->AddConnection(this->layers[0][0].Id(), id, RandomBrainConnectionWeight());
             // this->AddRandomHiddenNeuron();
         }
     }

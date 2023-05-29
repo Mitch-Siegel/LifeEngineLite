@@ -9,7 +9,7 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (0.1 * Settings.Get(WorldSettings::move_cost_multiplier)) * sqrt(nCells_ - 1)
+#define moveCost(nCells) (0.1 * Settings.Get(WorldSettings::move_cost_multiplier)) * sqrt(nCells_)
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -22,6 +22,7 @@ Organism::Organism(int center_x, int center_y)
 	this->currentEnergy = 0;
 	this->lifespan = 0;
 	this->maxEnergy = 0;
+	this->vitality_ = 0;
 	this->age = 0;
 	this->nCells_ = 0;
 	this->alive = true;
@@ -135,20 +136,12 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	this->AddEnergy(this->cellCounts[cell_leaf]);
-
-	if(this->currentEnergy > 0.9 * this->maxEnergy)
-	{
-		this->ExpendEnergy(this->nCells_);
-		this->vitality_++;
-	}
-
 	this->ExpendEnergy(0.1 * this->nCells_);
 
-	if (this->leftoverTickCost > 1.0)
+	if (this->currentEnergy > 0.75 * this->maxEnergy)
 	{
-		this->ExpendEnergy(floor(this->leftoverTickCost));
-		this->leftoverTickCost -= floor(this->leftoverTickCost);
+		this->ExpendEnergy(0.25 * this->maxEnergy);
+		this->vitality_++;
 	}
 
 	if (this->currentEnergy == 0 || this->currentHealth == 0 || (this->age >= this->lifespan) || (this->nCells() == 0))
@@ -214,10 +207,7 @@ Organism *Organism::Tick()
 		switch (this->brain->Decide())
 		{
 		case intent_idle:
-		{
-			this->leftoverTickCost += moveCost(1);
-		}
-		break;
+			break;
 		case intent_forward:
 		{
 			this->Move(1);
@@ -249,6 +239,8 @@ Organism *Organism::Tick()
 		}
 		break;
 		}
+
+		this->ExpendEnergy(moveCost(this->nCells_));
 	}
 
 	return nullptr;
@@ -278,7 +270,6 @@ void Organism::RecalculateStats()
 		this->maxEnergy = calculatedMaxEnergy;
 	}
 	this->maxEnergy *= Settings.Get(WorldSettings::energy_density_multiplier);
-	this->maxEnergy *= sqrt(this->nCells_);
 
 	this->maxHealth = this->nCells() * Settings.Get(WorldSettings::max_health_multiplier) + (this->cellCounts[cell_armor] * Settings.Get(WorldSettings::armor_health_bonus));
 	if (this->currentHealth > this->maxHealth)
@@ -320,7 +311,7 @@ void Organism::VerifyCellConnectedness()
 		Cell *examined = searchQueue.back();
 		searchQueue.pop_back();
 
-		// ensure leaves are within a 5x5 of a bark
+		// ensure leaves are within 3x3 of a bark
 		if (examined->type == cell_leaf)
 		{
 			bool barkAdjacent = false;
@@ -338,6 +329,7 @@ void Organism::VerifyCellConnectedness()
 				}
 			}
 
+			/*
 			if (!barkAdjacent)
 			{
 				static int secondRing[16][2] = {{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}, {-1, 2}, {0, 2}, {1, 2}, {2, 2}, {2, 1}, {2, 0}, {2, -1}, {2, -2}, {1, -2}, {0, -2}, {-1, -2}};
@@ -355,7 +347,7 @@ void Organism::VerifyCellConnectedness()
 					}
 				}
 			}
-
+			*/
 			// if it's not close enough to center or otherwise next to a bark, override and mark as unconnected
 			if (!barkAdjacent)
 			{
@@ -441,6 +433,17 @@ bool Organism::CheckValidity()
 		if ((this->cellCounts[cell_leaf] > (0.5 * this->nCells_)))
 		{
 			return true;
+		}
+	}
+
+	if (this->cellCounts[cell_leaf] == 0)
+	{
+		for (int i = 0; i < cell_null; i++)
+		{
+			if (this->nCells_ == this->cellCounts[i])
+			{
+				return true;
+			}
 		}
 	}
 
@@ -573,7 +576,6 @@ void Organism::Move(int moveDirection)
 		\operatorname{ceil}\left(\sqrt{\left(2^{.3x\ }+1.5\right)}\right)-2
 		*/
 	}
-	this->leftoverTickCost += moveCost(this->nCells_);
 }
 
 void Organism::Rotate(bool clockwise)
@@ -670,7 +672,7 @@ void Organism::Rotate(bool clockwise)
 		}
 	}
 
-	this->leftoverTickCost += moveCost(this->nCells_);
+	this->fractionalEnergy += moveCost(this->nCells_);
 	this->direction += (clockwise ? -1 : 1);
 	if (this->direction < 0)
 	{
@@ -702,18 +704,6 @@ void Organism::Heal(uint64_t n)
 	}
 }
 
-void Organism::ExpendEnergy(uint64_t n)
-{
-	if (n > this->currentEnergy)
-	{
-		this->currentEnergy = 0;
-	}
-	else
-	{
-		this->currentEnergy -= n;
-	}
-}
-
 void Organism::ExpendEnergy(double n)
 {
 	uint64_t intN = floor(n);
@@ -727,7 +717,16 @@ void Organism::ExpendEnergy(double n)
 	{
 		this->currentEnergy -= intN;
 	}
-	this->leftoverTickCost += n;
+	this->fractionalEnergy -= n;
+
+	while (this->fractionalEnergy < -1.0)
+	{
+		if (this->currentEnergy > 0)
+		{
+			this->currentEnergy--;
+		}
+		this->fractionalEnergy += 1.0;
+	}
 }
 
 void Organism::AddEnergy(uint64_t n)
@@ -738,6 +737,11 @@ void Organism::AddEnergy(uint64_t n)
 	{
 		this->currentEnergy = this->maxEnergy;
 	}
+}
+
+void Organism::ExpendVitality(uint32_t n)
+{
+	this->vitality_ -= n;
 }
 
 const uint64_t &Organism::MaxHealth()
@@ -853,8 +857,6 @@ Organism *Organism::Reproduce()
 				}
 				*/
 
-				this->ExpendEnergy(this->maxEnergy * (Settings.Get(WorldSettings::reproduction_energy_proportion) / 100.0));
-
 				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra, *this->brain);
 				replicated->direction = this->direction;
 				replicated->mutability = this->mutability;
@@ -958,12 +960,6 @@ Organism *Organism::Reproduce()
 					newSpecies &= !changeByOneChecker;
 				}
 
-				if (replicated->CheckValidity() || replicated->maxEnergy == 0)
-				{
-					replicated->Remove();
-					return replicated;
-				}
-
 				if (newSpecies)
 				{
 					replicated->identifier_ = OrganismIdentifier(board->GetNextSpecies());
@@ -998,21 +994,23 @@ Organism *Organism::Reproduce()
 				{
 					replicated->brain->Mutate();
 				}
-				//\frac{\sqrt{a}}{\log\left(x+1\right)+.01}\left(x+5\right)
-				// replicated->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(replicated->maxEnergy * replicated->nCells_); // + randInt(0, REPRODUCTION_COOLDOWN);
-				// this->reproductionCooldown = REPRODUCTION_COOLDOWN_MULTIPLIER * log(this->maxEnergy * this->nCells_);
+
 				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN(replicated->maxEnergy, replicated->nCells_, replicated->cellCounts[cell_leaf]);
 				this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
 
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->MaxHealth());
-				// if (replicated->cellCounts[cell_mover])
-				// {
-				// replicated->brain->Mutate();
-				// }
+
 				replicated->currentEnergy = randFloat(replicated->maxEnergy * 0.35, replicated->maxEnergy * 0.45);
 				replicated->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
-				this->vitality_ -= this->nCells_;
+
+				if (replicated->CheckValidity() || replicated->maxEnergy == 0)
+				{
+					replicated->Remove();
+				}
+
+				this->ExpendVitality(this->nCells_);
+
 				return replicated;
 			}
 
@@ -1026,7 +1024,7 @@ Organism *Organism::Reproduce()
 			continue;
 		}
 	}
-	this->vitality_--;
+	this->ExpendVitality(1);
 	return nullptr;
 }
 
@@ -1119,6 +1117,7 @@ bool Organism::Mutate()
 			}
 		}
 	}
+
 	return false;
 }
 
@@ -1181,6 +1180,11 @@ void Organism::OnCellRemoved(Cell *removed)
 				static_cast<Cell_Leaf *>(neighbor)->CalculatePhotosynthesieEffectiveness();
 			}
 		}
+	}
+
+	if (this->CheckValidity())
+	{
+		this->currentHealth = 0;
 	}
 }
 

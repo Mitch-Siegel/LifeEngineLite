@@ -316,7 +316,6 @@ int main(int argc, char *argv[])
 	Organism *firstOrganism = board->CreateOrganism(board->dim_x / 2, board->dim_y / 2);
 	firstOrganism->direction = 3;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
-	firstOrganism->AddCell(0, -1, new Cell_Flower());
 
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = 1000;
