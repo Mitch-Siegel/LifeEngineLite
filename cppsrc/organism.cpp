@@ -136,7 +136,7 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	this->ExpendEnergy(0.1 * this->nCells_);
+	this->ExpendEnergy(0.05 * sqrt(this->nCells_));
 
 	if (this->currentEnergy > 0.75 * this->maxEnergy)
 	{

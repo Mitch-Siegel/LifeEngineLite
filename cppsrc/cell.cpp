@@ -317,6 +317,12 @@ void Cell_Bark::Tick()
 		return;
 	}
 
+	if (this->actionCooldown > 0)
+	{
+		this->actionCooldown--;
+		return;
+	}
+
 	if (this->myOrganism->Vitality() > 0)
 	{
 		// bark will only grow a leaf directly adjacent
@@ -346,6 +352,7 @@ void Cell_Bark::Tick()
 					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Killer());
 				}
 				this->myOrganism->ExpendVitality(1);
+				this->actionCooldown = Settings.Get(WorldSettings::lifespan_multiplier);
 				return;
 			}
 		}

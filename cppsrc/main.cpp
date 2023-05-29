@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = 1000;
 
-	firstOrganism->mutability = 10;
+	firstOrganism->mutability = 50;
 	firstOrganism->age = 0;
 
 	board->AddSpeciesMember(firstOrganism);
