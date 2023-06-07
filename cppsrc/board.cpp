@@ -45,6 +45,58 @@ Board::~Board()
 	}
 }
 
+void Board::Reset()
+{
+	this->GetMutex();
+
+	// get rid of all organisms
+	this->Organisms.clear();
+	
+	for(auto c : this->FoodCells)
+	{
+		delete c.second;
+	}
+	this->FoodCells.clear();
+	
+
+	for (int y = 0; y < this->dim_y; y++)
+	{
+		for (int x = 0; x < this->dim_x; x++)
+		{
+			if (this->cells[y][x]->type != cell_empty)
+			{
+				this->replaceCellAt_NoTrackReplacedFood(x, y, new Cell_Empty());
+			}
+		}
+	}
+
+	this->nextSpecies = 0;
+	this->species.clear();
+	this->activeSpecies_.clear();
+	this->tickCount = 0;
+
+	this->stats.Reset();
+
+	// set up base organism
+	Organism *firstOrganism = this->CreateOrganism(this->dim_x / 2, this->dim_y / 2);
+	firstOrganism->direction = 3;
+	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
+
+	firstOrganism->RecalculateStats();
+	firstOrganism->lifespan = 1000;
+
+	firstOrganism->mutability = 50;
+	firstOrganism->age = 0;
+
+	this->AddSpeciesMember(firstOrganism);
+	this->GetNextSpecies();
+
+	firstOrganism->AddEnergy(static_cast<float>(firstOrganism->MaxEnergy() / 2));
+	firstOrganism->Heal(100);
+
+	this->ReleaseMutex();
+}
+
 // returns false if did tick, true if couldn't acquire mutex
 bool Board::Tick()
 {

@@ -110,6 +110,8 @@ public:
 
     ~Board();
 
+    void Reset();
+
     inline void GetMutex() { this->mutex.lock(); }
 
     inline bool TryGetMutex() { return this->mutex.try_lock(); }

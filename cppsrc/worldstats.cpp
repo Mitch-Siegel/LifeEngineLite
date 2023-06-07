@@ -396,3 +396,29 @@ void WorldStats::Update(Board *board)
 		nSpeciesBySize[static_cast<unsigned int>(log2(info.count))]++;
 	}
 }
+
+void WorldStats::Reset()
+{
+	for (int i = 0; i < class_null + 1; i++)
+	{
+		this->classCountData[i]->Reset();
+	}
+
+	for (int i = 0; i < class_null; i++)
+	{
+		this->classEnergyProportionData[i]->Reset();
+	}
+	this->whichGraph = 0;
+
+
+	// x-axis for tick values
+	tickData.Reset();
+	tickDataDouble.Reset();
+
+
+	// history of number of active species
+	activeSpeciesData.Reset();
+
+	// mapping from number of species members to count of species with this many members
+	nSpeciesBySize.clear();
+}

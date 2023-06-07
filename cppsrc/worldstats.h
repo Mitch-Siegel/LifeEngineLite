@@ -59,6 +59,8 @@ protected:
 	// this implies the board's mutex is locked so data can be read consistently
 	void Update(Board *b);
 
+	void Reset();
+
 public:
 	WorldStats();
 

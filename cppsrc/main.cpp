@@ -311,24 +311,8 @@ int main(int argc, char *argv[])
 
 	board = new Board(board_x, board_y);
 	printf("created board with dimension %d %d\n", board->dim_x, board->dim_y);
-	
 
-	Organism *firstOrganism = board->CreateOrganism(board->dim_x / 2, board->dim_y / 2);
-	firstOrganism->direction = 3;
-	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
-
-	firstOrganism->RecalculateStats();
-	firstOrganism->lifespan = 1000;
-
-	firstOrganism->mutability = 50;
-	firstOrganism->age = 0;
-
-	board->AddSpeciesMember(firstOrganism);
-	board->GetNextSpecies();
-
-	firstOrganism->AddEnergy(static_cast<float>(firstOrganism->MaxEnergy() / 2));
-	firstOrganism->Heal(100);
-
+	board->Reset();
 
 	// SDL_RendererInfo info;
 	// SDL_GetRendererInfo(renderer, &info);
@@ -349,6 +333,8 @@ int main(int argc, char *argv[])
 
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	bool testWinShown = false;
+
+	bool showResetButton = false;
 
 	int mouse_x = 0;
 	int mouse_y = 0;
@@ -534,6 +520,18 @@ int main(int argc, char *argv[])
 			// ImGui::PlotLines("Proportion of cells modified per render call", cellsModifiedData.rawData(), cellsModifiedData.size());
 			*/
 			ImGui::PlotLines("Frame Rate", frameRateData.rawData(), frameRateData.size());
+
+			ImGui::Checkbox("Show Reset Button", &showResetButton);
+			if(showResetButton)
+			{
+				ImGui::SameLine();
+				if(ImGui::Button("Reset board"))
+				{
+					board->Reset();
+					showResetButton = false;
+				}
+			}
+
 			ImGui::Checkbox("Autoplay (SPACE):", &autoplay);
 
 			ImGui::SliderFloat("Target tick count per frame", &targetTickrate, 1.0, 100.0, "%.0f");

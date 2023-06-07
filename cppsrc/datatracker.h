@@ -20,6 +20,8 @@ public:
 
 	~DataTracker();
 
+	void Reset();
+
 	void Add(T value);
 
 	T const *rawData();

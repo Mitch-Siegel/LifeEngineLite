@@ -32,6 +32,12 @@ DataTracker<T>::~DataTracker()
 }
 
 template <class T>
+void DataTracker<T>::Reset()
+{
+    this->dataP = 0;
+}
+
+template <class T>
 void DataTracker<T>::Add(T value)
 {
     this->data[this->dataP] = value;

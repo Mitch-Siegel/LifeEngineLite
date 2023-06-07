@@ -21,7 +21,7 @@ GAME_SRCS = $(basename $(wildcard *.cpp))
 GAME_OBJS = $(GAME_SRCS:%=%.o)
 
 CFLAGS_NOWARNINGS = -g -O2 -std=c++17 -I/opt/homebrew/Cellar/boost/1.81.0_1/include `sdl2-config --cflags` -Wno-mismatched-tags
-CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -g -O2 -std=c++17 -Werror -Wall -I./simplenets-0.01 -I/opt/homebrew/Cellar/boost/1.81.0_1/include `sdl2-config --cflags` -Wno-mismatched-tags -Wno-format
+CFLAGS_WARNINGS = $(CFLAGS_NOWARNINGS) -fsanitize=address -g -O2 -std=c++17 -Werror -Wall -I./simplenets-0.01 -I/opt/homebrew/Cellar/boost/1.81.0_1/include `sdl2-config --cflags` -Wno-mismatched-tags -Wno-format
 
 OBJS = $(IMGUI_OBJS) $(BACKEND_OBJS) $(IMPLOT_OBJS) $(SIMPLENETS_OBJS) main.o organismview.o detailedstats.o organism.o cell.o board.o rng.o brain.o util.o datatracker.o worldstats.o worldsettings.o
 
