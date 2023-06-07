@@ -122,7 +122,6 @@ bool Board::Tick()
 							grownFruit->identifier_ = OrganismIdentifier(this->GetNextSpecies());
 							this->AddSpeciesMember(grownFruit);
 							grownFruit->lifespan = UINT64_MAX;
-							grownFruit->reproductionCooldown = REPRODUCTION_COOLDOWN(grownFruit->maxEnergy, grownFruit->nCells_, grownFruit->cellCounts[cell_leaf]);
 							grownFruit->RecalculateStats();
 							grownFruit->AddEnergy(0.8 * grownFruit->MaxEnergy());
 							grownFruit->Heal(grownFruit->MaxHealth());

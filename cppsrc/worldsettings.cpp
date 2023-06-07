@@ -88,16 +88,6 @@ void WorldSettings::Initialize()
 																 75,
 																 {0, 9999});
 
-	this->settings[WorldSettings::reproduction_energy_proportion] = Setting("Reproduction Energy Proportion (%)",
-																			"Percent of maximum energy expended during reproduction (must have 1.1x this amount to reproduce)",
-																			75,
-																			{0, 91});
-
-	this->settings[WorldSettings::reproduction_cooldown_multiplier] = Setting("Reproduction Cooldown Multiplier",
-																			  "Multiplier on the formula of max energy and cell count which determines how frequently an organism can reproduce",
-																			  0.0,
-																			  {0, 9999});
-
 	this->settings[WorldSettings::max_health_multiplier] = Setting("Max Health Multiplier",
 																   "Multiplier on the formula of max health (1 per cell + extra for armor)",
 																   1,
@@ -115,7 +105,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::food_multiplier] = Setting("Food Multiplier",
 															 "Multiplier on energy gained for all food types",
-															 4,
+															 6,
 															 {0, 9999});
 
 	this->settings[WorldSettings::leaf_food_energy] = Setting("Leaf Food Energy",
@@ -148,30 +138,10 @@ void WorldSettings::Initialize()
 																	 3,
 																	 {0, 9999});
 
-	this->settings[WorldSettings::leaf_flowering_cost] = Setting("Leaf Flowering Cost",
-																 "Cost for a leaf to flower",
-																 3,
-																 {0, 9999});
-
-	this->settings[WorldSettings::leaf_flowering_cooldown] = Setting("Leaf Flowering Cooldown",
-																	 "Interval each leaf waits before trying to flower again",
-																	 25,
-																	 {0, 9999});
-
 	this->settings[WorldSettings::leaf_flowering_ability_percent] = Setting("Leaf Flowering Ability (%)",
 																			"What percent of leaf cells will be able to flower",
 																			30,
 																			{0, 100});
-
-	this->settings[WorldSettings::flower_bloom_cost] = Setting("Flower Bloom Cost",
-															   "Energy expended for a flower to bloom and generate a fruit",
-															   12,
-															   {0, 9999});
-
-	this->settings[WorldSettings::flower_bloom_cooldown] = Setting("Flower Bloom Cooldown",
-																   "Interval each flower waits before trying to bloom again",
-																   70,
-																   {0, 9999});
 
 	this->settings[WorldSettings::flower_wilt_chance] = Setting("Flower Wilt Chance (%)",
 																"Percent each flower will wilt after blooming",
@@ -208,24 +178,14 @@ void WorldSettings::Initialize()
 																50,
 																{0, 100});
 
-	this->settings[WorldSettings::bark_grow_cooldown] = Setting("Bark Grow Cooldown",
-																"Interval each bark waits before trying to grow again if possible",
-																25,
-																{0, 9999});
-
 	this->settings[WorldSettings::bark_plant_vs_thorn] = Setting("Bark Grow Leaf vs Thorn (%)",
 																 "Percent for a bark to grow a new leaf vs a new thorn",
 																 95,
 																 {0, 100});
 
-	this->settings[WorldSettings::bark_grow_cost] = Setting("Bark Grow Cost",
-															"Energy cost for a bark cell to grow",
-															24,
-															{0, 9999});
-
 	this->settings[WorldSettings::bark_max_integrity] = Setting("Bark Max Integrity",
 																"Number of \"chomps\" from an herbivore a bark can withstand before breaking",
-																3,
+																8,
 																{1, 9999});
 
 	this->settings[WorldSettings::killer_cost_interval] = Setting("Killer Cost Interval",
@@ -255,8 +215,6 @@ uint64_t WorldSettings::Get(WorldSettings::SettingNames s)
 	{
 	case default_mutability:
 	case lifespan_multiplier:
-	case reproduction_energy_proportion:
-	case reproduction_cooldown_multiplier:
 	case max_health_multiplier:
 	case energy_density_multiplier:
 	case move_cost_multiplier:
@@ -272,11 +230,7 @@ uint64_t WorldSettings::Get(WorldSettings::SettingNames s)
 
 	// leaf
 	case photosynthesis_interval:
-	case leaf_flowering_cost:
-	case leaf_flowering_cooldown:
 	case leaf_flowering_ability_percent:
-	case flower_bloom_cost:
-	case flower_bloom_cooldown:
 	case flower_wilt_chance:
 	case flower_expand_percent:
 	case spoil_time_base:
@@ -288,9 +242,7 @@ uint64_t WorldSettings::Get(WorldSettings::SettingNames s)
 		return this->settings[s].value * this->settings[spoil_time_base].value;
 
 	case fruit_grow_percent:
-	case bark_grow_cooldown:
 	case bark_plant_vs_thorn:
-	case bark_grow_cost:
 	case bark_max_integrity:
 	case killer_cost_interval:
 	case killer_damage_cost:

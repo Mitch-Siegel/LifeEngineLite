@@ -177,7 +177,6 @@ Cell_Leaf::Cell_Leaf()
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
 	this->flowering = randPercent(Settings.Get(WorldSettings::leaf_flowering_ability_percent));
-	this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
 }
 
 Cell_Leaf::Cell_Leaf(int floweringPercent)
@@ -185,7 +184,6 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 	this->type = cell_leaf;
 	this->myOrganism = nullptr;
 	this->flowering = randPercent(floweringPercent);
-	this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
 	this->photosynthesisCooldown = Settings.Get(WorldSettings::photosynthesis_interval);
 }
 
@@ -274,7 +272,6 @@ void Cell_Leaf::Tick()
 				{
 					this->myOrganism->ExpendVitality(1);
 					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
-					this->flowerCooldown = Settings.Get(WorldSettings::leaf_flowering_cooldown);
 				}
 				return;
 			}
@@ -303,7 +300,6 @@ Cell_Bark::Cell_Bark()
 	this->type = cell_bark;
 	this->myOrganism = nullptr;
 	this->actionCooldown = 0;
-	this->integrity = static_cast<int>(Settings.Get(WorldSettings::bark_max_integrity));
 }
 
 void Cell_Bark::Tick()

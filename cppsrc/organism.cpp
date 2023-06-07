@@ -26,7 +26,6 @@ Organism::Organism(int center_x, int center_y)
 	this->age = 0;
 	this->nCells_ = 0;
 	this->alive = true;
-	this->reproductionCooldown = 0;
 	this->mutability = Settings.Get(WorldSettings::default_mutability);
 	this->brain = new Brain();
 	this->direction = randInt(0, 3);
@@ -51,7 +50,6 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 	this->age = 0;
 	this->nCells_ = 0;
 	this->alive = true;
-	this->reproductionCooldown = 0;
 	this->mutability = Settings.Get(WorldSettings::default_mutability);
 	this->brain = new Brain(baseBrain);
 	this->direction = randInt(0, 3);
@@ -150,19 +148,9 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	if (this->reproductionCooldown == 0)
+	if (this->vitality_ >= (int64_t)this->nCells_)
 	{
-		if (this->vitality_ >= this->nCells_)
-		{
-			return this->Reproduce();
-		}
-	}
-	else
-	{
-		if (this->reproductionCooldown > 0)
-		{
-			this->reproductionCooldown--;
-		}
+		return this->Reproduce();
 	}
 
 	if (this->requireConnectednessCheck)
@@ -994,9 +982,6 @@ Organism *Organism::Reproduce()
 				{
 					replicated->brain->Mutate();
 				}
-
-				replicated->reproductionCooldown = REPRODUCTION_COOLDOWN(replicated->maxEnergy, replicated->nCells_, replicated->cellCounts[cell_leaf]);
-				this->reproductionCooldown = REPRODUCTION_COOLDOWN(this->maxEnergy, this->nCells_, this->cellCounts[cell_leaf]);
 
 				replicated->RecalculateStats();
 				replicated->Heal(replicated->MaxHealth());

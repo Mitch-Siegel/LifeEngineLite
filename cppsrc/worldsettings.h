@@ -23,8 +23,6 @@ public:
         default_mutability,
         lifespan_multiplier,
         // energy proportions (of max) required for certain actions
-        reproduction_energy_proportion,
-        reproduction_cooldown_multiplier, // * lifespan multiplier
         max_health_multiplier,
         // base energy stats
         energy_density_multiplier,
@@ -37,12 +35,8 @@ public:
         biomass_food_energy,              // * food multiplier
                                           // leaf
         photosynthesis_interval, // each leaf generates this much energy per tick
-        leaf_flowering_cost,              // * energy density multiplier
-        leaf_flowering_cooldown,          // number of ticks between leaf flowering
         leaf_flowering_ability_percent,   // % chance a new leaf cell will be able to flower
                                           // flower
-        flower_bloom_cost,                // * energy density multiplier
-        flower_bloom_cooldown,            // * lifespan multiplier
         flower_wilt_chance,               // each time the flower blooms, it has this % chance to wilt
         flower_expand_percent,            // % for wilting flower to become leaf
                                           // spoil times
@@ -53,9 +47,7 @@ public:
         fruit_grow_percent,               // % for fruit to spontaneously grow a new organism (must roll 2x in a row)
 
         // bark
-        bark_grow_cooldown,  // * lifespan multiplier
         bark_plant_vs_thorn, // % to grow a plant cell (leaf/bark) vs a killer
-        bark_grow_cost,      // * energy density multiplier
         bark_max_integrity,  // how many times bark can be "eaten" before it is broken through
 
         // killer
