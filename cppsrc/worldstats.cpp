@@ -36,7 +36,7 @@ void WorldStats::DisplayGeneralInfoTable()
 {
 	if (ImGui::BeginTable("OrganismStats", class_null + 1))
 	{
-		const char *rowNames[count_null + 2] = {"Class:", "Count", "Cells", "Energy%", "Vitality", "Max Energy/Cell", "Max Energy", "Age", "Lifespan", "Reproduction cooldown", "Mutability", "Inner Neurons", "Synapses"};
+		const char *rowNames[count_null + 2] = {"Class:", "Count", "Cells", "Energy%", "Vitality", "Max Energy/Cell", "Max Energy", "Age", "Lifespan", "Mutability", "Inner Neurons", "Synapses"};
 		int row = 0;
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
@@ -133,17 +133,6 @@ void WorldStats::DisplayGeneralInfoTable()
 		{
 			ImGui::TableSetColumnIndex(i + 1);
 			ImGui::Text("%.0f", organismStats[i][count_lifespan]);
-		}
-		row++;
-
-		// reproduction cooldown
-		ImGui::TableNextRow();
-		ImGui::TableSetColumnIndex(0);
-		ImGui::Text("%s", rowNames[row]);
-		for (int i = 0; i < class_null; i++)
-		{
-			ImGui::TableSetColumnIndex(i + 1);
-			ImGui::Text("%.1f", organismStats[i][count_reproductioncooldown]);
 		}
 		row++;
 
@@ -345,7 +334,6 @@ void WorldStats::Update(Board *board)
 
 		this->organismStats[thisClass][count_age] += o->age;
 		this->organismStats[thisClass][count_lifespan] += o->lifespan;
-		this->organismStats[thisClass][count_reproductioncooldown] += o->reproductionCooldown;
 		this->organismStats[thisClass][count_mutability] += o->mutability;
 		this->organismStats[thisClass][count_neurons] += o->brain->NHidden();
 		this->organismStats[thisClass][count_synapses] += o->brain->SynapseCount();

@@ -82,11 +82,10 @@ void Board::Reset()
 	firstOrganism->direction = 3;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
 
-	firstOrganism->RecalculateStats();
 	firstOrganism->lifespan = 1000;
+	firstOrganism->RecalculateStats();
 
-	firstOrganism->mutability = 50;
-	firstOrganism->age = 0;
+	firstOrganism->mutability = Settings.Get(WorldSettings::default_mutability);
 
 	this->AddSpeciesMember(firstOrganism);
 	this->GetNextSpecies();

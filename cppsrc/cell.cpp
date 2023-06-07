@@ -12,7 +12,7 @@ int CellEnergyDensities[cell_null] = {
 	0,	// plantmass
 	0,	// biomass
 	1,	// leaf
-	16, // bark
+	8,	// bark
 	2,	// flower
 	0,	// fruit
 	16, // herbivore
@@ -203,14 +203,12 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 				{
 				case cell_bark:
 					this->crowding -= 2;
-					// this->photosynthesisEffectiveness++;
 					break;
 
 				case cell_leaf:
 					break;
 
 				default:
-					this->crowding++;
 					break;
 				}
 			}
@@ -253,27 +251,22 @@ void Cell_Leaf::Tick()
 		return;
 	}
 
-	if (this->flowerCooldown > 0)
+	if (this->myOrganism->Vitality() > 0)
 	{
-		this->flowerCooldown--;
-	}
-	// can flower
-	else
-	{
-		int checkDirIndex = randInt(0, 3);
-		for (int i = 0; i < 4; i++)
 		{
-			int *thisDirection = directions[(checkDirIndex + i) % 4];
-			int x_abs = this->x + thisDirection[0];
-			int y_abs = this->y + thisDirection[1];
-			if (board->isCellOfType(x_abs, y_abs, cell_empty))
+			int checkDirIndex = randInt(0, 3);
+			for (int i = 0; i < 4; i++)
 			{
-				if (this->myOrganism->Vitality() > 0)
+				int *thisDirection = directions[(checkDirIndex + i) % 4];
+				int x_abs = this->x + thisDirection[0];
+				int y_abs = this->y + thisDirection[1];
+				if (board->isCellOfType(x_abs, y_abs, cell_empty))
 				{
+
 					this->myOrganism->ExpendVitality(1);
 					this->myOrganism->AddCell(x_abs - this->myOrganism->x, y_abs - this->myOrganism->y, new Cell_Flower());
+					return;
 				}
-				return;
 			}
 		}
 	}
@@ -300,6 +293,7 @@ Cell_Bark::Cell_Bark()
 	this->type = cell_bark;
 	this->myOrganism = nullptr;
 	this->actionCooldown = 0;
+	this->integrity = Settings.Get(WorldSettings::bark_max_integrity);
 }
 
 void Cell_Bark::Tick()

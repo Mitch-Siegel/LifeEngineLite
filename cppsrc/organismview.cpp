@@ -191,11 +191,17 @@ void OrganismView::OnFrame(SDL_Renderer *r)
         ImGui::Text("%lu ticks of lifespan left", (unsigned long)(this->myOrganism->lifespan - this->myOrganism->age));
         double energy = this->myOrganism->Energy();
         double maxEnergy = this->myOrganism->MaxEnergy();
+        double health = this->myOrganism->Health();
+        double maxHealth = this->myOrganism->MaxHealth();
+
         ImGui::Text("%.2f/%.1f energy (%.2f%%), %lld vitality", energy,
                     maxEnergy,
                     100.0 * static_cast<float>(energy) / maxEnergy, 
                     this->myOrganism->Vitality());
-        ImGui::Text("Reproduction cooldown: %d", this->myOrganism->reproductionCooldown);
+        ImGui::Text("%.2f/%.1f health (%.2f%%), %lld vitality", health,
+            maxHealth,
+            100.0 * static_cast<float>(health) / maxHealth, 
+            this->myOrganism->Vitality());
     }
     else
     {

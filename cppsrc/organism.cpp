@@ -30,6 +30,7 @@ Organism::Organism(int center_x, int center_y)
 	this->brain = new Brain();
 	this->direction = randInt(0, 3);
 	this->requireConnectednessCheck = false;
+
 	for (int i = 0; i < cell_null; i++)
 	{
 		this->cellCounts[i] = 0;
@@ -134,7 +135,7 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	this->ExpendEnergy(0.05 * sqrt(this->nCells_));
+	this->ExpendEnergy(0.05 * this->nCells_);
 
 	if (this->currentEnergy > 0.75 * this->maxEnergy)
 	{
@@ -169,20 +170,7 @@ Organism *Organism::Tick()
 		Cell *toTick = *celli;
 		if (ticked.count(toTick) == 0)
 		{
-			switch (toTick->type)
-			{
-			case cell_leaf:
-			{
-				Cell_Leaf *leafToTick = static_cast<Cell_Leaf *>(toTick);
-				if (leafToTick->CanFlower())
-				{
-					leafToTick->Tick();
-				}
-			}
-			default:
-				toTick->Tick();
-				break;
-			}
+			toTick->Tick();
 			ticked[toTick] = true;
 		}
 		celli = next;
@@ -280,66 +268,50 @@ void Organism::VerifyCellConnectedness()
 {
 	std::set<Cell *> unconnectedCells;
 	std::set<Cell *> removeAnyways;
-	// std::map<Cell *, bool> cellValidity;
 	for (Cell *c : this->myCells)
 	{
 		unconnectedCells.insert(c);
-		// cellValidity[c] = false;
 	}
 
 	// conduct a search on cells, only keep ones directly attached to the organism
 	std::vector<Cell *> searchQueue;
 	searchQueue.reserve(this->nCells_);
 	Cell *start = board->cells[this->y][this->x];
-	// cellValidity[start] = true;
 	unconnectedCells.erase(start);
 	searchQueue.push_back(start);
+
 	while (searchQueue.size() > 0)
 	{
 		Cell *examined = searchQueue.back();
+		unconnectedCells.erase(examined);
 		searchQueue.pop_back();
 
 		// ensure leaves are within 3x3 of a bark
 		if (examined->type == cell_leaf)
 		{
-			bool barkAdjacent = false;
-			for (int i = 0; i < 8; i++)
+			if ((abs(examined->x - this->x) > 1) && (abs(examined->y - this->y) > 1))
 			{
-				int x_check = examined->x + directions[i][0];
-				int y_check = examined->y + directions[i][1];
-				if (!board->boundCheckPos(x_check, y_check))
+				bool barkAdjacent = false;
+				for (int i = 0; i < 8; i++)
 				{
-					Cell *thisNeighbor = board->cells[y_check][x_check];
-					if ((thisNeighbor->myOrganism == this) && (thisNeighbor->type == cell_bark))
-					{
-						barkAdjacent = true;
-					}
-				}
-			}
-
-			/*
-			if (!barkAdjacent)
-			{
-				static int secondRing[16][2] = {{-2, -2}, {-2, -1}, {-2, 0}, {-2, 1}, {-2, 2}, {-1, 2}, {0, 2}, {1, 2}, {2, 2}, {2, 1}, {2, 0}, {2, -1}, {2, -2}, {1, -2}, {0, -2}, {-1, -2}};
-				for (int i = 0; i < 16; i++)
-				{
-					int x_check = examined->x + secondRing[i][0];
-					int y_check = examined->y + secondRing[i][1];
+					int x_check = examined->x + directions[i][0];
+					int y_check = examined->y + directions[i][1];
 					if (!board->boundCheckPos(x_check, y_check))
 					{
 						Cell *thisNeighbor = board->cells[y_check][x_check];
 						if ((thisNeighbor->myOrganism == this) && (thisNeighbor->type == cell_bark))
 						{
 							barkAdjacent = true;
+							break;
 						}
 					}
 				}
-			}
-			*/
-			// if it's not close enough to center or otherwise next to a bark, override and mark as unconnected
-			if (!barkAdjacent)
-			{
-				removeAnyways.insert(examined);
+
+				// if it's not close enough to center or otherwise next to a bark, override and mark as unconnected
+				if (!barkAdjacent)
+				{
+					removeAnyways.insert(examined);
+				}
 			}
 		}
 
@@ -353,7 +325,6 @@ void Organism::VerifyCellConnectedness()
 				Cell *neighbor = board->cells[y_abs][x_abs];
 				if (neighbor->myOrganism == this && unconnectedCells.count(neighbor))
 				{
-					unconnectedCells.erase(neighbor);
 					// cellValidity[neighbor] = true;
 					searchQueue.push_back(neighbor);
 				}
@@ -364,7 +335,6 @@ void Organism::VerifyCellConnectedness()
 	for (auto toRemove : unconnectedCells)
 	{
 		this->myCells.erase(toRemove);
-		this->nCells_--;
 		this->ReplaceKilledCell(toRemove);
 	}
 
@@ -373,7 +343,6 @@ void Organism::VerifyCellConnectedness()
 		if (this->myCells.count(toRemoveAnyways))
 		{
 			this->myCells.erase(toRemoveAnyways);
-			this->nCells_--;
 			this->ReplaceKilledCell(toRemoveAnyways);
 		}
 	}
@@ -415,25 +384,6 @@ bool Organism::CheckValidity()
 			return true;
 		}
 	}
-	else
-	{
-		// if it is a mover, it shouldn't be more than half leaves
-		if ((this->cellCounts[cell_leaf] > (0.5 * this->nCells_)))
-		{
-			return true;
-		}
-	}
-
-	if (this->cellCounts[cell_leaf] == 0)
-	{
-		for (int i = 0; i < cell_null; i++)
-		{
-			if (this->nCells_ == this->cellCounts[i])
-			{
-				return true;
-			}
-		}
-	}
 
 	bool invalid = false;
 
@@ -450,63 +400,6 @@ bool Organism::CheckValidity()
 	// must have a mover to have an eye
 	invalid |= (this->cellCounts[cell_eye] > 0 && this->cellCounts[cell_mover] == 0);
 
-	bool hasCenterCell = false;
-
-	// plants must have a killer cell next to bark
-	// leaves must be within a 3x3 around the center cell, or a bark
-	if (!invalid && this->cellCounts[cell_mover] == 0 && this->cellCounts[cell_killer])
-	{
-		for (Cell *c : this->myCells)
-		{
-			if (c->x == this->x && c->y == this->y)
-			{
-				hasCenterCell = true;
-			}
-			/*
-			if (c->type == cell_killer)
-			{
-				bool killerValid = false;
-				// killers on plants must have a bark directly adjacent (no diagonals)
-				for (int i = 0; i < 4; i++)
-				{
-					int *thisDirection = directions[i];
-					int x_abs = c->x + thisDirection[0];
-					int y_abs = c->y + thisDirection[1];
-					if (!board->boundCheckPos(x_abs, y_abs))
-					{
-						Cell *neighborCell = board->cells[y_abs][x_abs];
-						killerValid |= ((neighborCell->myOrganism == this) &&
-										(neighborCell->type == cell_bark));
-					}
-				}
-				if (!killerValid)
-				{
-					invalid = true;
-					break;
-				}
-			}
-			*/
-		}
-	}
-
-	if (!invalid)
-	{
-		if (!hasCenterCell)
-		{
-			for (Cell *c : this->myCells)
-			{
-				if (c->x == this->x && c->y == this->y)
-				{
-					hasCenterCell = true;
-					break;
-				}
-			}
-		}
-		if (!hasCenterCell)
-		{
-			invalid = true;
-		}
-	}
 	return invalid;
 }
 
@@ -732,6 +625,11 @@ void Organism::ExpendVitality(uint32_t n)
 	this->vitality_ -= n;
 }
 
+const uint64_t &Organism::Health()
+{
+	return this->currentHealth;
+}
+
 const uint64_t &Organism::MaxHealth()
 {
 	return this->maxHealth;
@@ -825,26 +723,6 @@ Organism *Organism::Reproduce()
 					dir_y_extra = 0;
 				}
 
-				/*
-				if (randPercent(55))
-				{
-					for (int k = 0; k < 16; k++)
-					{
-						dir_x_extra = randInt(-3, 3);
-						dir_y_extra = randInt(-3, 3);
-						if (dir_y_extra != 0 || dir_x_extra != 0)
-						{
-							if (this->CanOccupyPosition(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra))
-							{
-								break;
-							}
-						}
-						dir_x_extra = 0;
-						dir_y_extra = 0;
-					}
-				}
-				*/
-
 				Organism *replicated = new Organism(this->x + dir_x + dir_x_extra, this->y + dir_y + dir_y_extra, *this->brain);
 				replicated->direction = this->direction;
 				replicated->mutability = this->mutability;
@@ -904,16 +782,14 @@ Organism *Organism::Reproduce()
 					// if all of the above counts are identical, it's possible we just added a leaf or bark
 					// if the parent has a leaf and we added/removed a leaf and the child still has a leaf, consider it to be the same species
 					// same goes for killer
-					size_t parentLeafCount = this->cellCounts[cell_leaf];
-					size_t parentBarkCount = this->cellCounts[cell_bark];
-					size_t childLeafCount = replicated->cellCounts[cell_leaf];
-					size_t childBarkCount = replicated->cellCounts[cell_bark];
+					int parentLeafCount = this->cellCounts[cell_leaf];
+					int parentBarkCount = this->cellCounts[cell_bark];
+					int childLeafCount = replicated->cellCounts[cell_leaf];
+					int childBarkCount = replicated->cellCounts[cell_bark];
 					bool changeByOneChecker = true;
 					if (parentLeafCount && childLeafCount)
 					{
-						if ((childLeafCount != (parentLeafCount + 1)) &&
-							(childLeafCount != parentLeafCount) &&
-							(childLeafCount != (parentLeafCount - 1)))
+						if (abs(childLeafCount - parentLeafCount) > 1)
 						{
 
 							changeByOneChecker &= false;
@@ -929,9 +805,7 @@ Organism *Organism::Reproduce()
 
 					if (parentBarkCount && childBarkCount)
 					{
-						if ((childBarkCount != (parentBarkCount + 1)) &&
-							(childBarkCount != parentBarkCount) &&
-							(childBarkCount != (parentBarkCount - 1)))
+						if (abs(childBarkCount - parentBarkCount) > 1)
 						{
 							changeByOneChecker &= false;
 						}
@@ -984,9 +858,9 @@ Organism *Organism::Reproduce()
 				}
 
 				replicated->RecalculateStats();
-				replicated->Heal(replicated->MaxHealth());
+				replicated->currentHealth = replicated->MaxHealth();
+				replicated->currentEnergy = (0.7 * replicated->maxEnergy);
 
-				replicated->currentEnergy = randFloat(replicated->maxEnergy * 0.35, replicated->maxEnergy * 0.45);
 				replicated->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
 
 				if (replicated->CheckValidity() || replicated->maxEnergy == 0)
@@ -1038,7 +912,6 @@ bool Organism::Mutate()
 	{
 		// remove a cell
 		if ((this->nCells() > 2) &&
-			((this->nCells() == this->cellCounts[cell_leaf] ? this->nCells() > 4 : true)) &&
 			randPercent(50))
 		{
 			int removedIndex = randInt(0, this->nCells() - 2);
@@ -1097,7 +970,6 @@ bool Organism::Mutate()
 			if (canAdd)
 			{
 				this->AddCell(x_rel, y_rel, GenerateRandomCell());
-				this->requireConnectednessCheck = true;
 				return true;
 			}
 		}
@@ -1167,6 +1039,7 @@ void Organism::OnCellRemoved(Cell *removed)
 		}
 	}
 
+	// can't remove the whole organism because we may be in the middle of an organism tick
 	if (this->CheckValidity())
 	{
 		this->currentHealth = 0;
@@ -1192,6 +1065,7 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	this->nCells_++;
 	this->OnCellAdded(_cell);
 	this->RecalculateStats();
+	this->requireConnectednessCheck = true;
 }
 
 void Organism::RemoveCell(Cell *_myCell, bool doVitalityLoss)

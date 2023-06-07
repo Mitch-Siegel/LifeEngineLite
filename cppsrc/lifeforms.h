@@ -73,7 +73,6 @@ public:
 	uint64_t age;
 	int mutability;
 	bool alive;
-	int reproductionCooldown;
 	uint64_t lifespan;
 	Brain *brain;
 	uint64_t cellCounts[cell_null];
@@ -112,6 +111,8 @@ public:
 
 	void ReplaceCell(Cell *_myCell, Cell *_newCell);
 
+	const uint64_t &Health();
+
 	const uint64_t &MaxHealth();
 
 	const uint64_t &Energy();
@@ -144,7 +145,7 @@ public:
 };
 
 class Organism;
-#define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * (static_cast<double>(maxEnergy) / Settings.Get(WorldSettings::energy_density_multiplier) * sqrt(nCells)))
+#define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * maxEnergy * nCells)
 
 class Organism;
 

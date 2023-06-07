@@ -19,7 +19,6 @@ private:
 		count_vitality,
 		count_age,
 		count_lifespan,
-		count_reproductioncooldown,
 		count_mutability,
 		count_neurons,
 		count_synapses,
