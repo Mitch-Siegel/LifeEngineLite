@@ -71,11 +71,8 @@ void OrganismView::SetUpBrainVisualization()
 
     // push problem vertices into the next layer
     // a problem vertex is any one which has a connection that would require drawing the edge directly through another vertex in that column
-    for (size_t columnIndex = 1; (columnIndex < this->graph.size()) && (this->graph[columnIndex].size() > 0); columnIndex++)
+    for (size_t columnIndex = 0; (columnIndex < this->graph.size()) && (this->graph[columnIndex].size() > 0); columnIndex++)
     {
-        // make sure we always have a next column to vertices forward into
-        this->graph.push_back(std::set<size_t>());
-
         // iterate every vertex in this column
         for (auto postNum = this->graph[columnIndex].begin(); postNum != this->graph[columnIndex].end(); ++postNum)
         {
@@ -86,18 +83,13 @@ void OrganismView::SetUpBrainVisualization()
                 // if the destination is in the same column
                 if (this->graph[columnIndex].count(toId))
                 {
-                    // figure out if the edge will have to be drawn through other vertices, push vertices to next layer to eliminate these collisions
-                    // auto postDriver = postNum;
-                    // while ((postDriver != this->graph[columnIndex].end()) && (*postDriver != toId))
-                    // {
-                    // ++postDriver;
-                    // }
-                    // size_t erasedPost = *postDriver++;
-                    // should be able to be more greedy with this - only move the problematic vertex to next layer
-                    // this->graph[columnIndex].erase(erasedPost);
                     this->graph[columnIndex].erase(toId);
+                    // make sure we always have a next column to vertices forward into
+                    if (this->graph.size() == columnIndex + 1)
+                    {
+                        this->graph.push_back(std::set<size_t>());
+                    }
                     this->graph[columnIndex + 1].insert(toId);
-                    // postNum = postDriver;
                 }
             }
         }
@@ -196,12 +188,12 @@ void OrganismView::OnFrame(SDL_Renderer *r)
 
         ImGui::Text("%.2f/%.1f energy (%.2f%%), %lld vitality", energy,
                     maxEnergy,
-                    100.0 * static_cast<float>(energy) / maxEnergy, 
+                    100.0 * static_cast<float>(energy) / maxEnergy,
                     this->myOrganism->Vitality());
         ImGui::Text("%.2f/%.1f health (%.2f%%), %lld vitality", health,
-            maxHealth,
-            100.0 * static_cast<float>(health) / maxHealth, 
-            this->myOrganism->Vitality());
+                    maxHealth,
+                    100.0 * static_cast<float>(health) / maxHealth,
+                    this->myOrganism->Vitality());
     }
     else
     {
