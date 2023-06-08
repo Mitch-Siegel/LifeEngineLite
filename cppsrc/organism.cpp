@@ -137,7 +137,7 @@ Organism *Organism::Tick()
 
 	this->ExpendEnergy(0.05 * this->nCells_);
 
-	if (this->currentEnergy > 0.75 * this->maxEnergy)
+	if (this->currentEnergy > 0.95 * this->maxEnergy)
 	{
 		this->ExpendEnergy(0.25 * this->maxEnergy);
 		this->vitality_++;
@@ -149,7 +149,7 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	if (this->vitality_ >= (int64_t)this->nCells_)
+	if (this->vitality_ >= 2 * ceil(sqrt((int64_t)this->nCells_)))
 	{
 		return this->Reproduce();
 	}
@@ -859,7 +859,7 @@ Organism *Organism::Reproduce()
 
 				replicated->RecalculateStats();
 				replicated->currentHealth = replicated->MaxHealth();
-				replicated->currentEnergy = (0.7 * replicated->maxEnergy);
+				replicated->currentEnergy = randInt(0.5 * replicated->maxEnergy, 0.75 * replicated->maxEnergy);
 
 				replicated->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
 
@@ -868,8 +868,7 @@ Organism *Organism::Reproduce()
 					replicated->Remove();
 				}
 
-				this->ExpendVitality(this->nCells_);
-
+				this->ExpendVitality(2 * ceil(sqrt((int64_t)this->nCells_)));
 				return replicated;
 			}
 

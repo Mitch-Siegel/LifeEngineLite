@@ -145,7 +145,7 @@ public:
 };
 
 class Organism;
-#define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * maxEnergy * nCells)
+#define LIFESPAN(maxEnergy, nCells) (Settings.Get(WorldSettings::lifespan_multiplier) * maxEnergy * sqrt(nCells))
 
 class Organism;
 

@@ -80,7 +80,7 @@ void WorldSettings::Initialize()
 {
 	this->settings[WorldSettings::default_mutability] = Setting("Default Mutability (%)",
 																"Base percent chance for an organism to mutate upon reproduction",
-																15,
+																5,
 																{0, 100});
 
 	this->settings[WorldSettings::lifespan_multiplier] = Setting("Lifespan Multiplier",
@@ -95,47 +95,47 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::energy_density_multiplier] = Setting("Energy Density Multiplier",
 																	   "Multiplier on organism max energy (determined based on energy content of constituent cells)",
-																	   8,
+																	   4,
 																	   {1, 9999});
 
 	this->settings[WorldSettings::move_cost_multiplier] = Setting("Move Cost Multiplier (* 0.1)",
 																  "Multiplier on formula of cell count which termines cost for an organism to move once",
-																  7,
+																  2,
 																  {0, 9999});
 
 	this->settings[WorldSettings::food_multiplier] = Setting("Food Multiplier",
 															 "Multiplier on energy gained for all food types",
-															 6,
+															 4,
 															 {0, 9999});
 
 	this->settings[WorldSettings::leaf_food_energy] = Setting("Leaf Food Energy",
 															  "Energy gained by herbivores when eating one leaf",
-															  1,
+															  2,
 															  {0, 9999});
 
 	this->settings[WorldSettings::flower_food_energy] = Setting("Flower Food Energy",
 																"Energy gained by herbivores when eating one flower",
-																2,
+																4,
 																{0, 9999});
 
 	this->settings[WorldSettings::fruit_food_energy] = Setting("Fruit Food Energy",
 															   "Energy gained by herbivores when eating one fruit",
-															   4,
+															   8,
 															   {0, 9999});
 
 	this->settings[WorldSettings::plantmass_food_energy] = Setting("Plantmass Food Energy",
 																   "Energy gained by herbivores when eating one plantmass",
-																   2,
+																   3,
 																   {0, 9999});
 
 	this->settings[WorldSettings::biomass_food_energy] = Setting("Biomass Food Energy",
 																 "Energy gained by carnivores when eating one biomass",
-																 16,
+																 32,
 																 {0, 9999});
 
 	this->settings[WorldSettings::photosynthesis_interval] = Setting("Photosynthesis Interval",
 																	 "Interval each leaf cell waits between generating 1 energy",
-																	 3,
+																	 1,
 																	 {0, 9999});
 
 	this->settings[WorldSettings::leaf_flowering_ability_percent] = Setting("Leaf Flowering Ability (%)",
@@ -155,7 +155,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::spoil_time_base] = Setting("Spoil Time Multiplier",
 															 "Multiplier on time it takes plantmass/biomass/fruit to spoil",
-															 5,
+															 50,
 															 {0, 9999});
 
 	this->settings[WorldSettings::plantmass_spoil_time] = Setting("Plantmass Spoil Time",
@@ -165,7 +165,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::biomass_spoil_time] = Setting("Biomass Spoil Time",
 																"Base time it takes biomass to decay (dependent on organism size which became plantmass)",
-																5,
+																3,
 																{0, 9999});
 
 	this->settings[WorldSettings::fruit_spoil_time] = Setting("Fruit Spoil Time",
@@ -185,7 +185,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::bark_max_integrity] = Setting("Bark Max Integrity",
 																"Number of \"chomps\" from an herbivore a bark can withstand before breaking",
-																8,
+																4,
 																{1, 9999});
 
 	this->settings[WorldSettings::killer_cost_interval] = Setting("Killer Cost Interval",
