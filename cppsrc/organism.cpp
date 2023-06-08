@@ -135,7 +135,7 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	this->ExpendEnergy(0.05 * this->nCells_);
+	this->ExpendEnergy((0.05 * this->nCells_) + (0.05 * this->cellCounts[cell_leaf]));
 
 	if (this->currentEnergy > 0.95 * this->maxEnergy)
 	{
@@ -852,7 +852,7 @@ Organism *Organism::Reproduce()
 					replicated->Rotate(randPercent(50));
 				}
 
-				if (this->cellCounts[cell_mover] && randPercent(40))
+				if (this->cellCounts[cell_mover])
 				{
 					replicated->brain->Mutate();
 				}
@@ -882,7 +882,7 @@ Organism *Organism::Reproduce()
 			continue;
 		}
 	}
-	this->ExpendVitality(1);
+	this->ExpendVitality(2);
 	return nullptr;
 }
 
@@ -911,7 +911,7 @@ bool Organism::Mutate()
 	{
 		// remove a cell
 		if ((this->nCells() > 2) &&
-			randPercent(50))
+			randPercent(40))
 		{
 			int removedIndex = randInt(0, this->nCells() - 2);
 			auto removedIterator = this->myCells.begin();
@@ -1078,7 +1078,8 @@ void Organism::RemoveCell(Cell *_myCell, bool doVitalityLoss)
 
 	if (doVitalityLoss)
 	{
-		this->vitality_--;
+		this->ExpendEnergy(Settings.Get(WorldSettings::energy_density_multiplier) * CellEnergyDensities[_myCell->type]);
+		this->vitality_ -= 2;
 	}
 
 	this->nCells_--;

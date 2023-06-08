@@ -302,7 +302,7 @@ void Cell_Bark::Tick()
 
 	if (this->integrity < 1)
 	{
-		this->myOrganism->RemoveCell(this, false);
+		this->myOrganism->RemoveCell(this, true);
 		board->replaceCell(this, new Cell_Empty());
 		return;
 	}
@@ -576,7 +576,7 @@ void Cell_Herbivore::Tick()
 
 	if (!valid)
 	{
-		this->myOrganism->RemoveCell(this, false);
+		this->myOrganism->RemoveCell(this, true);
 		board->replaceCell(this, new Cell_Empty());
 	}
 }
@@ -648,7 +648,7 @@ void Cell_Carnivore::Tick()
 
 	if (!valid)
 	{
-		this->myOrganism->RemoveCell(this, false);
+		this->myOrganism->RemoveCell(this, true);
 		board->replaceCell(this, new Cell_Empty());
 	}
 }

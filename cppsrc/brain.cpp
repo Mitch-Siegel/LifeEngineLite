@@ -25,15 +25,39 @@ Brain::Brain() : SimpleNets::DAGNetwork(BRAIN_DEFAULT_INPUTS, {}, {7, SimpleNets
     this->freeWill = randFloat(0.0, 1.0);
     this->nTicksSameAction = 0;
 
-    size_t randomId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::logistic));
-    this->AddConnection(this->layers[0][1].Id(), randomId, RandomBrainConnectionWeight());
-    this->AddConnection(this->layers[0][randInt(0, this->layers[0].size() - 1)].Id(), randomId, RandomBrainConnectionWeight());
-    this->AddConnection(randomId, this->layers[2][randInt(1, 4)].Id(), RandomBrainConnectionWeight());
+    int startingNeurons = randInt(3, 15);
+    std::vector<size_t> addedIds;
+    for (int i = 0; i < startingNeurons; i++)
+    {
+        addedIds.push_back(this->AddNeuron(SimpleNets::logistic));
+    }
 
-    randomId = this->AddNeuron(static_cast<SimpleNets::neuronTypes>(SimpleNets::logistic));
-    this->AddConnection(this->layers[0][1].Id(), randomId, RandomBrainConnectionWeight());
-    this->AddConnection(this->layers[0][randInt(0, this->layers[0].size() - 1)].Id(), randomId, RandomBrainConnectionWeight());
-    this->AddConnection(randomId, this->layers[2][randInt(5, 6)].Id(), RandomBrainConnectionWeight());
+    for (int i = 0; i < startingNeurons; i++)
+    {
+        // add an input to a random neuron
+        if (randPercent(50))
+        {
+            while (!this->TryAddRandomHiddenConnectionByDst(addedIds[randInt(0, startingNeurons - 1)]))
+                ;
+        }
+        else
+        {
+            while (!this->TryAddRandomInputConnectionByDst(addedIds[randInt(0, startingNeurons - 1)]))
+                ;
+        }
+
+        // add an output to a random neuron
+        if (randPercent(50))
+        {
+            while (!this->TryAddRandomHiddenConnectionBySrc(addedIds[randInt(0, startingNeurons - 1)]))
+                ;
+        }
+        else
+        {
+            while (!this->TryAddRandomOutputConnectionBySrc(addedIds[randInt(0, startingNeurons - 1)]))
+                ;
+        }
+    }
 
     /*for (int i = 0; i < 1; i++)
     {
@@ -301,7 +325,7 @@ void Brain::Mutate()
                 ++toModify;
             }
 
-            this->ChangeWeight(toModify->first.first, toModify->first.second, randFloat(-0.25, 0.25));
+            this->ChangeWeight(toModify->first.first, toModify->first.second, randFloat(-0.05, 0.05) * 20);
         }
         else // add/remove connection
         {
@@ -353,7 +377,6 @@ void Brain::Mutate()
 
 unsigned int Brain::GetNewSensorIndex()
 {
-
     size_t thisInputNeuron = this->AddNeuron(SimpleNets::perceptron);
     if (randPercent(50) && (this->size(1) > 1))
     {

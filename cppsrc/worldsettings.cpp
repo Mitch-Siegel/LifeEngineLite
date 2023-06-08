@@ -85,12 +85,12 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::lifespan_multiplier] = Setting("Lifespan Multiplier",
 																 "Multiplier on the formula of max energy and cell count which determines lifespan",
-																 5,
+																 6,
 																 {0, 9999});
 
 	this->settings[WorldSettings::max_health_multiplier] = Setting("Max Health Multiplier",
 																   "Multiplier on the formula of max health (1 per cell + extra for armor)",
-																   1,
+																   2,
 																   {1, 9999});
 
 	this->settings[WorldSettings::energy_density_multiplier] = Setting("Energy Density Multiplier",
