@@ -189,7 +189,7 @@ Cell_Leaf::Cell_Leaf(int floweringPercent)
 
 void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 {
-	this->crowding = 0;
+	this->crowding = 1;
 	for (int i = 0; i < 8; i++)
 	{
 		int x_check = this->x + directions[i][0];
@@ -202,7 +202,8 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 				switch (neighbor->type)
 				{
 				case cell_bark:
-					this->crowding -= 2;
+					this->crowding = 1;
+					return;
 					break;
 
 				case cell_leaf:
@@ -226,7 +227,7 @@ void Cell_Leaf::CalculatePhotosynthesieEffectiveness()
 					break;
 
 				default:
-					this->crowding += 2;
+					this->crowding++;
 					break;
 				}
 			}
@@ -243,7 +244,7 @@ void Cell_Leaf::Tick()
 	else
 	{
 		this->myOrganism->AddEnergy(1.0);
-		this->photosynthesisCooldown = Settings.Get(WorldSettings::photosynthesis_interval) + this->crowding;
+		this->photosynthesisCooldown = Settings.Get(WorldSettings::photosynthesis_interval) * sqrt(this->crowding);
 	}
 
 	if (!this->flowering)

@@ -1080,7 +1080,8 @@ void Organism::RemoveCell(Cell *_myCell, bool doVitalityLoss)
 
 	if (doVitalityLoss)
 	{
-		this->ExpendVitality(reproductionCost(this->nCells()));
+
+		this->ExpendVitality(reproductionCost(this->nCells() * ((float)CellEnergyDensities[_myCell->type] / this->maxEnergy)));
 	}
 	
 	this->myCells.erase(_myCell);
