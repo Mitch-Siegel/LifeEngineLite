@@ -51,13 +51,12 @@ void Board::Reset()
 
 	// get rid of all organisms
 	this->Organisms.clear();
-	
-	for(auto c : this->FoodCells)
+
+	for (auto c : this->FoodCells)
 	{
 		delete c.second;
 	}
 	this->FoodCells.clear();
-	
 
 	for (int y = 0; y < this->dim_y; y++)
 	{
@@ -81,6 +80,13 @@ void Board::Reset()
 	Organism *firstOrganism = this->CreateOrganism(this->dim_x / 2, this->dim_y / 2);
 	firstOrganism->direction = 3;
 	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
+	for (int i = 0; i < 8; i++)
+	{
+		if (randPercent(50))
+		{
+			firstOrganism->AddCell(directions[i][0], directions[i][1], new Cell_Leaf(0));
+		}
+	}
 
 	firstOrganism->lifespan = 1000;
 	firstOrganism->RecalculateStats();

@@ -19,7 +19,7 @@ int CellEnergyDensities[cell_null] = {
 	32, // carnivore
 	16, // mover
 	8,	// killer
-	5,	// armor
+	8,	// armor
 	1,	// touch sensor
 	1,	// eye
 };
@@ -717,19 +717,6 @@ Cell_Armor::Cell_Armor()
 
 void Cell_Armor::Tick()
 {
-	bool valid = false;
-	for (int i = 0; i < 8 && !valid; i++)
-	{
-		int *thisDirection = directions[i];
-		int abs_x = this->x + thisDirection[0];
-		int abs_y = this->y + thisDirection[1];
-		valid = valid || (!board->boundCheckPos(abs_x, abs_y) && board->cells[abs_y][abs_x]->myOrganism == this->myOrganism);
-	}
-	if (!valid)
-	{
-		this->myOrganism->RemoveCell(this, false);
-		board->replaceCell(this, new Cell_Empty());
-	}
 }
 
 Cell_Armor *Cell_Armor::Clone()

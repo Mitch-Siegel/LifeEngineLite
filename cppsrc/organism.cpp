@@ -9,7 +9,8 @@
 #include "rng.h"
 #include "util.h"
 
-#define moveCost(nCells) (0.1 * Settings.Get(WorldSettings::move_cost_multiplier)) * sqrt(nCells_)
+#define moveCost(nCells) ((0.1 * Settings.Get(WorldSettings::move_cost_multiplier)) * sqrt(nCells))
+#define reproductionCost(ncells) (2 * ceil(sqrt((int64_t)ncells)))
 
 extern Board *board;
 Organism::Organism(int center_x, int center_y)
@@ -24,7 +25,6 @@ Organism::Organism(int center_x, int center_y)
 	this->maxEnergy = 0;
 	this->vitality_ = 0;
 	this->age = 0;
-	this->nCells_ = 0;
 	this->alive = true;
 	this->mutability = Settings.Get(WorldSettings::default_mutability);
 	this->brain = new Brain();
@@ -49,7 +49,6 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 	this->maxEnergy = 0;
 	this->vitality_ = 0;
 	this->age = 0;
-	this->nCells_ = 0;
 	this->alive = true;
 	this->mutability = Settings.Get(WorldSettings::default_mutability);
 	this->brain = new Brain(baseBrain);
@@ -65,6 +64,11 @@ Organism::Organism(int center_x, int center_y, const Brain &baseBrain)
 Organism::~Organism()
 {
 	delete this->brain;
+}
+
+const uint64_t Organism::nCells()
+{
+	return this->myCells.size();
 }
 
 void Organism::ReplaceKilledCell(Cell *replaced)
@@ -135,7 +139,7 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	this->ExpendEnergy((0.05 * this->nCells_) + (0.05 * this->cellCounts[cell_leaf]));
+	this->ExpendEnergy(0.13 * this->nCells());
 
 	if (this->currentEnergy > 0.95 * this->maxEnergy)
 	{
@@ -149,7 +153,7 @@ Organism *Organism::Tick()
 		return nullptr;
 	}
 
-	if (this->vitality_ >= 2 * ceil(sqrt((int64_t)this->nCells_)))
+	if (this->vitality_ >= reproductionCost(this->nCells()))
 	{
 		return this->Reproduce();
 	}
@@ -216,7 +220,7 @@ Organism *Organism::Tick()
 		break;
 		}
 
-		this->ExpendEnergy(moveCost(this->nCells_));
+		this->ExpendEnergy(moveCost(this->nCells()));
 	}
 
 	return nullptr;
@@ -253,9 +257,9 @@ void Organism::RecalculateStats()
 		this->currentHealth = this->maxHealth;
 	}
 
-	if (this->lifespan > LIFESPAN(this->maxEnergy, this->nCells_))
+	if (this->lifespan > LIFESPAN(this->maxEnergy, this->nCells()))
 	{
-		this->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
+		this->lifespan = LIFESPAN(this->maxEnergy, this->nCells());
 	}
 	if (this->currentEnergy > this->maxEnergy)
 	{
@@ -275,7 +279,7 @@ void Organism::VerifyCellConnectedness()
 
 	// conduct a search on cells, only keep ones directly attached to the organism
 	std::vector<Cell *> searchQueue;
-	searchQueue.reserve(this->nCells_);
+	searchQueue.reserve(this->nCells());
 	Cell *start = board->cells[this->y][this->x];
 	unconnectedCells.erase(start);
 	searchQueue.push_back(start);
@@ -356,7 +360,7 @@ void Organism::VerifyCellConnectedness()
 		{
 			Cell *invalidCell = v.first;
 			this->myCells.erase(invalidCell);
-			this->nCells_--;
+			this->nCells()--;
 			board->replaceCell(invalidCell, new Cell_Empty());
 		}
 	}*/
@@ -553,7 +557,7 @@ void Organism::Rotate(bool clockwise)
 		}
 	}
 
-	this->fractionalEnergy += moveCost(this->nCells_);
+	this->fractionalEnergy += moveCost(this->nCells());
 	this->direction += (clockwise ? -1 : 1);
 	if (this->direction < 0)
 	{
@@ -861,14 +865,14 @@ Organism *Organism::Reproduce()
 				replicated->currentHealth = replicated->MaxHealth();
 				replicated->currentEnergy = randInt(0.5 * replicated->maxEnergy, 0.75 * replicated->maxEnergy);
 
-				replicated->lifespan = LIFESPAN(this->maxEnergy, this->nCells_);
+				replicated->lifespan = LIFESPAN(this->maxEnergy, this->nCells());
 
 				if (replicated->CheckValidity() || replicated->maxEnergy == 0)
 				{
 					replicated->Remove();
 				}
 
-				this->ExpendVitality(2 * ceil(sqrt((int64_t)this->nCells_)));
+				this->ExpendVitality(reproductionCost(this->nCells()));
 				return replicated;
 			}
 
@@ -1061,7 +1065,6 @@ void Organism::AddCell(int x_rel, int y_rel, Cell *_cell)
 	board->replaceCellAt(x_abs, y_abs, _cell);
 	this->myCells.insert(_cell);
 
-	this->nCells_++;
 	this->OnCellAdded(_cell);
 	this->RecalculateStats();
 	this->requireConnectednessCheck = true;
@@ -1074,15 +1077,14 @@ void Organism::RemoveCell(Cell *_myCell, bool doVitalityLoss)
 		std::cerr << "Bad call to remove cell with _myCell not from this organism!" << std::endl;
 		exit(1);
 	}
-	this->myCells.erase(_myCell);
 
 	if (doVitalityLoss)
 	{
-		this->ExpendEnergy(Settings.Get(WorldSettings::energy_density_multiplier) * CellEnergyDensities[_myCell->type]);
-		this->vitality_ -= 2;
+		this->ExpendVitality(reproductionCost(this->nCells()));
 	}
+	
+	this->myCells.erase(_myCell);
 
-	this->nCells_--;
 	this->OnCellRemoved(_myCell);
 	this->RecalculateStats();
 	this->requireConnectednessCheck = true;
@@ -1093,7 +1095,6 @@ void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 	this->RemoveCell(_myCell, false);
 	_newCell->myOrganism = this;
 	this->myCells.insert(_newCell);
-	this->nCells_++;
 	// int x_rel = _myCell->x - this->x;
 	// int y_rel = _myCell->y - this->y;
 	board->replaceCell(_myCell, _newCell);

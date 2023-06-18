@@ -53,7 +53,6 @@ private:
 	uint64_t currentEnergy, maxEnergy;
 	int64_t vitality_;
 	std::set<Cell *> myCells;
-	uint64_t nCells_;
 	OrganismIdentifier identifier_;
 
 	double fractionalEnergy = 0.0;
@@ -77,7 +76,7 @@ public:
 	Brain *brain;
 	uint64_t cellCounts[cell_null];
 
-	const uint64_t &nCells() const { return this->nCells_; }
+	const uint64_t nCells();
 
 	const int64_t &Vitality() const { return this->vitality_; }
 
