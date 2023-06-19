@@ -79,13 +79,14 @@ void Board::Reset()
 	// set up base organism
 	Organism *firstOrganism = this->CreateOrganism(this->dim_x / 2, this->dim_y / 2);
 	firstOrganism->direction = 3;
-	firstOrganism->AddCell(0, 0, new Cell_Leaf(0));
-	for (int i = 0; i < 8; i++)
+	firstOrganism->AddCell(0, 0, new Cell_Bark());
+	for(int i = 0; i < 4; i++)
 	{
-		if (randPercent(50))
-		{
-			firstOrganism->AddCell(directions[i][0], directions[i][1], new Cell_Leaf(0));
-		}
+		firstOrganism->AddCell(directions[i][0], directions[i][1], new Cell_Leaf(0));
+		// int secondIndex;
+		// while ((secondIndex = randInt(0, 7)) == firstIndex)
+			// ;
+		// firstOrganism->AddCell(directions[secondIndex][0], directions[secondIndex][1], new Cell_Leaf(0));
 	}
 
 	firstOrganism->lifespan = 1000;

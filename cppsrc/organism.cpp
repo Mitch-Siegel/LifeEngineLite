@@ -141,7 +141,7 @@ Organism *Organism::Tick()
 
 	this->ExpendEnergy(0.13 * this->nCells());
 
-	if (this->currentEnergy > 0.95 * this->maxEnergy)
+	if (this->currentEnergy >= 0.85 * this->maxEnergy)
 	{
 		this->ExpendEnergy(0.25 * this->maxEnergy);
 		this->vitality_++;
@@ -699,7 +699,7 @@ Organism *Organism::Reproduce()
 	for (int i = 0; i < 8; i++)
 	{
 		int *thisDir = directions[(dirIndex + i) % 8];
-		for (int j = 1; j < ceil(sqrt(this->nCells())) + 1; j++)
+		for (int j = ceil(sqrt(this->nCells())) + 1; j >= 1; j--)
 		{
 			int dir_x = thisDir[0] * j;
 			int dir_y = thisDir[1] * j;
@@ -886,7 +886,7 @@ Organism *Organism::Reproduce()
 			continue;
 		}
 	}
-	this->ExpendVitality(2);
+	this->ExpendVitality(reproductionCost(this->nCells()) / 2);
 	return nullptr;
 }
 
