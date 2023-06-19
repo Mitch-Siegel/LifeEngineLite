@@ -126,6 +126,8 @@ public:
 
 	void AddEnergy(uint64_t n);
 
+	void AddVitality(uint32_t n);
+
 	void ExpendVitality(uint32_t n);
 
 	bool CanOccupyPosition(int _x_abs, int _y_abs);

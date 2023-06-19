@@ -139,12 +139,12 @@ Organism *Organism::Tick()
 {
 	this->age++;
 
-	this->ExpendEnergy(0.13 * this->nCells());
+	this->ExpendEnergy(0.25 * sqrt(this->nCells()));
 
 	if (this->currentEnergy >= 0.85 * this->maxEnergy)
 	{
 		this->ExpendEnergy(0.25 * this->maxEnergy);
-		this->vitality_++;
+		this->AddVitality(1);
 	}
 
 	if (this->currentEnergy == 0 || this->currentHealth == 0 || (this->age >= this->lifespan) || (this->nCells() == 0))
@@ -622,6 +622,19 @@ void Organism::AddEnergy(uint64_t n)
 	{
 		this->currentEnergy = this->maxEnergy;
 	}
+}
+
+void Organism::AddVitality(uint32_t n)
+{
+	if((this->vitality_ + n) < reproductionCost(this->nCells()))
+	{
+		this->vitality_ += n;
+	}
+	else
+	{
+		this->vitality_ = reproductionCost(this->nCells());
+	}
+
 }
 
 void Organism::ExpendVitality(uint32_t n)

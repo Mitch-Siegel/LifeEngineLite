@@ -625,7 +625,7 @@ void Cell_Carnivore::Tick()
 		if (potentiallyEaten->type == cell_biomass)
 		{
 			gainedEnergy = Settings.Get(WorldSettings::biomass_food_energy);
-			// this->myOrganism->AddEnergy(BIOMASS_FOOD_ENERGY);
+			this->myOrganism->AddEnergy(gainedEnergy);
 			board->replaceCell(potentiallyEaten, new Cell_Empty());
 			couldEat = true;
 		}

@@ -80,12 +80,12 @@ void WorldSettings::Initialize()
 {
 	this->settings[WorldSettings::default_mutability] = Setting("Default Mutability (%)",
 																"Base percent chance for an organism to mutate upon reproduction",
-																5,
+																50,
 																{0, 100});
 
 	this->settings[WorldSettings::lifespan_multiplier] = Setting("Lifespan Multiplier",
 																 "Multiplier on the formula of max energy and cell count which determines lifespan",
-																 6,
+																 10,
 																 {0, 9999});
 
 	this->settings[WorldSettings::max_health_multiplier] = Setting("Max Health Multiplier",
@@ -105,7 +105,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::food_multiplier] = Setting("Food Multiplier",
 															 "Multiplier on energy gained for all food types",
-															 4,
+															 6,
 															 {0, 9999});
 
 	this->settings[WorldSettings::leaf_food_energy] = Setting("Leaf Food Energy",
@@ -135,7 +135,7 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::photosynthesis_interval] = Setting("Photosynthesis Interval",
 																	 "Interval each leaf cell waits between generating 1 energy",
-																	 1,
+																	 3,
 																	 {0, 9999});
 
 	this->settings[WorldSettings::leaf_flowering_ability_percent] = Setting("Leaf Flowering Ability (%)",
@@ -155,12 +155,12 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::spoil_time_base] = Setting("Spoil Time Multiplier",
 															 "Multiplier on time it takes plantmass/biomass/fruit to spoil",
-															 50,
+															 250,
 															 {0, 9999});
 
 	this->settings[WorldSettings::plantmass_spoil_time] = Setting("Plantmass Spoil Time",
 																  "Base time it takes plantmass to decay (dependent on organism size which became plantmass)",
-																  25,
+																  18,
 																  {0, 9999});
 
 	this->settings[WorldSettings::biomass_spoil_time] = Setting("Biomass Spoil Time",
@@ -190,12 +190,12 @@ void WorldSettings::Initialize()
 
 	this->settings[WorldSettings::killer_cost_interval] = Setting("Killer Cost Interval",
 																  "Each killer will cost its organism 1 energy this frequently",
-																  1,
+																  99,
 																  {0, 9999});
 
 	this->settings[WorldSettings::killer_damage_cost] = Setting("Killer Damage Cost",
 																"Energy cost for a killer to do 1 damage",
-																24,
+																4,
 																{0, 9999});
 
 	this->settings[WorldSettings::armor_health_bonus] = Setting("Armor Health Bonus",
