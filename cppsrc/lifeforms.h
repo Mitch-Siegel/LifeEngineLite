@@ -224,7 +224,7 @@ public:
 class Cell_Flower;
 class Cell_Leaf : public Cell
 {
-	friend class Cell_Herbivore;
+	friend class Cell_Mouth;
 	friend class Cell_Bark;
 	friend class Cell_Flower;
 	friend class Organism;
@@ -259,7 +259,7 @@ public:
 class Cell_Bark : public Cell
 {
 	friend class Organism;
-	friend class Cell_Herbivore;
+	friend class Cell_Mouth;
 	int actionCooldown;
 	int integrity;
 
@@ -326,36 +326,20 @@ public:
 	Cell_Mover *Clone() override;
 };
 
-class Cell_Herbivore : public Cell
+class Cell_Mouth : public Cell
 {
 	uint8_t digestCooldown;
 
 public:
-	~Cell_Herbivore() override;
+	~Cell_Mouth() override;
 
-	Cell_Herbivore();
+	Cell_Mouth();
 
-	explicit Cell_Herbivore(Organism *_myOrganism);
-
-	void Tick() override;
-
-	Cell_Herbivore *Clone() override;
-};
-
-class Cell_Carnivore : public Cell
-{
-	uint8_t digestCooldown;
-
-public:
-	~Cell_Carnivore() override;
-
-	Cell_Carnivore();
-
-	explicit Cell_Carnivore(Organism *_myOrganism);
+	explicit Cell_Mouth(Organism *_myOrganism);
 
 	void Tick() override;
 
-	Cell_Carnivore *Clone() override;
+	Cell_Mouth *Clone() override;
 };
 
 class Cell_Killer : public Cell

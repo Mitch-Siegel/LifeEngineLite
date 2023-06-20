@@ -104,8 +104,7 @@ void Organism::ReplaceKilledCell(Cell *replaced)
 		break;
 
 	case cell_mover:
-	case cell_herbivore_mouth:
-	case cell_carnivore_mouth:
+	case cell_mouth:
 	case cell_touch:
 	case cell_eye:
 		replacedWith = new Cell_Biomass();
@@ -379,32 +378,15 @@ bool Organism::CheckValidity()
 		return true;
 	}
 
-	// if this organism is not a mover
 	if (this->cellCounts[cell_mover] == 0)
 	{
-		// it shouldn't have touch, eye, or mouth cells
-		if (this->cellCounts[cell_touch] || this->cellCounts[cell_eye] || this->cellCounts[cell_herbivore_mouth] || this->cellCounts[cell_carnivore_mouth])
+		if (this->cellCounts[cell_touch] || this->cellCounts[cell_eye])
 		{
 			return true;
 		}
 	}
 
-	bool invalid = false;
-
-	// disallow organisms that are all mouths
-	// invalid |= (this->cellCounts[cell_herbivore_mouth] == this->nCells());
-
-	// disallow herbivores that have leaves on them
-	invalid |= (((this->cellCounts[cell_herbivore_mouth] > 0) || (this->cellCounts[cell_carnivore_mouth] > 0)) &&
-				(this->cellCounts[cell_leaf] > 0));
-
-	// must have a mover to have a touch sensor
-	invalid |= (this->cellCounts[cell_touch] > 0 && this->cellCounts[cell_mover] == 0);
-
-	// must have a mover to have an eye
-	invalid |= (this->cellCounts[cell_eye] > 0 && this->cellCounts[cell_mover] == 0);
-
-	return invalid;
+	return false;
 }
 
 void Organism::Move(int moveDirection)
@@ -626,7 +608,7 @@ void Organism::AddEnergy(uint64_t n)
 
 void Organism::AddVitality(uint32_t n)
 {
-	if((this->vitality_ + n) < reproductionCost(this->nCells()))
+	if ((this->vitality_ + n) < reproductionCost(this->nCells()))
 	{
 		this->vitality_ += n;
 	}
@@ -634,7 +616,6 @@ void Organism::AddVitality(uint32_t n)
 	{
 		this->vitality_ = reproductionCost(this->nCells());
 	}
-
 }
 
 void Organism::ExpendVitality(uint32_t n)
@@ -780,8 +761,7 @@ Organism *Organism::Reproduce()
 
 					// check these cell types
 					std::vector<enum CellTypes> checkedTypes{
-						cell_herbivore_mouth,
-						cell_carnivore_mouth,
+						cell_mouth,
 						cell_mover,
 						cell_killer,
 						cell_armor,
@@ -1096,7 +1076,7 @@ void Organism::RemoveCell(Cell *_myCell, bool doVitalityLoss)
 
 		this->ExpendVitality(reproductionCost(this->nCells() * ((float)CellEnergyDensities[_myCell->type] / this->maxEnergy)));
 	}
-	
+
 	this->myCells.erase(_myCell);
 
 	this->OnCellRemoved(_myCell);
@@ -1121,18 +1101,10 @@ void Organism::ReplaceCell(Cell *_myCell, Cell *_newCell)
 
 enum OrganismClassifications Organism::Classify()
 {
-	// classify by mouth
-	if (this->cellCounts[cell_herbivore_mouth] && this->cellCounts[cell_carnivore_mouth])
+	// classify by mover-ness
+	if (this->cellCounts[cell_mover])
 	{
-		return class_omnivore;
-	}
-	else if (this->cellCounts[cell_herbivore_mouth])
-	{
-		return class_herbivore;
-	}
-	else if (this->cellCounts[cell_carnivore_mouth])
-	{
-		return class_carnivore;
+		return class_mover;
 	}
 
 	// if no mouths classify as plant

@@ -144,7 +144,7 @@ bool Board::Tick()
 
 							bool moverInCenter = randPercent(50);
 
-							grownFruit->AddCell(0, 0, (moverInCenter ? static_cast<Cell *>(new Cell_Mover()) : static_cast<Cell *>(new Cell_Herbivore())));
+							grownFruit->AddCell(0, 0, (moverInCenter ? static_cast<Cell *>(new Cell_Mover()) : static_cast<Cell *>(new Cell_Mouth())));
 							// Cell *secondRandomCell = GenerateRandomCell();
 							// bool couldAddSecond = false;
 							int dirIndex = randInt(0, 7);
@@ -153,7 +153,7 @@ bool Board::Tick()
 								int *thisDirection = directions[(j + dirIndex) % 8];
 								if (this->isCellOfType(grownFruit->x + thisDirection[0], grownFruit->y + thisDirection[1], cell_empty))
 								{
-									grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(moverInCenter ? static_cast<Cell *>(new Cell_Herbivore()) : static_cast<Cell *>(new Cell_Mover())));
+									grownFruit->AddCell(thisDirection[0], thisDirection[1], static_cast<Cell *>(moverInCenter ? static_cast<Cell *>(new Cell_Mouth()) : static_cast<Cell *>(new Cell_Mover())));
 									break;
 								}
 							}

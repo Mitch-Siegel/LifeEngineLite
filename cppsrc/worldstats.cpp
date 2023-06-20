@@ -192,9 +192,7 @@ void WorldStats::DisplayHistoryGraphs()
 			ImPlot::PushColormap(ClassColormap);
 			ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
 			ImPlot::PlotLine("Plants", tickData.rawData(), classCountData[class_plant]->rawData(), static_cast<int>(classCountData[class_plant]->size()));
-			ImPlot::PlotLine("Herbivores", tickData.rawData(), classCountData[class_herbivore]->rawData(), static_cast<int>(classCountData[class_herbivore]->size()));
-			ImPlot::PlotLine("Carnivores", tickData.rawData(), classCountData[class_carnivore]->rawData(), static_cast<int>(classCountData[class_carnivore]->size()));
-			ImPlot::PlotLine("Omnivores", tickData.rawData(), classCountData[class_omnivore]->rawData(), static_cast<int>(classCountData[class_omnivore]->size()));
+			ImPlot::PlotLine("Movers", tickData.rawData(), classCountData[class_mover]->rawData(), static_cast<int>(classCountData[class_mover]->size()));
 			ImPlot::PopColormap();
 			ImPlot::PlotLine("Total Organisms", tickData.rawData(), classCountData[class_null]->rawData(), static_cast<int>(classCountData[class_null]->size()));
 			ImPlot::EndPlot();

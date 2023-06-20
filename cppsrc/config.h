@@ -9,8 +9,7 @@ enum CellTypes
 	cell_bark,
 	cell_flower,
 	cell_fruit,
-	cell_herbivore_mouth,
-	cell_carnivore_mouth,
+	cell_mouth,
 	cell_mover,
 	cell_killer,
 	cell_armor,
@@ -22,9 +21,7 @@ enum CellTypes
 enum OrganismClassifications
 {
 	class_plant,
-	class_herbivore,
-	class_carnivore,
-	class_omnivore,
+	class_mover,
 	class_null,
 };
 

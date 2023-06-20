@@ -26,8 +26,7 @@ const ImVec4 cellColors[cell_null] =
 		{75, 25, 25, 255},	  // bark
 		{50, 250, 150, 255},  // flower
 		{200, 200, 0, 255},	  // fruit
-		{255, 150, 0, 255},	  // herb
-		{255, 100, 150, 255}, // carn
+		{255, 150, 0, 255},	  // mouth
 		{50, 120, 255, 255},  // mover
 		{255, 0, 0, 255},	  // killer
 		{175, 0, 255, 255},	  // armor
@@ -39,9 +38,7 @@ const ImVec4 cellColors[cell_null] =
 const ImVec4 classColors[class_null] =
 	{
 		{30.0 / 255, 120.0 / 255, 30.0 / 255, 255.0 / 255},	  // plant
-		{255.0 / 255, 150.0 / 255, 0.0 / 255, 255.0 / 255},	  // herb
-		{255.0 / 255, 100.0 / 255, 150.0 / 255, 255.0 / 255}, // carn
-		{255.0 / 255, 0.0 / 255, 255.0 / 255, 255.0 / 255}	  // omni
+		{255.0 / 255, 150.0 / 255, 0.0 / 255, 255.0 / 255},	  // mover
 };
 
 const char *cellNames[cell_null] =
@@ -52,8 +49,7 @@ const char *cellNames[cell_null] =
 	 "bark",
 	 "flower",
 	 "fruit",
-	 "herbivore",
-	 "carnivore",
+	 "mouth",
 	 "mover",
 	 "killer",
 	 "armor",
@@ -62,12 +58,10 @@ const char *cellNames[cell_null] =
 
 const char *classNames[class_null] =
 	{"plant",
-	 "herbivore",
-	 "carnivore",
-	 "omnivore"};
+	 "mover"};
 
-const uint32_t cellXs[cell_null] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
-const double cellXs_double[cell_null] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0};
+const uint32_t cellXs[cell_null] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+const double cellXs_double[cell_null] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
 
 ImPlotColormap CellColormap;
 ImPlotColormap ClassColormap;

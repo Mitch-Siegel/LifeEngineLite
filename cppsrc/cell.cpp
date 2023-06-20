@@ -15,8 +15,7 @@ int CellEnergyDensities[cell_null] = {
 	8,	// bark
 	2,	// flower
 	0,	// fruit
-	16, // herbivore
-	32, // carnivore
+	16, // mouth
 	16, // mover
 	8,	// killer
 	8,	// armor
@@ -26,7 +25,7 @@ int CellEnergyDensities[cell_null] = {
 
 Cell *GenerateRandomCell()
 {
-	switch (randInt(0, 8))
+	switch (randInt(0, 7))
 	{
 	case 0:
 		return new Cell_Mover();
@@ -41,26 +40,22 @@ Cell *GenerateRandomCell()
 		break;
 
 	case 3:
-		return new Cell_Herbivore();
+		return new Cell_Mouth();
 		break;
 
 	case 4:
-		return new Cell_Carnivore();
-		break;
-
-	case 5:
 		return new Cell_Killer();
 		break;
 
-	case 6:
+	case 5:
 		return new Cell_Armor();
 		break;
 
-	case 7:
+	case 6:
 		return new Cell_Touch();
 		break;
 
-	case 8:
+	case 7:
 		return new Cell_Eye();
 		break;
 	}
@@ -309,6 +304,7 @@ void Cell_Bark::Tick()
 		return;
 	}
 
+	/*
 	if (this->myOrganism->Vitality() > 0)
 	{
 		// bark will only grow a leaf directly adjacent
@@ -342,6 +338,7 @@ void Cell_Bark::Tick()
 			}
 		}
 	}
+	*/
 }
 
 Cell_Bark *Cell_Bark::Clone()
@@ -456,18 +453,18 @@ Cell_Mover *Cell_Mover::Clone()
 }
 
 // herbivore mouth cell
-Cell_Herbivore::~Cell_Herbivore()
+Cell_Mouth::~Cell_Mouth()
 {
 }
 
-Cell_Herbivore::Cell_Herbivore()
+Cell_Mouth::Cell_Mouth()
 {
-	this->type = cell_herbivore_mouth;
+	this->type = cell_mouth;
 	this->myOrganism = nullptr;
 	this->digestCooldown = 0;
 }
 
-void Cell_Herbivore::Tick()
+void Cell_Mouth::Tick()
 {
 	if (this->digestCooldown > 0)
 	{
@@ -493,7 +490,8 @@ void Cell_Herbivore::Tick()
 			potentiallyEaten->type == cell_flower ||
 			potentiallyEaten->type == cell_fruit ||
 			potentiallyEaten->type == cell_plantmass ||
-			potentiallyEaten->type == cell_bark)
+			potentiallyEaten->type == cell_bark || 
+			potentiallyEaten->type == cell_biomass)
 		{
 			Organism *eatenParent = potentiallyEaten->myOrganism;
 			bool removeEaten = true;
@@ -519,6 +517,11 @@ void Cell_Herbivore::Tick()
 				case cell_plantmass:
 					gainedEnergy = Settings.Get(WorldSettings::plantmass_food_energy);
 					this->digestCooldown = 0;
+					break;
+
+				case cell_biomass:
+					gainedEnergy = Settings.Get(WorldSettings::biomass_food_energy);
+					this->digestCooldown = 4;
 					break;
 
 				case cell_bark:
@@ -583,81 +586,9 @@ void Cell_Herbivore::Tick()
 	}
 }
 
-Cell_Herbivore *Cell_Herbivore::Clone()
+Cell_Mouth *Cell_Mouth::Clone()
 {
-	return new Cell_Herbivore(*this);
-}
-
-// carnivore mouth cell
-Cell_Carnivore::~Cell_Carnivore()
-{
-}
-
-Cell_Carnivore::Cell_Carnivore()
-{
-	this->type = cell_carnivore_mouth;
-	this->myOrganism = nullptr;
-	this->digestCooldown = 0;
-}
-
-void Cell_Carnivore::Tick()
-{
-	if (this->digestCooldown > 0)
-	{
-		this->digestCooldown--;
-		return;
-	}
-	bool couldEat = false;
-	int gainedEnergy = 0;
-	bool valid = false;
-
-	int checkDirIndex = randInt(0, 3);
-	for (int i = 0; i < 4; i++)
-	{
-		int *thisDirection = directions[(checkDirIndex + i) % 4];
-		int x_abs = this->x + thisDirection[0];
-		int y_abs = this->y + thisDirection[1];
-		if (board->boundCheckPos(x_abs, y_abs))
-		{
-			continue;
-		}
-		Cell *potentiallyEaten = board->cells[y_abs][x_abs];
-		if (potentiallyEaten->type == cell_biomass)
-		{
-			gainedEnergy = Settings.Get(WorldSettings::biomass_food_energy);
-			this->myOrganism->AddEnergy(gainedEnergy);
-			board->replaceCell(potentiallyEaten, new Cell_Empty());
-			couldEat = true;
-		}
-	}
-
-	if (!valid)
-	{
-		for (int i = 0; i < 8; i++)
-		{
-			int *thisDirection = directions[i];
-			int abs_x = this->x + thisDirection[0];
-			int abs_y = this->y + thisDirection[1];
-			valid = valid || (!board->boundCheckPos(abs_x, abs_y) && board->cells[abs_y][abs_x]->myOrganism == this->myOrganism);
-		}
-	}
-
-	if (couldEat)
-	{
-		this->myOrganism->AddEnergy(gainedEnergy);
-		this->digestCooldown = 6;
-	}
-
-	if (!valid)
-	{
-		this->myOrganism->RemoveCell(this, true);
-		board->replaceCell(this, new Cell_Empty());
-	}
-}
-
-Cell_Carnivore *Cell_Carnivore::Clone()
-{
-	return new Cell_Carnivore(*this);
+	return new Cell_Mouth(*this);
 }
 
 // killer cell
